@@ -364,6 +364,53 @@
                 <textarea id="messageInput" placeholder="Digite sua pergunta... (Shift+Enter para quebra de linha)" rows="1"></textarea>
                 <button id="sendBtn" onclick="sendMessage()">Enviar</button>
                 <button id="stopBtn" onclick="stopResponse()" style="display: none; background: #ff6f00;">Parar</button>
+                <button id="imageBtn" onclick="toggleImageGenerator()" style="background: linear-gradient(135deg, #00ff41 0%, #00d4ff 100%); color: #000; font-weight: bold;">🎨 Imagem</button>
+                <button id="videoBtn" onclick="toggleVideoGenerator()" style="background: linear-gradient(135deg, #ff6f00 0%, #ff1744 100%); color: #fff; font-weight: bold;">🎬 Vídeo</button>
+            </div>
+
+            <div id="imageGenerator" style="display: none; padding: 20px; border-top: 2px solid var(--accent); background: rgba(0, 255, 65, 0.05);">
+                <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                    <input id="imagePrompt" type="text" placeholder="Descreva a imagem que quer gerar..." style="flex: 1; padding: 10px; border: 1px solid var(--accent); border-radius: 8px; background: #1a1a1a; color: var(--text);">
+                    <button id="gerarBtn" onclick="generateImage()" style="padding: 10px 20px; background: linear-gradient(135deg, #00ff41 0%, #00d4ff 100%); color: #000; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">Gerar</button>
+                </div>
+
+                <div id="imageProgressContainer" style="display: none; margin-top: 15px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 12px;">
+                        <span id="progressLabel">Gerando imagem...</span>
+                        <span id="progressPercent">0%</span>
+                    </div>
+                    <div style="width: 100%; height: 8px; background: #222; border-radius: 4px; overflow: hidden; border: 1px solid var(--accent);">
+                        <div id="progressBar" style="height: 100%; width: 0%; background: linear-gradient(90deg, #00ff41 0%, #00d4ff 100%); transition: width 0.3s;"></div>
+                    </div>
+                    <div style="margin-top: 8px; font-size: 11px; color: #888;">
+                        <span id="progressTime">Tempo estimado: 7-10 minutos</span>
+                    </div>
+                </div>
+
+                <div id="imageStatus" style="font-size: 12px; color: var(--accent); margin-top: 10px;"></div>
+            </div>
+
+            <div id="videoGenerator" style="display: none; padding: 20px; border-top: 2px solid #ff6f00; background: rgba(255, 111, 0, 0.05);">
+                <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                    <input id="videoPrompt" type="text" placeholder="Descreva o vídeo que quer gerar..." style="flex: 1; padding: 10px; border: 1px solid #ff6f00; border-radius: 8px; background: #1a1a1a; color: var(--text);">
+                    <input id="videoDuration" type="number" min="2" max="10" value="4" placeholder="Duração (seg)" style="width: 80px; padding: 10px; border: 1px solid #ff6f00; border-radius: 8px; background: #1a1a1a; color: var(--text);">
+                    <button id="gerarVideoBtn" onclick="generateVideo()" style="padding: 10px 20px; background: linear-gradient(135deg, #ff6f00 0%, #ff1744 100%); color: #fff; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">Gerar</button>
+                </div>
+
+                <div id="videoProgressContainer" style="display: none; margin-top: 15px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 12px;">
+                        <span id="videoProgressLabel">Gerando vídeo...</span>
+                        <span id="videoProgressPercent">0%</span>
+                    </div>
+                    <div style="width: 100%; height: 8px; background: #222; border-radius: 4px; overflow: hidden; border: 1px solid #ff6f00;">
+                        <div id="videoProgressBar" style="height: 100%; width: 0%; background: linear-gradient(90deg, #ff6f00 0%, #ff1744 100%); transition: width 0.3s;"></div>
+                    </div>
+                    <div style="margin-top: 8px; font-size: 11px; color: #888;">
+                        <span id="videoProgressTime">Tempo estimado: 20-40 minutos</span>
+                    </div>
+                </div>
+
+                <div id="videoStatus" style="font-size: 12px; color: #ff6f00; margin-top: 10px;"></div>
             </div>
         </div>
     </div>
@@ -396,6 +443,208 @@
                 stopBtn.style.display = 'none';
                 sendBtn.style.display = 'block';
                 statusDiv.textContent = '⏹️ Resposta interrompida pelo usuário';
+            }
+        }
+
+        function toggleImageGenerator() {
+            const generator = document.getElementById('imageGenerator');
+            generator.style.display = generator.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function toggleVideoGenerator() {
+            const generator = document.getElementById('videoGenerator');
+            generator.style.display = generator.style.display === 'none' ? 'block' : 'none';
+        }
+
+        async function generateVideo() {
+            const promptInput = document.getElementById('videoPrompt');
+            const durationInput = document.getElementById('videoDuration');
+
+            if (!promptInput) {
+                alert('Erro: campo de vídeo não encontrado');
+                return;
+            }
+            const prompt = promptInput.value ? promptInput.value.trim() : '';
+            const duration = parseInt(durationInput.value) || 4;
+
+            if (!prompt) {
+                alert('Digite uma descrição para o vídeo!');
+                return;
+            }
+
+            const statusDiv = document.getElementById('videoStatus');
+            const progressContainer = document.getElementById('videoProgressContainer');
+            const gerarBtn = document.getElementById('gerarVideoBtn');
+
+            progressContainer.style.display = 'block';
+            statusDiv.textContent = '';
+            gerarBtn.disabled = true;
+            gerarBtn.style.opacity = '0.5';
+
+            try {
+                // 1. Solicitar geração (retorna job_id)
+                const startResp = await fetch('/api/generate-video', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt, duration, fps: 12 })
+                });
+
+                const startData = await startResp.json();
+                if (!startData.job_id) {
+                    throw new Error('Erro ao iniciar geração');
+                }
+
+                const jobId = startData.job_id;
+                console.log('🎬 Job iniciado:', jobId);
+
+                // 2. Polling de progresso
+                const startTime = Date.now();
+                let lastPercent = 0;
+
+                const pollInterval = setInterval(async () => {
+                    try {
+                        const statusResp = await fetch(`/api/video-status/${jobId}`);
+                        const status = await statusResp.json();
+
+                        // Atualizar barra com progresso REAL
+                        document.getElementById('videoProgressBar').style.width = status.percent + '%';
+                        document.getElementById('videoProgressPercent').textContent = status.percent + '%';
+                        document.getElementById('videoProgressLabel').textContent = status.message;
+
+                        // Calcular tempo restante baseado em progresso real
+                        if (status.percent > 0 && status.percent < 100) {
+                            const elapsed = (Date.now() - startTime) / 1000;
+                            const perSecond = status.percent / elapsed;
+                            const remaining = (100 - status.percent) / perSecond;
+                            const mins = Math.ceil(remaining / 60);
+                            document.getElementById('videoProgressTime').textContent = `⏱️  Tempo restante: ~${mins}min`;
+                        }
+
+                        // Quando completar
+                        if (status.status === 'concluído') {
+                            clearInterval(pollInterval);
+                            document.getElementById('videoProgressBar').style.width = '100%';
+                            document.getElementById('videoProgressPercent').textContent = '100%';
+                            document.getElementById('videoProgressLabel').textContent = '✅ Concluído!';
+                            document.getElementById('videoProgressTime').textContent = 'Salvando resultado...';
+
+                            setTimeout(() => {
+                                statusDiv.textContent = `✅ Vídeo gerado: ${status.result.filename}`;
+                                addMessage('video', `🎬 ${prompt}\n📁 ${status.result.filename}`);
+                                promptInput.value = '';
+                                progressContainer.style.display = 'none';
+                                gerarBtn.disabled = false;
+                                gerarBtn.style.opacity = '1';
+                            }, 1000);
+                        } else if (status.status === 'erro') {
+                            clearInterval(pollInterval);
+                            statusDiv.textContent = `❌ Erro: ${status.error}`;
+                            progressContainer.style.display = 'none';
+                            gerarBtn.disabled = false;
+                            gerarBtn.style.opacity = '1';
+                        }
+                    } catch (e) {
+                        console.error('Erro ao verificar status:', e);
+                    }
+                }, 500); // Poll a cada 500ms para atualizações rápidas
+
+            } catch (error) {
+                statusDiv.textContent = `❌ Erro: ${error.message}`;
+                progressContainer.style.display = 'none';
+                gerarBtn.disabled = false;
+                gerarBtn.style.opacity = '1';
+            }
+        }
+
+        let progressInterval = null;
+
+        function updateProgress(current) {
+            const progressBar = document.getElementById('progressBar');
+            const progressPercent = document.getElementById('progressPercent');
+            const progressLabel = document.getElementById('progressLabel');
+            const progressTime = document.getElementById('progressTime');
+
+            progressBar.style.width = current + '%';
+            progressPercent.textContent = current + '%';
+
+            // Estimativa de tempo
+            if (current < 100) {
+                const estimatedTotal = 8 * 60; // 8 minutos em segundos
+                const elapsed = (current / 100) * estimatedTotal;
+                const remaining = estimatedTotal - elapsed;
+                const minutes = Math.ceil(remaining / 60);
+                progressTime.textContent = `⏱️  Tempo restante: ~${minutes}min`;
+            } else {
+                progressLabel.textContent = '✅ Concluído!';
+                progressTime.textContent = 'Processando resposta...';
+            }
+        }
+
+        async function generateImage() {
+            const promptInput = document.getElementById('imagePrompt');
+            if (!promptInput) {
+                alert('Erro: campo de imagem não encontrado');
+                return;
+            }
+            const prompt = promptInput.value ? promptInput.value.trim() : '';
+            if (!prompt) {
+                alert('Digite uma descrição para a imagem!');
+                return;
+            }
+
+            const statusDiv = document.getElementById('imageStatus');
+            const progressContainer = document.getElementById('imageProgressContainer');
+            const gerarBtn = document.getElementById('gerarBtn');
+
+            // Mostrar barra de progresso
+            progressContainer.style.display = 'block';
+            statusDiv.textContent = '';
+            gerarBtn.disabled = true;
+            gerarBtn.style.opacity = '0.5';
+
+            // Simular progresso
+            let progress = 0;
+            updateProgress(progress);
+            progressInterval = setInterval(() => {
+                progress += Math.random() * 8;
+                if (progress > 95) progress = 95;
+                updateProgress(progress);
+            }, 500);
+
+            try {
+                const body = JSON.stringify({ prompt: prompt });
+                const response = await fetch('/api/generate-image', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: body
+                });
+
+                clearInterval(progressInterval);
+                updateProgress(100);
+
+                const result = await response.json();
+
+                if (result.success) {
+                    setTimeout(() => {
+                        statusDiv.textContent = `✅ Imagem gerada: ${result.filename}`;
+                        addMessage('image', `🎨 ${prompt}\n📁 ${result.filename}`);
+                        promptInput.value = '';
+                        progressContainer.style.display = 'none';
+                        gerarBtn.disabled = false;
+                        gerarBtn.style.opacity = '1';
+                    }, 1000);
+                } else {
+                    statusDiv.textContent = `❌ Erro: ${result.error || 'Falha ao gerar imagem'}`;
+                    progressContainer.style.display = 'none';
+                    gerarBtn.disabled = false;
+                    gerarBtn.style.opacity = '1';
+                }
+            } catch (error) {
+                clearInterval(progressInterval);
+                statusDiv.textContent = `❌ Erro: ${error.message}`;
+                progressContainer.style.display = 'none';
+                gerarBtn.disabled = false;
+                gerarBtn.style.opacity = '1';
             }
         }
 
