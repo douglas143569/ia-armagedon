@@ -70,5 +70,4 @@ Write-Host "   echo 'Olá Douglas' | piper --model pt_BR-faber-medium --output_f
 Write-Host "`n3. Script de voz em Python:" -ForegroundColor Yellow
 Write-Host "   python armagedon_voice.py" -ForegroundColor Gray
 
-Write-Host "`n[DICA] Execute os scripts Python do ambiente virtual ativado!" -ForegroundColor Cyan
-Write-Host "   . .\venv_voice\Scripts\Activate.ps1`n" -ForegroundColor Gray
+Write-Host "`n[DICA] Ative o ambiente com: venv_voice\Scripts\Activate.ps1" -ForegroundColor Cyan
