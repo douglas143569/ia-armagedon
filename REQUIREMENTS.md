@@ -34,19 +34,24 @@ Eu (Douglas) só converso com o **ARMAGEDON**, num lugar só (chat/hub — Fase 
 
 ## Situação de hardware (ponto de partida)
 
-- Computador de casa: **CPU apenas, sem GPU dedicada**
-- Implicações:
-  - Texto/chat: viável, boa velocidade com modelos de 3B-8B
-  - Imagem: viável mas lenta (minutos por imagem)
-  - Vídeo: praticamente inviável sem GPU
+**Máquina de Douglas (confirmada 2026-08-27)**:
+- CPU: Intel Core i7-8565U (4 cores/8 threads, 1.8GHz)
+- RAM: 34GB ✅ (excelente para modelos locais)
+- SSD: 474GB (320GB livre) ✅
+- GPU: NVIDIA GeForce MX150 2GB ✅ (vai acelerar texto/chat e imagem)
+
+**Implicações**:
+- Texto/chat: **viável, ótima velocidade** com modelos de 3B-8B
+- Imagem: viável mas moderada (Stable Diffusion é factível)
+- Vídeo: limitado (precisará de GPU rental no futuro)
 - Upgrade futuro considerado: GPU usada (ex: RTX 3060 12GB) e/ou aluguel de GPU por hora (RunPod/Vast.ai) para tarefas pesadas pontuais (vídeo, fine-tuning)
 
 ## Fases do projeto
 
 ### Fase 1 — Assistente de texto local (base de tudo)
-- [ ] Instalar Ollama
-- [ ] Baixar modelo de uso geral (ex: `Qwen3` ou `Phi-4-mini-instruct`, 3B-8B — atualizado em ago/2026, ver "Descobertas recentes") para tarefas do dia a dia / dev
-- [ ] Baixar modelo "uncensored" para escrita criativa (ex: `dolphin-llama3`)
+- [x] Instalar Ollama (v0.33.1 instalado em 2026-08-27)
+- [x] Baixar modelo de uso geral (`Qwen2.5 7B` — atualizado em ago/2026, ver "Descobertas recentes") para tarefas do dia a dia / dev
+- [x] Baixar modelo "uncensored" para escrita criativa (`dolphin-llama3`)
 - [ ] Testar ambos via terminal (`ollama run`)
 - [ ] Instalar Open WebUI (interface de chat local, tipo ChatGPT) por cima do Ollama
 
