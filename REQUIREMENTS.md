@@ -50,9 +50,9 @@ Eu (Douglas) só converso com o **ARMAGEDON**, num lugar só (chat/hub — Fase 
 
 ### Fase 1 — Assistente de texto local (base de tudo)
 - [x] Instalar Ollama (v0.33.1 instalado em 2026-08-27)
-- [x] Baixar modelo de uso geral (`Qwen2.5 7B` — atualizado em ago/2026, ver "Descobertas recentes") para tarefas do dia a dia / dev
-- [x] Baixar modelo "uncensored" para escrita criativa (`dolphin-llama3`)
-- [ ] Testar ambos via terminal (`ollama run`)
+- [x] Baixar modelo de uso geral (`Qwen2.5 7B` — 4.7GB, atualizado em ago/2026) para tarefas do dia a dia / dev
+- [x] Baixar modelo "uncensored" para escrita criativa (`dolphin-llama3` — 4.7GB)
+- [x] Testar ambos via terminal (`ollama run`) — ✅ Qwen2.5 respondendo em português com latência aceitável
 - [ ] Instalar Open WebUI (interface de chat local, tipo ChatGPT) por cima do Ollama
 
 ### Fase 2 — Customização (deixar a IA "minha")
