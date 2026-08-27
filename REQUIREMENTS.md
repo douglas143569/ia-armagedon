@@ -56,7 +56,10 @@ Eu (Douglas) só converso com o **ARMAGEDON**, num lugar só (chat/hub — Fase 
 - [ ] Instalar Open WebUI (interface de chat local, tipo ChatGPT) por cima do Ollama
 
 ### Fase 2 — Customização (deixar a IA "minha")
-- [ ] Criar Modelfile próprio (system prompt definindo o ARMAGEDON como assistente, personalidade, parâmetros) em cima do modelo base
+- [x] Criar Modelfile próprio (system prompt definindo o ARMAGEDON como assistente pessoal, personalidade, parâmetros) em cima do modelo Qwen2.5 7B
+  - System prompt: identidade, objetivo, estilo (amigável/profissional), especialidades em código/dados/criatividade
+  - Parâmetros otimizados: temperature 0.7, top_p 0.9, repeat_penalty 1.1
+  - ✅ Testado e respondendo com personalidade customizada em português
 - [ ] Montar RAG — dar acesso aos meus próprios documentos/notas/projetos como contexto
 - [ ] Montar tool calling / agentes — conectar a IA a funções/scripts reais (rodar comandos, consultar meus projetos, etc.), no mesmo padrão de agentes tipo Claude Code
   - [ ] Ferramenta de histórico de trabalho: consultar `git log` de um projeto por período (ex: "o que eu fiz ontem no projeto X") — precisa de um mapeamento nome do projeto → caminho da pasta
