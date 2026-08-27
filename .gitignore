@@ -1,0 +1,31 @@
+# Pesos e arquivos de modelo (baixados sob demanda, não versionar)
+*.gguf
+*.safetensors
+*.bin
+*.ckpt
+*.pt
+*.onnx
+models/
+*.gguf.json
+
+# Ambientes Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# Node (caso a UI use)
+node_modules/
+
+# Ambiente / segredos
+.env
+.env.local
+
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Áudio/vídeo gerados de teste
+*.wav
+*.mp4
+outputs/
