@@ -53,7 +53,11 @@ Eu (Douglas) só converso com o **ARMAGEDON**, num lugar só (chat/hub — Fase 
 - [x] Baixar modelo de uso geral (`Qwen2.5 7B` — 4.7GB, atualizado em ago/2026) para tarefas do dia a dia / dev
 - [x] Baixar modelo "uncensored" para escrita criativa (`dolphin-llama3` — 4.7GB)
 - [x] Testar ambos via terminal (`ollama run`) — ✅ Qwen2.5 respondendo em português com latência aceitável
-- [ ] Instalar Open WebUI (interface de chat local, tipo ChatGPT) por cima do Ollama
+- [x] Instalar Open WebUI (interface de chat local, tipo ChatGPT) por cima do Ollama
+  - Instalado via npm (131 packages)
+  - Disponível em http://localhost:8000
+  - Integrado com Ollama local
+  - Script de inicialização criado: `start-webui.ps1`
 
 ### Fase 2 — Customização (deixar a IA "minha")
 - [x] Criar Modelfile próprio (system prompt definindo o ARMAGEDON como assistente pessoal, personalidade, parâmetros) em cima do modelo Qwen2.5 7B
