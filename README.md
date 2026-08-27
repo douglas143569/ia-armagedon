@@ -1,4 +1,4 @@
-# minhaIA
+# ARMAGEDON
 
 Projeto de IA local/pessoal — ver [REQUIREMENTS.md](REQUIREMENTS.md) para o levantamento completo de requisitos, fases e stack técnica.
 

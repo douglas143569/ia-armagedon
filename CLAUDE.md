@@ -1,11 +1,11 @@
-# minhaIA — Ayran
+# ARMAGEDON
 
 Projeto de IA pessoal local. Antes de qualquer ação, leia **REQUIREMENTS.md** inteiro — é a fonte de verdade do projeto (objetivo, arquitetura, fases, stack técnica, descobertas recentes).
 
 ## Contexto essencial
 
-- **Dono**: Gabriel, uso pessoal exclusivo
-- **Nome da IA**: Ayran (masculino, voz masculina)
+- **Dono**: Douglas, uso pessoal exclusivo
+- **Nome da IA**: ARMAGEDON
 - **Hardware**: computador de casa — confirmar RAM/armazenamento reais e atualizar a seção "Situação de hardware" do REQUIREMENTS.md se ainda não tiver sido feito
 - **Arquitetura**: um só ponto de entrada (chat/hub), um roteador escolhe o modelo certo por trás (texto geral, uncensored, raciocínio, imagem, vídeo, voz, ou escala pro Claude) — ver seção "Arquitetura" no REQUIREMENTS.md
 
