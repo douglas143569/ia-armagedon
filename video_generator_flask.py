@@ -105,7 +105,7 @@ def ken_burns_frames(base, n, out_size):
         cw, ch = int(W / zoom), int(H / zoom)
         x = int((W - cw) * (0.15 + 0.70 * t))
         y = int((H - ch) * (0.10 + 0.55 * t))
-        frame = base.crop((x, y, x + cw, y + ch)).resize((out_size, out_size), Image.FAST)
+        frame = base.crop((x, y, x + cw, y + ch)).resize((out_size, out_size), Image.BILINEAR)
         frames.append(frame)
     return frames
 
@@ -376,12 +376,11 @@ if __name__ == "__main__":
     print("=" * 50)
     print("ARMAGEDON - Gerador de Videos/GIFs (SD-1.5 + SD-Turbo + INT8)")
     print("=" * 50)
-    print("\n🚀 Pré-carregando modelo SD-Turbo...")
-    get_pipe("turbo")
-    print("✓ Pronto!\n")
+    print("\n✓ Servidor iniciado\n")
     sys.stdout.flush()
     print("🌐 Interface Web: http://localhost:5001/ui")
     print("📡 API REST: http://localhost:5001")
+    print("🤖 Modelos carregam na primeira requisição")
     print("=" * 50 + "\n")
     sys.stdout.flush()
     app.run(host="localhost", port=5001, debug=False, threaded=True)
