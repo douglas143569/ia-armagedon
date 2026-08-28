@@ -48,33 +48,59 @@ def humanize_text(text):
     return text
 
 
-def generate_audio_job(job_id, text, speed):
-    """Gera áudio em background com humanização."""
+def generate_audio_job(job_id, text, speed, lang='pt'):
+    """Gera áudio em background com humanização e múltiplos idiomas."""
     job = jobs[job_id]
     try:
         job["status"] = "gerando"
         job["message"] = "Processando texto..."
         job["percent"] = 20
 
-        # Humanizar o texto
-        humanized_text = humanize_text(text)
+        # Humanizar o texto (apenas para PT)
+        if lang.startswith('pt'):
+            humanized_text = humanize_text(text)
+        else:
+            humanized_text = text
+
         job["percent"] = 30
-        job["message"] = "Preparando fala natural..."
+        job["message"] = f"Preparando fala em {lang.upper()}..."
 
         filename = f"armagedon_{datetime.now():%Y%m%d_%H%M%S}.mp3"
         filepath = os.path.join(AUDIO_DIR, filename)
 
         job["percent"] = 60
-        job["message"] = "Gerando áudio com voz natural..."
+        job["message"] = "Gerando áudio..."
 
-        # Gerar áudio com gTTS com vozes variadas
+        # Gerar áudio com gTTS com idiomas variados
         try:
-            # Usar português do Brasil com ênfase natural
+            # Mapear idiomas para TLDs corretos
+            tld_map = {
+                'pt': 'com.br',      # Português Brasil
+                'pt-pt': 'pt',       # Português Portugal
+                'en': 'com',         # English US
+                'en-gb': 'co.uk',    # English UK
+                'en-au': 'com.au',   # English Australia
+                'es': 'es',          # Spanish Spain
+                'es-mx': 'com.mx',   # Spanish Mexico
+                'fr': 'fr',          # French France
+                'fr-ca': 'ca',       # French Canada
+                'it': 'it',          # Italian
+                'de': 'de',          # German
+                'ja': 'co.jp',       # Japanese
+                'ko': 'co.kr',       # Korean
+                'zh-CN': 'cn',       # Chinese
+                'ru': 'ru',          # Russian
+                'hi': 'co.in',       # Hindi
+            }
+
+            tld = tld_map.get(lang, 'com')
+            lang_code = lang.split('-')[0] if '-' in lang else lang
+
             tts = gTTS(
                 text=humanized_text,
-                lang='pt-br',  # Português do Brasil (mais natural)
-                slow=False,     # Velocidade normal
-                tld='com.br'    # TLD brasileiro para melhor sotaque
+                lang=lang_code,
+                slow=False,
+                tld=tld
             )
             tts.save(filepath)
 
@@ -119,6 +145,7 @@ def generate():
         data = request.get_json(silent=True) or {}
         text = (data.get("text") or "Olá").strip()
         speed = max(0.5, min(2.0, float(data.get("speed", 1.0))))
+        voice = data.get("voice", "pt")  # Novo: suportar múltiplos idiomas
 
         if len(text) > 500:
             return jsonify({"error": "Texto muito longo (máx 500 caracteres)"}), 400
@@ -130,6 +157,7 @@ def generate():
                 "type": "áudio",
                 "text": text,
                 "speed": speed,
+                "voice": voice,
                 "status": "na fila",
                 "percent": 0,
                 "message": "Na fila",
@@ -139,7 +167,7 @@ def generate():
 
         threading.Thread(
             target=generate_audio_job,
-            args=(job_id, text, speed),
+            args=(job_id, text, speed, voice),
             daemon=True
         ).start()
 

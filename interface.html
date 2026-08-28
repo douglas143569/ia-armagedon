@@ -461,12 +461,38 @@
                 <div style="display: flex; gap: 10px; margin-bottom: 8px;">
                     <textarea id="voiceText" placeholder="Escreva o texto que quer converter em áudio..." style="flex: 1; padding: 10px; border: 1px solid #a855f7; border-radius: 8px; background: #1a1a1a; color: var(--text); min-height: 80px; resize: vertical;"></textarea>
                     <div style="display: flex; flex-direction: column; gap: 8px;">
-                        <label style="font-size: 11px; color: #a855f7;">Voz
-                            <select id="voiceSelect" style="display: block; width: 120px; margin-top: 3px; padding: 8px; border: 1px solid #a855f7; border-radius: 6px; background: #1a1a1a; color: var(--text); font-size: 11px;">
-                                <option value="pt-br-default">PT-BR</option>
-                                <option value="pt-br-female">PT-BR (F)</option>
-                                <option value="en-us-default">EN-US</option>
-                                <option value="es-es-default">ES-ES</option>
+                        <label style="font-size: 11px; color: #a855f7;">Voz & Idioma
+                            <select id="voiceSelect" style="display: block; width: 140px; margin-top: 3px; padding: 8px; border: 1px solid #a855f7; border-radius: 6px; background: #1a1a1a; color: var(--text); font-size: 10px;">
+                                <optgroup label="🇧🇷 Português">
+                                    <option value="pt">PT-BR (Padrão)</option>
+                                    <option value="pt-pt">PT-PT (Portugal)</option>
+                                </optgroup>
+                                <optgroup label="🇺🇸 Inglês">
+                                    <option value="en">EN-US (Americano)</option>
+                                    <option value="en-gb">EN-GB (Britânico)</option>
+                                    <option value="en-au">EN-AU (Australiano)</option>
+                                </optgroup>
+                                <optgroup label="🇪🇸 Espanhol">
+                                    <option value="es">ES (Espanha)</option>
+                                    <option value="es-mx">ES-MX (México)</option>
+                                </optgroup>
+                                <optgroup label="🇫🇷 Francês">
+                                    <option value="fr">FR (França)</option>
+                                    <option value="fr-ca">FR-CA (Canadá)</option>
+                                </optgroup>
+                                <optgroup label="🇮🇹 Italiano">
+                                    <option value="it">IT (Italiano)</option>
+                                </optgroup>
+                                <optgroup label="🇩🇪 Alemão">
+                                    <option value="de">DE (Alemão)</option>
+                                </optgroup>
+                                <optgroup label="🇯🇵 Outros">
+                                    <option value="ja">JA (Japonês)</option>
+                                    <option value="ko">KO (Coreano)</option>
+                                    <option value="zh-CN">ZH (Chinês)</option>
+                                    <option value="ru">RU (Russo)</option>
+                                    <option value="hi">HI (Hindi)</option>
+                                </optgroup>
                             </select>
                         </label>
                         <button id="gerarVozBtn" onclick="generateVoice()" style="padding: 8px 16px; background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%); color: #fff; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 12px;">Gerar</button>
