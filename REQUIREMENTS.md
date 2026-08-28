@@ -54,6 +54,8 @@ Eu (Douglas) só converso com o **ARMAGEDON**, num lugar só (chat/hub — Fase 
 - [x] Instalar Ollama (v0.33.1 instalado em 2026-08-27)
 - [x] Baixar modelo de uso geral (`Qwen2.5 7B` — 4.7GB, atualizado em ago/2026) para tarefas do dia a dia / dev
 - [x] Baixar modelo "uncensored" para escrita criativa (`dolphin-llama3` — 4.7GB)
+  - **Upgrade 2026-08-28**: `Modelfile-livre` → modelo `armagedon-livre` com system prompt sem restrições (nunca recusa, sem sermão, sem disclaimer). É o alvo criativo do roteador. Opção "🔓 ARMAGEDON Livre" no dropdown.
+  - Base do `armagedon-livre`: **`huihui_ai/dolphin3-abliterated`** (Dolphin 3.0 uncensored + abliteration = recusa removida dos pesos). `hermes3:8b` e `dolphin-llama3` ficam de reserva. (Merge real via mergekit foi descartado — inviável nos 14 GB de RAM.)
 - [x] Testar ambos via terminal (`ollama run`) — ✅ Qwen2.5 respondendo em português com latência aceitável
 - [x] Instalar Open WebUI (interface de chat local, tipo ChatGPT) por cima do Ollama
   - Instalado via npm (131 packages)
@@ -66,7 +68,11 @@ Eu (Douglas) só converso com o **ARMAGEDON**, num lugar só (chat/hub — Fase 
   - System prompt: identidade, objetivo, estilo (amigável/profissional), especialidades em código/dados/criatividade
   - Parâmetros otimizados: temperature 0.7, top_p 0.9, repeat_penalty 1.1
   - ✅ Testado e respondendo com personalidade customizada em português
-- [ ] Montar RAG — dar acesso aos meus próprios documentos/notas/projetos como contexto
+- [x] Montar RAG — dar acesso aos meus próprios documentos/notas/projetos como contexto
+  - Serviço `armagedon_brain.py` (porta 5002): pasta `documentos/` (.txt/.md/.pdf) → chunks de ~1000 chars → embeddings via `nomic-embed-text` (no Ollama) → ChromaDB em `brain_data/` (fallback numpy se o Chroma falhar)
+  - O hub (`server.js`) chama `/augment` antes de mandar pro Ollama e injeta os trechos + memória no prompt; devolve as fontes no header `X-Rag-Sources`
+  - Interface: botão "🧠 Conhecimento" (reindexar, ver docs, toggle "usar nas respostas"); a resposta mostra "📄 Fontes: ..."
+  - Testado 2026-08-28: pergunta sobre um doc → modelo respondeu citando o arquivo correto
 - [ ] Montar tool calling / agentes — conectar a IA a funções/scripts reais (rodar comandos, consultar meus projetos, etc.), no mesmo padrão de agentes tipo Claude Code
   - [ ] Ferramenta de histórico de trabalho: consultar `git log` de um projeto por período (ex: "o que eu fiz ontem no projeto X") — precisa de um mapeamento nome do projeto → caminho da pasta
   - [ ] Ferramenta de resumo de redes sociais: Instagram, Facebook, LinkedIn (+ outra a confirmar) via API oficial de cada plataforma — **somente leitura/resumo**, sem publicar ou responder automaticamente
@@ -125,19 +131,24 @@ Parâmetros expostos na interface: modo, resolução (512/384), steps (auto/1–
 - [ ] **Trade-off**: quebra parcialmente o "ilimitado e grátis" — API é paga por uso (tokens). Usar só como escalonamento pontual, não como padrão
 
 ### Fase 6 — Fine-tuning (aprendizado avançado)
-- [ ] Aprender base de Python + Hugging Face `transformers`
-- [ ] Fazer um fine-tuning leve (LoRA/QLoRA) com dados próprios, num modelo pequeno
+Pipeline montado 2026-08-28 — ver **`FASE-6-FINETUNING.md`**. Pasta `finetune/`.
+- [ ] Aprender base de Python + Hugging Face `transformers` (contínuo)
+- [x] Fazer um fine-tuning leve (LoRA/QLoRA) com dados próprios, num modelo pequeno
+  - `finetune/train_lora.py` — LoRA via `peft`+`trl`, roda em CPU (modelo 0.5–1.5B) ou GPU alugada (7B+). Instalado no venv: `peft 0.20`, `datasets 5.0`, `trl 1.12`.
+  - `finetune/build_dataset.py` — `brain_data/feedback.jsonl` → `finetune/dataset.jsonl` (formato chat)
+  - `finetune/to_ollama.py` — merge do LoRA + conversão GGUF (via llama.cpp) + `ollama create armagedon-tuned`
 - [ ] (Opcional, longo prazo) Estudar arquitetura Transformer a fundo (paper "Attention Is All You Need", série do Andrej Karpathy construindo um GPT do zero)
-- [ ] Ciclo de melhoria contínua do ARMAGEDON (não é aprendizado em tempo real — o modelo não muda durante a conversa; é um processo deliberado e periódico):
-  - [ ] Feedback 👍/👎 nas respostas, virando dataset de correções
-  - [ ] Rodar novo fine-tuning (LoRA) periodicamente incorporando esse feedback
+- [~] Ciclo de melhoria contínua (não é tempo real — processo deliberado e periódico):
+  - [x] Feedback 👍/👎 nas respostas virando dataset — botões na interface sob cada resposta; no 👎 abre campo "como deveria ter respondido"; salva em `brain_data/feedback.jsonl` via `POST /api/brain/feedback`. Painel 🧠 Conhecimento mostra a contagem.
+  - [ ] Rodar o fine-tuning periodicamente incorporando o feedback (manual, quando tiver ~30+ exemplos)
   - [ ] Revisar/trocar o modelo base conforme saem versões melhores (ver "Descobertas recentes" abaixo)
 
 ### Fase 7 — Técnicas avançadas para maximizar a inteligência
-- [ ] Modelo de raciocínio (reasoning model) para tarefas complexas — ex: DeepSeek-R1 destilado ou QwQ — "pensa" passo a passo antes de responder, mais preciso em lógica/matemática/código (mais lento, mas não exige mais memória)
-- [ ] RAG avançado com banco vetorial (embeddings) — ex: ChromaDB ou Qdrant, local — busca semântica de verdade, não só palavra-chave
-- [ ] Memória de longo prazo — ARMAGEDON lembra fatos/preferências/histórico entre sessões, mesmo princípio da memória do Claude
-- [ ] Roteamento de modelos — modelo pequeno/rápido para perguntas simples, modelo de raciocínio (ou escalar pro Claude, Fase 6.5) só quando a tarefa for complexa
+- [x] Modelo de raciocínio (reasoning model) para tarefas complexas — `deepseek-r1:7b` no Ollama (2026-08-28). O Ollama 0.33 separa o raciocínio no campo `thinking` da resposta (não vem `<think>` inline); a interface mostra num "🧠 raciocínio" recolhível. Medido: pergunta de matemática ~1 min, problema de várias etapas ~5 min na CPU — por isso só via roteador
+- [x] RAG avançado com banco vetorial (embeddings) — ChromaDB local + `nomic-embed-text`, busca por similaridade de cosseno (`armagedon_brain.py`). Falta: re-ranking, chunking mais esperto, ingestão incremental (hoje reindexa tudo)
+- [x] **Busca na web / informação em tempo real** — `armagedon_brain.py`: DuckDuckGo (`ddgs`, sem API key) + extração de texto das páginas (`trafilatura`), injetado no prompt igual ao RAG. Dispara por heurística (`precisa_web()` — "hoje", "cotação", "última versão", "notícia", anos ≥ 2026...) ou pelo seletor 🌐 auto/sempre/nunca no painel. Header `X-Web-Used`; a resposta mostra "🌐 Web:" com links. Testado 2026-08-28 (cotação do dólar → respondeu citando a URL).
+- [x] Memória de longo prazo — SQLite `brain_data/memoria.db` (tabela `fatos`: categoria + texto), injetada no prompt a cada pergunta. CRUD pela interface. Endpoint `/memory/extract` usa o LLM pra extrair fatos duráveis de um texto. Falta: extração automática ao fim de cada conversa
+- [x] Roteamento de modelos — `route_model()` em `armagedon_brain.py` (heurística por regex, sem custo): matemática/lógica → `deepseek-r1:7b`, escrita criativa → `dolphin-llama3`, resto → `armagedon`. O hub aplica quando o modelo escolhido na interface é "🤖 Automático" e devolve `X-Router-Model`/`X-Router-Reason`; a interface mostra "🧭 roteado para ...". Dropdown ainda permite forçar um modelo. Falta: classificador via LLM p/ casos ambíguos, rotear "gerar imagem/vídeo" (depende de tool calling)
 - [ ] Orquestração multi-agente — modelos/instâncias especializadas colaborando (planeja / executa / revisa) em vez de um modelo genérico fazendo tudo
 - [ ] Adotar MCP (Model Context Protocol) como padrão de ferramentas — protocolo aberto para conectar a IA a ferramentas/dados de forma padronizada, em vez de solução caseira
 
@@ -159,7 +170,7 @@ Parâmetros expostos na interface: modo, resolução (512/384), steps (auto/1–
 | Interface de chat (rápida, genérica) | Open WebUI |
 | Interface personalizada (hub central) | Tauri (frontend HTML/CSS/JS) |
 | Modelo geral | Qwen2.5 / Llama 3.2 (3B–8B) |
-| Modelo uncensored/criativo | Dolphin (`dolphin-llama3`) |
+| Modelo uncensored/criativo | `armagedon-livre` (Hermes 3 8B + system prompt sem filtro); `dolphin-llama3` de reserva |
 | STT (voz → texto) | Whisper (local) |
 | TTS (texto → voz) | Piper |
 | Wake word | openWakeWord |

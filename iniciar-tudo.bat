@@ -21,7 +21,11 @@ REM Iniciar o Hub (server.js) em background
 echo Iniciando Hub...
 start "ARMAGEDON - Hub" node server.js
 
-REM Aguardar o Hub subir
+REM Iniciar o Cerebro (RAG + memoria) em background
+echo Iniciando Cerebro (RAG + memoria)...
+start "ARMAGEDON - Cerebro" cmd /c "call venv_images\Scripts\activate.bat && python armagedon_brain.py"
+
+REM Aguardar subir
 timeout /t 3 /nobreak
 
 REM Abrir Interface no navegador

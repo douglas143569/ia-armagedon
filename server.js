@@ -24,6 +24,28 @@ function getJson(port, path) {
     });
 }
 
+// POST JSON pra um serviço local; resolve com null se offline/erro
+function postJson(port, path, obj, timeoutMs = 20000) {
+    return new Promise((resolve) => {
+        const payload = JSON.stringify(obj);
+        const r = http.request({
+            host: 'localhost', port, path, method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload) },
+            timeout: timeoutMs,
+        }, (resp) => {
+            let d = '';
+            resp.on('data', c => d += c);
+            resp.on('end', () => { try { resolve(JSON.parse(d)); } catch { resolve(null); } });
+        });
+        r.on('error', () => resolve(null));
+        r.on('timeout', () => { r.destroy(); resolve(null); });
+        r.write(payload);
+        r.end();
+    });
+}
+
+const BRAIN_PORT = 5002;
+
 const server = http.createServer(async (req, res) => {
     // CORS headers
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -225,16 +247,85 @@ const server = http.createServer(async (req, res) => {
         return;
     }
 
-    // Proxy para Ollama API
+    // Passthrough pro cérebro (RAG + memória): /api/brain/<algo> -> localhost:5002/<algo>
+    if (req.url.startsWith('/api/brain/')) {
+        const target = '/' + req.url.slice('/api/brain/'.length);
+        let body = '';
+        req.on('data', c => body += c);
+        req.on('end', () => {
+            const opts = {
+                host: 'localhost', port: BRAIN_PORT, path: target, method: req.method,
+                headers: { 'Content-Type': 'application/json' }, timeout: 600000,
+            };
+            if (body) opts.headers['Content-Length'] = Buffer.byteLength(body);
+            const bReq = http.request(opts, (bRes) => {
+                let d = '';
+                bRes.on('data', c => d += c);
+                bRes.on('end', () => {
+                    res.writeHead(bRes.statusCode || 200, { 'Content-Type': 'application/json' });
+                    res.end(d || '{}');
+                });
+            });
+            bReq.on('error', (e) => { res.writeHead(503); res.end(JSON.stringify({ error: 'Cérebro offline: ' + e.message })); });
+            bReq.on('timeout', () => { bReq.destroy(); res.writeHead(504); res.end(JSON.stringify({ error: 'timeout' })); });
+            if (body) bReq.write(body);
+            bReq.end();
+        });
+        return;
+    }
+
+    // Proxy para Ollama API (com RAG + memória injetados pelo cérebro, se disponível)
     if (req.url === '/api/generate' && req.method === 'POST') {
         let body = '';
         req.on('data', chunk => body += chunk);
-        req.on('end', () => {
+        req.on('end', async () => {
+            let payload;
+            try { payload = JSON.parse(body); } catch { payload = null; }
+
+            let sources = [];
+            let routerModel = '';
+            let routerReason = '';
+            let webUsed = false;
+            const wantsAuto = payload && (payload.model === 'auto' || !payload.model);
+            // use_web: true (sempre) | false (nunca) | ausente => "auto" (heurística)
+            const useWeb = payload && ('use_web' in payload)
+                ? payload.use_web : 'auto';
+
+            if (payload && typeof payload.prompt === 'string' &&
+                (payload.use_rag !== false || wantsAuto || useWeb !== false)) {
+                const aug = await postJson(BRAIN_PORT, '/augment', {
+                    prompt: payload.prompt,
+                    use_rag: payload.use_rag !== false,
+                    use_web: useWeb,
+                    route: wantsAuto,
+                }, 45000);   // web search + fetch de páginas pode passar de 30s
+                if (aug && aug.system_block) {
+                    payload.prompt = aug.system_block +
+                        '\n\n=== PERGUNTA DE DOUGLAS ===\n' + payload.prompt;
+                }
+                if (aug) sources = aug.sources || [];
+                if (aug && aug.web_usada) webUsed = true;
+                if (aug && aug.model) { routerModel = aug.model; routerReason = aug.route_reason || ''; }
+            }
+
+            // Define o modelo: roteado, ou fallback se o cérebro estiver offline
+            if (wantsAuto) payload.model = routerModel || 'armagedon';
+
+            // remove flags internas antes de mandar pro Ollama
+            if (payload) { delete payload.use_rag; delete payload.use_web; }
+            const outBody = payload ? JSON.stringify(payload) : body;
+
             const ollamaReq = http.request(
                 `${OLLAMA_URL}/api/generate`,
                 { method: 'POST', headers: { 'Content-Type': 'application/json' } },
                 (ollamaRes) => {
-                    res.writeHead(ollamaRes.statusCode, ollamaRes.headers);
+                    const headers = Object.assign({}, ollamaRes.headers, {
+                        'X-Rag-Sources': Buffer.from(JSON.stringify(sources)).toString('base64'),
+                        'X-Router-Model': (payload && payload.model) || '',
+                        'X-Router-Reason': Buffer.from(routerReason || '', 'utf8').toString('base64'),
+                        'X-Web-Used': webUsed ? '1' : '0',
+                    });
+                    res.writeHead(ollamaRes.statusCode, headers);
                     ollamaRes.pipe(res);
                 }
             );
@@ -242,7 +333,7 @@ const server = http.createServer(async (req, res) => {
                 res.writeHead(500);
                 res.end('Erro ao conectar com Ollama');
             });
-            ollamaReq.write(body);
+            ollamaReq.write(outBody);
             ollamaReq.end();
         });
         return;

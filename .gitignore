@@ -33,3 +33,12 @@ Thumbs.db
 outputs/
 images_generated/
 videos_generated/
+
+# Cérebro: dados locais (índice vetorial + memória + feedback) e documentos do usuário
+brain_data/
+documentos/*
+!documentos/LEIA-ME.md
+
+# Fase 6 — fine-tuning: dataset derivado do feedback e saídas de treino
+finetune/dataset.jsonl
+finetune/out/

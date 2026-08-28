@@ -325,9 +325,12 @@
             <div class="model-selector">
                 <label>Modelo</label>
                 <select id="modelSelect">
+                    <option value="auto">🤖 Automático (roteador)</option>
                     <option value="armagedon">ARMAGEDON (customizado)</option>
+                    <option value="armagedon-livre">🔓 ARMAGEDON Livre (sem filtro)</option>
                     <option value="qwen2.5:7b">Qwen2.5 7B</option>
                     <option value="dolphin-llama3">Dolphin-Llama3</option>
+                    <option value="deepseek-r1:7b">🧩 DeepSeek-R1 (raciocínio)</option>
                 </select>
             </div>
 
@@ -367,6 +370,45 @@
                 <button id="imageBtn" onclick="toggleImageGenerator()" style="background: linear-gradient(135deg, #00ff41 0%, #00d4ff 100%); color: #000; font-weight: bold;">🎨 Imagem</button>
                 <button id="videoBtn" onclick="toggleVideoGenerator()" style="background: linear-gradient(135deg, #ff6f00 0%, #ff1744 100%); color: #fff; font-weight: bold;">🎬 Vídeo</button>
                 <button id="procBtn" onclick="toggleProcessPanel()" style="background: #334155; color: #fff; font-weight: bold;">⚙️ Processos</button>
+                <button id="brainBtn" onclick="toggleBrainPanel()" style="background: linear-gradient(135deg, #7c3aed 0%, #2563eb 100%); color: #fff; font-weight: bold;">🧠 Conhecimento</button>
+            </div>
+
+            <div id="brainPanel" style="display: none; padding: 16px 20px; border-top: 2px solid #7c3aed; background: rgba(124, 58, 237, 0.10);">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:8px;">
+                    <strong style="font-size:13px;">📄 Documentos (RAG) · 🌐 Web</strong>
+                    <span style="font-size:11px; color:#c4b5fd;">
+                        <label style="cursor:pointer;"><input id="useRag" type="checkbox" checked style="vertical-align:middle;"> RAG</label>
+                        &nbsp;·&nbsp;🌐
+                        <select id="useWeb" style="background:#1a1a1a; color:var(--text); border:1px solid #7c3aed; border-radius:5px; font-size:11px; padding:2px;">
+                            <option value="auto">auto</option>
+                            <option value="always">sempre</option>
+                            <option value="never">nunca</option>
+                        </select>
+                    </span>
+                </div>
+                <div id="ragStatus" style="font-size:12px; color:#cbd5e1; margin-bottom:8px;">...</div>
+                <button onclick="reindexDocs()" id="reindexBtn" style="padding:6px 14px; background:#7c3aed; color:#fff; border:none; border-radius:6px; cursor:pointer; font-size:12px;">Reindexar documentos</button>
+                <div style="font-size:11px; color:#888; margin-top:6px;">Coloque arquivos <code>.txt .md .pdf</code> na pasta <code id="docsPath">documentos/</code> e clique em reindexar.</div>
+
+                <hr style="border:none; border-top:1px solid #3b3355; margin:14px 0;">
+
+                <strong style="font-size:13px;">🧠 Memória de longo prazo</strong>
+                <div id="memList" style="font-size:12px; color:#cbd5e1; margin:8px 0;">...</div>
+                <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                    <select id="memCat" style="padding:7px; border:1px solid #7c3aed; border-radius:6px; background:#1a1a1a; color:var(--text); font-size:12px;">
+                        <option value="preferencia">preferência</option>
+                        <option value="fato">fato</option>
+                        <option value="projeto">projeto</option>
+                    </select>
+                    <input id="memText" type="text" placeholder="ex: prefiro respostas curtas e diretas" style="flex:1; min-width:180px; padding:7px; border:1px solid #7c3aed; border-radius:6px; background:#1a1a1a; color:var(--text); font-size:12px;">
+                    <button onclick="addMemory()" style="padding:7px 14px; background:#7c3aed; color:#fff; border:none; border-radius:6px; cursor:pointer; font-size:12px;">Adicionar</button>
+                </div>
+
+                <hr style="border:none; border-top:1px solid #3b3355; margin:14px 0;">
+
+                <strong style="font-size:13px;">📈 Feedback / Fine-tuning (Fase 6)</strong>
+                <div id="fbStats" style="font-size:12px; color:#cbd5e1; margin:8px 0;">...</div>
+                <div style="font-size:11px; color:#888;">Dê 👍/👎 nas respostas. Com ~30 exemplos, rode <code>finetune\build_dataset.py</code> → <code>train_lora.py</code> (ver <code>FASE-6-FINETUNING.md</code>).</div>
             </div>
 
             <div id="processPanel" style="display: none; padding: 16px 20px; border-top: 2px solid #334155; background: rgba(51, 65, 85, 0.12);">
@@ -596,6 +638,84 @@
             } catch (e) {
                 alert('Falha ao cancelar: ' + e.message);
             }
+        }
+
+        // ===== Painel de conhecimento (RAG + memória) =====
+        function toggleBrainPanel() {
+            const p = document.getElementById('brainPanel');
+            const show = p.style.display === 'none';
+            p.style.display = show ? 'block' : 'none';
+            if (show) { refreshRagStatus(); refreshMemory(); refreshFeedback(); }
+        }
+
+        async function refreshFeedback() {
+            const el = document.getElementById('fbStats');
+            try {
+                const s = await (await fetch('/api/brain/feedback/stats')).json();
+                el.innerHTML = `👍 <b>${s.up}</b> · 👎 <b>${s.down}</b> · com correção: <b>${s.com_correcao}</b><br>` +
+                    `exemplos treináveis: <b>${s.treinaveis}</b> ${s.treinaveis >= 30 ? '✅ dá pra treinar' : '(junte ~30)'}`;
+            } catch (e) {
+                el.innerHTML = '<span style="color:#ff6f6f;">Cérebro offline.</span>';
+            }
+        }
+
+        async function refreshRagStatus() {
+            const el = document.getElementById('ragStatus');
+            try {
+                const s = await (await fetch('/api/brain/status')).json();
+                const nDocs = (s.docs || []).filter(d => d.trechos > 0).length;
+                document.getElementById('docsPath').textContent = s.pasta_documentos || 'documentos/';
+                const quando = s.indexado_em ? new Date(s.indexado_em).toLocaleString('pt-BR') : 'nunca';
+                el.innerHTML = `<b>${nDocs}</b> documento(s) · <b>${s.total_trechos || 0}</b> trechos · última indexação: ${quando}` +
+                    ((s.docs && s.docs.length) ? '<br>' + s.docs.map(d => `• ${d.arquivo} (${d.trechos})`).join('<br>') : '');
+            } catch (e) {
+                el.innerHTML = '<span style="color:#ff6f6f;">Cérebro offline (inicie <code>iniciar-brain.bat</code>).</span>';
+            }
+        }
+
+        async function reindexDocs() {
+            const btn = document.getElementById('reindexBtn');
+            btn.disabled = true; btn.textContent = 'Indexando...';
+            try {
+                const r = await (await fetch('/api/brain/ingest', { method: 'POST' })).json();
+                if (r.erro) alert('Erro: ' + r.erro);
+            } catch (e) { alert('Falha: ' + e.message); }
+            btn.disabled = false; btn.textContent = 'Reindexar documentos';
+            refreshRagStatus();
+        }
+
+        async function refreshMemory() {
+            const el = document.getElementById('memList');
+            try {
+                const r = await (await fetch('/api/brain/memory')).json();
+                const fatos = r.fatos || [];
+                if (!fatos.length) { el.innerHTML = '<span style="color:#888;">Nenhum fato salvo ainda.</span>'; return; }
+                el.innerHTML = fatos.map(f => `<div style="display:flex; gap:8px; align-items:flex-start; padding:4px 0; border-bottom:1px solid #2a2740;">
+                    <span style="flex:1;"><span style="color:#a78bfa; font-size:10px;">[${f.categoria}]</span> ${f.texto}</span>
+                    <button onclick="delMemory(${f.id})" style="background:#ff1744; color:#fff; border:none; border-radius:5px; cursor:pointer; font-size:10px; padding:2px 7px;">×</button>
+                </div>`).join('');
+            } catch (e) {
+                el.innerHTML = '<span style="color:#ff6f6f;">Cérebro offline.</span>';
+            }
+        }
+
+        async function addMemory() {
+            const cat = document.getElementById('memCat').value;
+            const txt = document.getElementById('memText').value.trim();
+            if (!txt) return;
+            try {
+                await fetch('/api/brain/memory', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ categoria: cat, texto: txt })
+                });
+                document.getElementById('memText').value = '';
+                refreshMemory();
+            } catch (e) { alert('Falha: ' + e.message); }
+        }
+
+        async function delMemory(id) {
+            try { await fetch('/api/brain/memory/' + id, { method: 'DELETE' }); refreshMemory(); }
+            catch (e) { alert('Falha: ' + e.message); }
         }
 
         let currentVideoJob = null;
@@ -851,47 +971,136 @@
             try {
                 abortController = new AbortController();
 
-                const response = await fetch('http://localhost:11434/api/generate', {
+                const useRagEl = document.getElementById('useRag');
+                const useWebEl = document.getElementById('useWeb');
+                const webMap = { auto: 'auto', always: true, never: false };
+                const response = await fetch('/api/generate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     signal: abortController.signal,
                     body: JSON.stringify({
                         model: modelSelect.value,
                         prompt: message,
-                        stream: true
+                        stream: true,
+                        use_rag: !useRagEl || useRagEl.checked,
+                        use_web: webMap[useWebEl ? useWebEl.value : 'auto']
                     })
                 });
 
                 if (!response.ok) throw new Error('Ollama não está respondendo');
 
+                // Headers do hub: fontes do RAG + roteador de modelo
+                let ragSources = [];
+                let routerModel = '', routerReason = '';
+                try {
+                    const raw = response.headers.get('X-Rag-Sources');
+                    if (raw) ragSources = JSON.parse(atob(raw));
+                } catch (e) { /* sem fontes */ }
+                try {
+                    routerModel = response.headers.get('X-Router-Model') || '';
+                    const rr = response.headers.get('X-Router-Reason');
+                    if (rr) routerReason = decodeURIComponent(escape(atob(rr)));
+                } catch (e) { /* sem roteador */ }
+                const webUsed = response.headers.get('X-Web-Used') === '1';
+
                 loadingDiv.remove();
 
-                const reader = response.body.getReader();
-                let fullResponse = '';
                 const assistantDiv = document.createElement('div');
                 assistantDiv.className = 'message assistant';
+
+                // Badge: qual modelo respondeu (só quando o roteador escolheu)
+                if (modelSelect.value === 'auto' && routerModel) {
+                    const badge = document.createElement('div');
+                    badge.style.cssText = 'font-size:11px; color:#38bdf8; margin-bottom:4px;';
+                    badge.textContent = `🧭 roteado para ${routerModel}` + (routerReason ? ` (${routerReason})` : '');
+                    assistantDiv.appendChild(badge);
+                }
+
+                // Bloco de raciocínio (modelos tipo DeepSeek-R1 usam <think>...</think>)
+                const thinkBox = document.createElement('details');
+                thinkBox.style.cssText = 'font-size:12px; color:#94a3b8; margin-bottom:6px; display:none;';
+                const thinkSummary = document.createElement('summary');
+                thinkSummary.textContent = '🧠 raciocínio';
+                thinkSummary.style.cursor = 'pointer';
+                const thinkContent = document.createElement('div');
+                thinkContent.style.cssText = 'white-space:pre-wrap; margin-top:4px; padding-left:10px; border-left:2px solid #334155;';
+                thinkBox.appendChild(thinkSummary);
+                thinkBox.appendChild(thinkContent);
+                assistantDiv.appendChild(thinkBox);
+
                 const contentDiv = document.createElement('div');
                 contentDiv.className = 'message-content';
                 assistantDiv.appendChild(contentDiv);
                 messagesDiv.appendChild(assistantDiv);
 
+                const reader = response.body.getReader();
+                let fullResponse = '';
+                let thinking = '';
+                let buffer = '';
+
+                const render = () => {
+                    // 1) raciocínio via campo separado do Ollama (DeepSeek-R1 etc.)
+                    let think = thinking;
+                    let answer = fullResponse;
+                    // 2) fallback: alguns modelos põem <think>...</think> dentro da resposta
+                    const m = fullResponse.match(/<think>([\s\S]*?)<\/think>/);
+                    if (m) {
+                        think = (think + '\n' + m[1]).trim();
+                        answer = fullResponse.replace(/<think>[\s\S]*?<\/think>/, '').trim();
+                    } else if (!think && fullResponse.includes('<think>')) {
+                        think = fullResponse.split('<think>')[1] || '';
+                        answer = '';
+                    }
+                    if (think) {
+                        thinkBox.style.display = 'block';
+                        thinkContent.textContent = think.trim();
+                        if (!answer) thinkBox.open = true;
+                    }
+                    contentDiv.textContent = answer;
+                    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                };
+
                 while (true) {
                     const {done, value} = await reader.read();
                     if (done) break;
 
-                    const text = new TextDecoder().decode(value);
-                    const lines = text.split('\n');
+                    buffer += new TextDecoder().decode(value, { stream: true });
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop();
 
                     for (const line of lines) {
-                        if (line) {
+                        if (!line.trim()) continue;
+                        try {
                             const json = JSON.parse(line);
-                            if (json.response) {
-                                fullResponse += json.response;
-                                contentDiv.textContent = fullResponse;
-                                messagesDiv.scrollTop = messagesDiv.scrollHeight;
-                            }
-                        }
+                            if (json.thinking) thinking += json.thinking;
+                            if (json.response) fullResponse += json.response;
+                            if (json.thinking || json.response) render();
+                        } catch (e) { /* linha parcial */ }
                     }
+                }
+                if (thinkBox.style.display === 'block') thinkBox.open = false;
+
+                const webSrc = ragSources.filter(s => s.web);
+                const docSrc = ragSources.filter(s => !s.web);
+                if (webUsed || webSrc.length) {
+                    const w = document.createElement('div');
+                    w.style.cssText = 'font-size:11px; color:#38bdf8; margin-top:6px;';
+                    w.innerHTML = '🌐 Web: ' + (webSrc.length
+                        ? webSrc.map(s => `<a href="${s.url}" target="_blank" style="color:#38bdf8;">${(s.source || s.url).slice(0, 50)}</a>`).join(' · ')
+                        : 'consultada');
+                    assistantDiv.appendChild(w);
+                }
+                if (docSrc.length) {
+                    const src = document.createElement('div');
+                    src.style.cssText = 'font-size:11px; color:#a78bfa; margin-top:4px;';
+                    src.textContent = '📄 Fontes: ' + [...new Set(docSrc.map(s => s.source))].join(', ');
+                    assistantDiv.appendChild(src);
+                }
+
+                // Feedback 👍/👎 (Fase 6 — vira dataset de fine-tuning)
+                if (contentDiv.textContent.trim()) {
+                    addFeedbackBar(assistantDiv, message,
+                        contentDiv.textContent, routerModel || modelSelect.value);
                 }
 
                 stopBtn.style.display = 'none';
@@ -920,6 +1129,44 @@
             messageDiv.appendChild(contentDiv);
             messagesDiv.appendChild(messageDiv);
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        // Barra de feedback 👍/👎 sob cada resposta (Fase 6)
+        function addFeedbackBar(container, prompt, response, model) {
+            const bar = document.createElement('div');
+            bar.style.cssText = 'display:flex; gap:6px; align-items:center; margin-top:8px; font-size:12px;';
+            const up = document.createElement('button');
+            const down = document.createElement('button');
+            const msg = document.createElement('span');
+            msg.style.color = '#64748b';
+            const bs = 'border:none; border-radius:6px; cursor:pointer; padding:3px 9px; font-size:12px;';
+            up.textContent = '👍'; up.style.cssText = bs + 'background:#1e3a2f; color:#fff;';
+            down.textContent = '👎'; down.style.cssText = bs + 'background:#3a1e26; color:#fff;';
+
+            const send = (rating, correction) => fetch('/api/brain/feedback', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt, response, model, rating, correction })
+            }).then(r => r.ok ? r.json() : Promise.reject())
+              .then(() => { msg.textContent = rating === 'up' ? 'obrigado! 👍' : 'anotado 👎'; })
+              .catch(() => { msg.textContent = 'falha ao enviar'; });
+
+            up.onclick = () => { up.disabled = down.disabled = true; send('up', ''); };
+            down.onclick = () => {
+                up.disabled = down.disabled = true;
+                const box = document.createElement('div');
+                box.style.cssText = 'display:flex; gap:6px; margin-top:6px; width:100%;';
+                const inp = document.createElement('input');
+                inp.placeholder = 'como deveria ter respondido? (opcional, mas ajuda o treino)';
+                inp.style.cssText = 'flex:1; padding:6px; border:1px solid #3a1e26; border-radius:6px; background:#1a1a1a; color:var(--text); font-size:12px;';
+                const ok = document.createElement('button');
+                ok.textContent = 'enviar'; ok.style.cssText = bs + 'background:#3a1e26; color:#fff;';
+                ok.onclick = () => { send('down', inp.value.trim()); box.remove(); };
+                box.appendChild(inp); box.appendChild(ok);
+                container.appendChild(box);
+                inp.focus();
+            };
+            bar.appendChild(up); bar.appendChild(down); bar.appendChild(msg);
+            container.appendChild(bar);
         }
 
         function newChat() {
