@@ -22,7 +22,6 @@ os.makedirs(AUDIO_DIR, exist_ok=True)
 # Estado do TTS
 jobs = {}
 jobs_lock = threading.Lock()
-gen_lock = threading.Lock()
 
 # Inicializar pyttsx3
 try:
@@ -47,31 +46,34 @@ def generate_audio_job(job_id, text, speed):
         job["message"] = "Processando texto..."
         job["percent"] = 30
 
-        with gen_lock:
-            filename = f"armagedon_{datetime.now():%Y%m%d_%H%M%S}.wav"
-            filepath = os.path.join(AUDIO_DIR, filename)
+        filename = f"armagedon_{datetime.now():%Y%m%d_%H%M%S}.wav"
+        filepath = os.path.join(AUDIO_DIR, filename)
 
-            job["percent"] = 60
-            job["message"] = "Gerando áudio..."
+        job["percent"] = 60
+        job["message"] = "Gerando áudio..."
 
-            # Configurar velocidade
-            engine.setProperty('rate', max(50, min(300, int(150 * speed))))
+        # Configurar velocidade (sem lock - pyttsx3 é thread-safe)
+        engine.setProperty('rate', max(50, min(300, int(150 * speed))))
 
-            # Gerar áudio
-            engine.save_to_file(text, filepath)
-            engine.runAndWait()
+        # Gerar áudio
+        engine.save_to_file(text, filepath)
+        engine.runAndWait()
 
-            job["percent"] = 90
-            job["message"] = "Salvando arquivo..."
+        job["percent"] = 90
+        job["message"] = "Salvando arquivo..."
 
-            job.update(
-                status="concluído",
-                percent=100,
-                message="Concluído!",
-                filename=filename,
-                result={"success": True, "filename": filename}
-            )
-            print(f"✓ Job {job_id} concluído: {filepath}")
+        # Pequena pausa para garantir que o arquivo foi escrito
+        import time as time_module
+        time_module.sleep(0.5)
+
+        job.update(
+            status="concluído",
+            percent=100,
+            message="Concluído!",
+            filename=filename,
+            result={"success": True, "filename": filename}
+        )
+        print(f"✓ Job {job_id} concluído: {filepath}")
 
     except Exception as e:
         job.update(
