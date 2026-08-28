@@ -48,8 +48,34 @@ def humanize_text(text):
     return text
 
 
-def generate_audio_job(job_id, text, speed, lang='pt'):
-    """Gera áudio em background com humanização e múltiplos idiomas."""
+def adjust_pitch(filepath, gender='neutral'):
+    """Ajusta o pitch do áudio baseado no gênero."""
+    try:
+        import librosa
+        import soundfile as sf
+
+        # Carregar áudio
+        y, sr = librosa.load(filepath, sr=None)
+
+        # Ajustar pitch baseado no gênero
+        if gender == 'female':
+            # Aumentar pitch em ~4 semitons (mulher mais aguda)
+            y = librosa.effects.pitch_shift(y, sr=sr, n_steps=4)
+        elif gender == 'male':
+            # Diminuir pitch em ~3 semitons (homem mais grave)
+            y = librosa.effects.pitch_shift(y, sr=sr, n_steps=-3)
+        # Se neutro, não muda
+
+        # Salvar com as mudanças
+        sf.write(filepath, y, sr)
+        return True
+    except Exception as e:
+        print(f"⚠️ Ajuste de pitch falhou: {e}")
+        return False
+
+
+def generate_audio_job(job_id, text, speed, lang='pt', gender='neutral'):
+    """Gera áudio em background com humanização, múltiplos idiomas e gênero."""
     job = jobs[job_id]
     try:
         job["status"] = "gerando"
@@ -63,7 +89,8 @@ def generate_audio_job(job_id, text, speed, lang='pt'):
             humanized_text = text
 
         job["percent"] = 30
-        job["message"] = f"Preparando fala em {lang.upper()}..."
+        gender_label = {'male': 'Masculina', 'female': 'Feminina', 'neutral': 'Neutra'}
+        job["message"] = f"Voz {gender_label.get(gender, 'Neutra')}..."
 
         filename = f"armagedon_{datetime.now():%Y%m%d_%H%M%S}.mp3"
         filepath = os.path.join(AUDIO_DIR, filename)
@@ -103,6 +130,13 @@ def generate_audio_job(job_id, text, speed, lang='pt'):
                 tld=tld
             )
             tts.save(filepath)
+
+            job["percent"] = 75
+            job["message"] = "Ajustando tom de voz..."
+
+            # Ajustar pitch se não for neutro
+            if gender != 'neutral':
+                adjust_pitch(filepath, gender)
 
             job["percent"] = 85
             job["message"] = "Aprimorando qualidade..."
@@ -145,7 +179,8 @@ def generate():
         data = request.get_json(silent=True) or {}
         text = (data.get("text") or "Olá").strip()
         speed = max(0.5, min(2.0, float(data.get("speed", 1.0))))
-        voice = data.get("voice", "pt")  # Novo: suportar múltiplos idiomas
+        voice = data.get("voice", "pt")
+        gender = data.get("gender", "neutral")  # Novo: suportar gênero
 
         if len(text) > 500:
             return jsonify({"error": "Texto muito longo (máx 500 caracteres)"}), 400
@@ -158,6 +193,7 @@ def generate():
                 "text": text,
                 "speed": speed,
                 "voice": voice,
+                "gender": gender,
                 "status": "na fila",
                 "percent": 0,
                 "message": "Na fila",
@@ -167,7 +203,7 @@ def generate():
 
         threading.Thread(
             target=generate_audio_job,
-            args=(job_id, text, speed, voice),
+            args=(job_id, text, speed, voice, gender),
             daemon=True
         ).start()
 
