@@ -36,17 +36,19 @@ const server = http.createServer(async (req, res) => {
         return;
     }
 
-    // Lista unificada de processos (imagem + vídeo)
+    // Lista unificada de processos (imagem + vídeo + áudio)
     if (req.url === '/api/processes' && req.method === 'GET') {
-        const [img, vid] = await Promise.all([
+        const [img, vid, aud] = await Promise.all([
             getJson(5000, '/jobs'),
             getJson(5001, '/jobs'),
+            getJson(5002, '/jobs'),
         ]);
         const out = {
-            servers: { imagem: img !== null, 'vídeo': vid !== null },
+            servers: { imagem: img !== null, 'vídeo': vid !== null, 'áudio': aud !== null },
             jobs: [
                 ...((img && img.jobs) || []).map(j => ({ ...j, server: 'imagem' })),
                 ...((vid && vid.jobs) || []).map(j => ({ ...j, server: 'vídeo' })),
+                ...((aud && aud.jobs) || []).map(j => ({ ...j, server: 'áudio' })),
             ].sort((a, b) => (b.active - a.active) || (a.elapsed - b.elapsed)),
         };
         res.writeHead(200, { 'Content-Type': 'application/json' });

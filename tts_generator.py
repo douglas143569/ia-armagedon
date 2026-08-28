@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""ARMAGEDON - Gerador de Áudio com Piper TTS
+"""ARMAGEDON - Gerador de Áudio com pyttsx3
 
-Converte texto em fala (texto → voz) usando Piper
-Suporta múltiplos idiomas e vozes
+Converte texto em fala usando pyttsx3
+Funciona 100% offline, sem dependências complexas
 """
 
 import os
@@ -13,105 +13,65 @@ import threading
 import time
 from datetime import datetime
 from flask import Flask, request, jsonify, send_file
-from pathlib import Path
-
-try:
-    from piper import PiperTTS
-except ImportError:
-    PiperTTS = None
+import pyttsx3
 
 app = Flask(__name__)
 AUDIO_DIR = os.path.join(os.path.dirname(__file__), "audio_generated")
 os.makedirs(AUDIO_DIR, exist_ok=True)
 
 # Estado do TTS
-tts_instance = None
 jobs = {}
 jobs_lock = threading.Lock()
 gen_lock = threading.Lock()
 
-# Configurações de voz disponíveis
-VOICES = {
-    "pt-br-default": {
-        "name": "PT-BR (Padrão)",
-        "lang": "pt_BR",
-        "quality": "medium"
-    },
-    "pt-br-female": {
-        "name": "PT-BR (Feminina)",
-        "lang": "pt_BR",
-        "quality": "high"
-    },
-    "en-us-default": {
-        "name": "English (US)",
-        "lang": "en_US",
-        "quality": "medium"
-    },
-    "es-es-default": {
-        "name": "Español",
-        "lang": "es_ES",
-        "quality": "medium"
-    }
-}
+# Inicializar pyttsx3
+try:
+    engine = pyttsx3.init()
+    engine.setProperty('rate', 150)
+    print("✓ pyttsx3 carregado com sucesso")
+except Exception as e:
+    engine = None
+    print(f"❌ Erro ao carregar pyttsx3: {e}")
+
+sys.stdout.flush()
 
 
-def load_piper():
-    """Carrega instância de Piper TTS."""
-    global tts_instance
-    if tts_instance is None:
-        try:
-            tts_instance = PiperTTS()
-            print("✓ Piper TTS carregado")
-        except Exception as e:
-            print(f"❌ Erro ao carregar Piper: {e}")
-            sys.stdout.flush()
-    return tts_instance
-
-
-def generate_audio_job(job_id, text, voice, speed):
+def generate_audio_job(job_id, text, speed):
     """Gera áudio em background."""
     job = jobs[job_id]
     try:
+        if not engine:
+            raise RuntimeError("pyttsx3 não disponível")
+
         job["status"] = "gerando"
-        job["message"] = "Carregando Piper..."
-
-        tts = load_piper()
-        if not tts:
-            raise RuntimeError("Piper TTS não disponível")
-
-        job["percent"] = 30
         job["message"] = "Processando texto..."
+        job["percent"] = 30
 
-        filename = f"armagedon_{datetime.now():%Y%m%d_%H%M%S}.wav"
-        filepath = os.path.join(AUDIO_DIR, filename)
+        with gen_lock:
+            filename = f"armagedon_{datetime.now():%Y%m%d_%H%M%S}.wav"
+            filepath = os.path.join(AUDIO_DIR, filename)
 
-        job["percent"] = 60
-        job["message"] = "Gerando áudio..."
+            job["percent"] = 60
+            job["message"] = "Gerando áudio..."
 
-        # Gerar áudio (implementação simplificada)
-        # Em produção, usar a API real do Piper
-        import subprocess
-        result = subprocess.run(
-            ["echo", text],
-            capture_output=True,
-            text=True
-        )
+            # Configurar velocidade
+            engine.setProperty('rate', max(50, min(300, int(150 * speed))))
 
-        job["percent"] = 90
-        job["message"] = "Salvando arquivo..."
+            # Gerar áudio
+            engine.save_to_file(text, filepath)
+            engine.runAndWait()
 
-        # Criar arquivo de teste (substituir com áudio real)
-        with open(filepath, 'w') as f:
-            f.write("AUDIO_DATA")
+            job["percent"] = 90
+            job["message"] = "Salvando arquivo..."
 
-        job.update(
-            status="concluído",
-            percent=100,
-            message="Concluído!",
-            filename=filename,
-            result={"success": True, "filename": filename}
-        )
-        print(f"Job {job_id} concluído: {filepath}")
+            job.update(
+                status="concluído",
+                percent=100,
+                message="Concluído!",
+                filename=filename,
+                result={"success": True, "filename": filename}
+            )
+            print(f"✓ Job {job_id} concluído: {filepath}")
 
     except Exception as e:
         job.update(
@@ -119,7 +79,7 @@ def generate_audio_job(job_id, text, voice, speed):
             message=str(e),
             result={"success": False, "error": str(e)}
         )
-        print(f"Job {job_id} erro: {e}")
+        print(f"❌ Job {job_id} erro: {e}")
 
     sys.stdout.flush()
 
@@ -130,11 +90,10 @@ def generate():
     try:
         data = request.get_json(silent=True) or {}
         text = (data.get("text") or "Olá").strip()
-        voice = data.get("voice", "pt-br-default")
         speed = max(0.5, min(2.0, float(data.get("speed", 1.0))))
 
-        if len(text) > 1000:
-            return jsonify({"error": "Texto muito longo (máx 1000 caracteres)"}), 400
+        if len(text) > 500:
+            return jsonify({"error": "Texto muito longo (máx 500 caracteres)"}), 400
 
         job_id = str(uuid.uuid4())[:8]
         with jobs_lock:
@@ -142,7 +101,6 @@ def generate():
                 "id": job_id,
                 "type": "áudio",
                 "text": text,
-                "voice": voice,
                 "speed": speed,
                 "status": "na fila",
                 "percent": 0,
@@ -153,7 +111,7 @@ def generate():
 
         threading.Thread(
             target=generate_audio_job,
-            args=(job_id, text, voice, speed),
+            args=(job_id, text, speed),
             daemon=True
         ).start()
 
@@ -175,12 +133,11 @@ def status(job_id):
         "percent": job["percent"],
         "message": job["message"],
         "text": job["text"],
-        "voice": job["voice"],
     }
 
     if job["status"] == "concluído":
         resp["result"] = job["result"]
-    elif job["status"] in ("erro",):
+    elif job["status"] == "erro":
         resp["error"] = job["message"]
 
     return jsonify(resp), 200
@@ -200,40 +157,38 @@ def download(job_id):
     return send_file(filepath, as_attachment=True)
 
 
-@app.route("/voices", methods=["GET"])
-def list_voices():
-    """Lista vozes disponíveis."""
-    return jsonify({
-        "voices": {k: v["name"] for k, v in VOICES.items()},
-        "default": "pt-br-default"
-    }), 200
-
-
-@app.route("/config", methods=["GET"])
-def config():
-    """Configuração e status."""
-    return jsonify({
-        "engine": "Piper TTS",
-        "status": "online" if load_piper() else "offline",
-        "languages": ["pt-BR", "en-US", "es-ES"],
-        "max_text_length": 1000,
-        "output_format": "WAV"
-    }), 200
+@app.route("/jobs", methods=["GET"])
+def list_jobs():
+    """Lista todos os jobs de áudio."""
+    now = time.time()
+    out = [{
+        "id": j["id"],
+        "type": j["type"],
+        "prompt": j.get("text", ""),
+        "status": j["status"],
+        "percent": j["percent"],
+        "message": j["message"],
+        "elapsed": int(now - j["created"]),
+        "active": j["status"] in ("na fila", "gerando"),
+    } for j in sorted(jobs.values(), key=lambda x: x["created"], reverse=True)]
+    return jsonify({"jobs": out}), 200
 
 
 @app.route("/health", methods=["GET"])
 def health():
-    return jsonify({"status": "ok"}), 200
+    return jsonify({
+        "status": "ok" if engine else "error",
+        "engine": "pyttsx3"
+    }), 200
 
 
 if __name__ == "__main__":
     print("=" * 50)
-    print("ARMAGEDON - Gerador de Áudio (Piper TTS)")
+    print("ARMAGEDON - Gerador de Áudio (pyttsx3)")
     print("=" * 50)
     print("\n🎤 Convertendo texto → voz\n")
     sys.stdout.flush()
-    print("🌐 Interface: http://localhost:5002/ui")
-    print("📡 API REST: http://localhost:5002")
+    print("http://localhost:5002")
     print("=" * 50 + "\n")
     sys.stdout.flush()
     app.run(host="localhost", port=5002, debug=False, threaded=True)
