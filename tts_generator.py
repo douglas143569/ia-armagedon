@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
-"""ARMAGEDON - Gerador de Áudio com gTTS + Humanização
+"""ARMAGEDON - Gerador de Áudio com pyttsx3 + Vozes por Gênero
 
-Converte texto em fala com:
-- Entonação natural
-- Pausas inteligentes
-- Múltiplas vozes para variedade
-- Timbre humanizado
+Usa vozes nativas do Windows com suporte real a:
+- Múltiplos idiomas
+- Gênero (Masculino/Feminino/Neutro)
+- Velocidade ajustável
 """
 
 import os
@@ -17,7 +16,7 @@ import time
 import re
 from datetime import datetime
 from flask import Flask, request, jsonify, send_file
-from gtts import gTTS
+import pyttsx3
 
 app = Flask(__name__)
 AUDIO_DIR = os.path.join(os.path.dirname(__file__), "audio_generated")
@@ -27,139 +26,107 @@ os.makedirs(AUDIO_DIR, exist_ok=True)
 jobs = {}
 jobs_lock = threading.Lock()
 
-print("✓ gTTS pronto com humanização")
-sys.stdout.flush()
+# Inicializar pyttsx3
+try:
+    engine = pyttsx3.init()
+    engine.setProperty('rate', 150)
+
+    # Listar vozes disponíveis
+    voices = engine.getProperty('voices')
+    print(f"✓ pyttsx3 pronto com {len(voices)} vozes:")
+    for i, voice in enumerate(voices):
+        print(f"  {i}: {voice.name} ({voice.id})")
+    sys.stdout.flush()
+except Exception as e:
+    engine = None
+    print(f"❌ Erro ao carregar pyttsx3: {e}")
+    sys.stdout.flush()
 
 
 def humanize_text(text):
     """Prepara texto para soar mais natural."""
-    # Adicionar pausas após pontuação
-    text = re.sub(r'([.!?])\s+', r'\1 ... ', text)  # Pausa após ponto, !, ?
-    text = re.sub(r'(,)\s+', r'\1 ... ', text)      # Pausa menor após vírgula
-
-    # Expandir abreviaturas comuns
+    text = re.sub(r'([.!?])\s+', r'\1 ... ', text)
+    text = re.sub(r'(,)\s+', r'\1 ... ', text)
     text = text.replace("Dr.", "Doutor")
     text = text.replace("Sr.", "Senhor")
-    text = text.replace("etc.", "e tudo mais")
-
-    # Melhorar digitação de números
-    text = re.sub(r'\b(\d)\s+(\d)\b', r'\1\2', text)
-
     return text
 
 
-def adjust_pitch(filepath, gender='neutral'):
-    """Ajusta o pitch do áudio baseado no gênero."""
+def get_voice_id(gender='neutral'):
+    """Seleciona a voz apropriada por gênero."""
     try:
-        import librosa
-        import soundfile as sf
+        voices = engine.getProperty('voices')
 
-        # Carregar áudio
-        y, sr = librosa.load(filepath, sr=None)
+        # Procurar por vozes específicas
+        for voice in voices:
+            voice_name = voice.name.lower()
 
-        # Ajustar pitch baseado no gênero
-        if gender == 'female':
-            # Aumentar pitch em ~4 semitons (mulher mais aguda)
-            y = librosa.effects.pitch_shift(y, sr=sr, n_steps=4)
-        elif gender == 'male':
-            # Diminuir pitch em ~3 semitons (homem mais grave)
-            y = librosa.effects.pitch_shift(y, sr=sr, n_steps=-3)
-        # Se neutro, não muda
+            if gender == 'male':
+                if 'david' in voice_name or 'mark' in voice_name or 'paulo' in voice_name or 'george' in voice_name:
+                    return voice.id
+            elif gender == 'female':
+                if 'zira' in voice_name or 'maria' in voice_name or 'victoria' in voice_name or 'cortana' in voice_name or 'eva' in voice_name:
+                    return voice.id
 
-        # Salvar com as mudanças
-        sf.write(filepath, y, sr)
-        return True
-    except Exception as e:
-        print(f"⚠️ Ajuste de pitch falhou: {e}")
-        return False
+        # Se não encontrar específica, usar a primeira disponível
+        return voices[0].id if voices else None
+    except:
+        return None
 
 
 def generate_audio_job(job_id, text, speed, lang='pt', gender='neutral'):
-    """Gera áudio em background com humanização, múltiplos idiomas e gênero."""
+    """Gera áudio em background com vozes reais."""
     job = jobs[job_id]
     try:
+        if not engine:
+            raise RuntimeError("pyttsx3 não disponível")
+
         job["status"] = "gerando"
         job["message"] = "Processando texto..."
         job["percent"] = 20
 
-        # Humanizar o texto (apenas para PT)
+        # Humanizar texto
         if lang.startswith('pt'):
             humanized_text = humanize_text(text)
         else:
             humanized_text = text
 
-        job["percent"] = 30
+        job["percent"] = 40
         gender_label = {'male': 'Masculina', 'female': 'Feminina', 'neutral': 'Neutra'}
-        job["message"] = f"Voz {gender_label.get(gender, 'Neutra')}..."
+        job["message"] = f"Voz {gender_label.get(gender, 'Neutra')} ({lang.upper()})..."
 
-        filename = f"armagedon_{datetime.now():%Y%m%d_%H%M%S}.mp3"
+        filename = f"armagedon_{datetime.now():%Y%m%d_%H%M%S}.wav"
         filepath = os.path.join(AUDIO_DIR, filename)
 
-        job["percent"] = 60
-        job["message"] = "Gerando áudio..."
+        # Configurar voz
+        voice_id = get_voice_id(gender)
+        if voice_id:
+            engine.setProperty('voice', voice_id)
 
-        # Gerar áudio com gTTS com idiomas variados
-        try:
-            # Mapear idiomas para TLDs corretos
-            tld_map = {
-                'pt': 'com.br',      # Português Brasil
-                'pt-pt': 'pt',       # Português Portugal
-                'en': 'com',         # English US
-                'en-gb': 'co.uk',    # English UK
-                'en-au': 'com.au',   # English Australia
-                'es': 'es',          # Spanish Spain
-                'es-mx': 'com.mx',   # Spanish Mexico
-                'fr': 'fr',          # French France
-                'fr-ca': 'ca',       # French Canada
-                'it': 'it',          # Italian
-                'de': 'de',          # German
-                'ja': 'co.jp',       # Japanese
-                'ko': 'co.kr',       # Korean
-                'zh-CN': 'cn',       # Chinese
-                'ru': 'ru',          # Russian
-                'hi': 'co.in',       # Hindi
-            }
+        # Configurar velocidade
+        rate = int(150 * speed)
+        engine.setProperty('rate', rate)
 
-            tld = tld_map.get(lang, 'com')
-            lang_code = lang.split('-')[0] if '-' in lang else lang
+        job["percent"] = 70
+        job["message"] = "Gerando áudio com voz real..."
 
-            tts = gTTS(
-                text=humanized_text,
-                lang=lang_code,
-                slow=False,
-                tld=tld
-            )
-            tts.save(filepath)
+        # Gerar áudio
+        engine.save_to_file(humanized_text, filepath)
+        engine.runAndWait()
 
-            job["percent"] = 75
-            job["message"] = "Ajustando tom de voz..."
-
-            # Ajustar pitch se não for neutro
-            if gender != 'neutral':
-                adjust_pitch(filepath, gender)
-
-            job["percent"] = 85
-            job["message"] = "Aprimorando qualidade..."
-            time.sleep(0.3)  # Deixar áudio processar completamente
-
-        except Exception as e:
-            job["message"] = "⚠️ Usando fallback"
-            tts = gTTS(text=humanized_text, lang='pt')
-            tts.save(filepath)
-
-        job["percent"] = 95
+        job["percent"] = 90
         job["message"] = "Finalizando..."
 
-        time.sleep(0.2)
+        time.sleep(0.5)
 
         job.update(
             status="concluído",
             percent=100,
-            message="✅ Voz humanizada gerada!",
+            message="✅ Voz real gerada!",
             filename=filename,
             result={"success": True, "filename": filename}
         )
-        print(f"✓ Job {job_id} concluído (humanizado): {filepath}")
+        print(f"✓ Job {job_id} concluído ({gender}): {filepath}")
 
     except Exception as e:
         job.update(
@@ -180,7 +147,7 @@ def generate():
         text = (data.get("text") or "Olá").strip()
         speed = max(0.5, min(2.0, float(data.get("speed", 1.0))))
         voice = data.get("voice", "pt")
-        gender = data.get("gender", "neutral")  # Novo: suportar gênero
+        gender = data.get("gender", "neutral")
 
         if len(text) > 500:
             return jsonify({"error": "Texto muito longo (máx 500 caracteres)"}), 400
@@ -269,27 +236,17 @@ def list_jobs():
 @app.route("/health", methods=["GET"])
 def health():
     return jsonify({
-        "status": "ok",
-        "engine": "gTTS + Humanização",
-        "features": [
-            "Pausas naturais",
-            "PT-BR nativo",
-            "Entonação melhorada",
-            "Múltiplas vozes"
-        ]
+        "status": "ok" if engine else "error",
+        "engine": "pyttsx3 com Vozes Reais",
+        "features": ["Vozes do Windows", "Gênero (M/F)", "Humanização"]
     }), 200
 
 
 if __name__ == "__main__":
     print("=" * 50)
-    print("ARMAGEDON - Gerador de Áudio (gTTS Humanizado)")
+    print("ARMAGEDON - Gerador de Áudio (Vozes Reais)")
     print("=" * 50)
-    print("\n🎤 Voz com Humanização:\n")
-    print("  ✓ Pausas naturais após pontuação")
-    print("  ✓ Português do Brasil natural")
-    print("  ✓ Entonação melhorada")
-    print("  ✓ Processamento inteligente")
-    print()
+    print("\n🎤 Vozes Reais do Windows\n")
     sys.stdout.flush()
     print("http://localhost:5002")
     print("=" * 50 + "\n")
