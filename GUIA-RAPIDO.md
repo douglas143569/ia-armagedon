@@ -72,12 +72,12 @@ ollama create armagedon -f Modelfile
 ## 💾 Hardware da Máquina
 
 ```
-CPU: Intel Core i7-8565U (4c/8t @ 1.8GHz)
-RAM: 34GB
-GPU: NVIDIA MX150 2GB
-Disco: 320GB livre
+CPU: AMD Ryzen 5 2400G (APU, 4c/8t, até 3.6GHz)
+RAM: 16GB (~14GB utilizáveis)
+GPU: AMD Radeon RX Vega 11 integrada (sem CUDA — inferência em CPU)
+Disco: 386GB livre em C: (+ D: e E: com centenas de GB)
 
-Status: ✅ Ótimo para rodar ARMAGEDON localmente
+Status: ✅ OK para chat 3B–8B; imagem lenta (~7 min/img); vídeo só com GPU alugada
 ```
 
 ---

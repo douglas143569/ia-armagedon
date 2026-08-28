@@ -34,17 +34,19 @@ Eu (Douglas) só converso com o **ARMAGEDON**, num lugar só (chat/hub — Fase 
 
 ## Situação de hardware (ponto de partida)
 
-**Máquina de Douglas (confirmada 2026-08-27)**:
-- CPU: Intel Core i7-8565U (4 cores/8 threads, 1.8GHz)
-- RAM: 34GB ✅ (excelente para modelos locais)
-- SSD: 474GB (320GB livre) ✅
-- GPU: NVIDIA GeForce MX150 2GB ✅ (vai acelerar texto/chat e imagem)
+**Máquina de Douglas (lida direto do sistema em 2026-08-27)**:
+- CPU: AMD Ryzen 5 2400G (APU, 4 cores / 8 threads, até 3.6 GHz)
+- RAM: 16 GB físicos (2× 8 GB DDR4 @ 2667 MHz); ~14 GB utilizáveis (≈2 GB reservados para a GPU integrada)
+- Armazenamento: C: 476 GB (386 livre) · D: 931 GB (690 livre) · E: 894 GB (498 livre) — espaço sobrando
+- GPU: AMD Radeon RX Vega 11 **integrada** (compartilha a RAM do sistema, ~2 GB alocados). Sem CUDA; ROCm não suporta essa iGPU no Windows → **inferência roda em CPU**
+- SO: Windows 10 Pro (build 19045)
 
 **Implicações**:
-- Texto/chat: **viável, ótima velocidade** com modelos de 3B-8B
-- Imagem: viável mas moderada (Stable Diffusion é factível)
-- Vídeo: limitado (precisará de GPU rental no futuro)
-- Upgrade futuro considerado: GPU usada (ex: RTX 3060 12GB) e/ou aluguel de GPU por hora (RunPod/Vast.ai) para tarefas pesadas pontuais (vídeo, fine-tuning)
+- Texto/chat: viável com modelos 3B–8B quantizados (Q4). Um modelo 7B ocupa ~5 GB de RAM — dá pra rodar um de cada vez com folga; carregar dois grandes ao mesmo tempo ou passar de ~13B fica apertado nos 14 GB
+- Imagem: só CPU — funciona, mas **~7 min por imagem 512×512** (20 steps), medido nesta máquina
+- Vídeo: inviável localmente para uso real (cada clipe = dezenas de frames = dezenas de minutos). Vai precisar de GPU alugada
+- Upgrade que muda o jogo: GPU discreta NVIDIA (CUDA) — ex: RTX 3060 12 GB usada — e/ou aluguel de GPU por hora (RunPod/Vast.ai) para vídeo e fine-tuning
+- Modelos 1-bit / BitNet (ver "Descobertas recentes") são especialmente relevantes aqui pela RAM limitada e ausência de GPU
 
 ## Fases do projeto
 
@@ -94,14 +96,28 @@ Eu (Douglas) só converso com o **ARMAGEDON**, num lugar só (chat/hub — Fase 
   - [ ] Rotina exemplo: "olá Douglas, deixa o escritório pronto" → dispara várias ações de uma vez (luz, música, etc.)
 
 ### Fase 4 — Geração de imagem
-- [ ] Avaliar necessidade de GPU (CPU vai ser lento)
-- [ ] Instalar ComfyUI
-- [ ] Baixar modelo aberto (Stable Diffusion / SDXL / Flux)
-- [ ] Testar geração local
+- [x] Avaliar necessidade de GPU (CPU vai ser lento) — confirmado: roda em CPU, mas ~7 min por imagem 512×512 (20 steps) no Ryzen 5 2400G. Aceitável para uso pontual; GPU discreta (CUDA) seria upgrade desejável.
+- [ ] Instalar ComfyUI — não usado; implementação atual usa `diffusers` direto (`image_generator_final.py`, servidor HTTP na porta 5000)
+- [x] Baixar modelo aberto (Stable Diffusion / SDXL / Flux) — Stable Diffusion v1.5 via `diffusers` (repo `runwayml/stable-diffusion-v1-5`, hoje redireciona p/ `stable-diffusion-v1-5/stable-diffusion-v1-5`), cache em `~/.cache/huggingface`
+- [x] Testar geração local — ✅ imagem gerada e salva em `images_generated/` (2026-08-27)
+- [x] Modo rápido **SD-Turbo** (`stabilityai/sd-turbo`) como opção "⚡ Turbo" na interface — 4 steps, guidance 0.0. Medido: **39 s por imagem** vs ~7 min do SD-1.5 (~10× mais rápido). Só um modelo fica na RAM por vez (troca recarrega, ~1-2 min). Vale para imagem e vídeo.
+- Geração agora é **serializada** (1 job por vez / fila) e cada job tem **cancelamento** no meio da geração; painel "⚙️ Processos" na interface lista e cancela jobs. Endpoints novos nos geradores: `/jobs`, `/cancel/<id>`, `/status/<id>`; no hub: `/api/processes`, `/api/cancel`.
+
+**Setup instalado em 2026-08-27** (venv `venv_images`, Python 3.12 — torch não tem wheel p/ o Python 3.14 do sistema):
+`torch 2.13.0+cpu`, `torchvision 0.28.0+cpu`, `diffusers 0.40.0`, `transformers 5.16.1`, `accelerate 1.14.0`, `flask 3.1.3`, `pillow 12.3.0`, `safetensors 0.8.0`.
+Node.js 24.19 e Ollama 0.33.1 instalados via winget. Modelos Ollama: `qwen2.5:7b`, `dolphin-llama3`, `armagedon` (do Modelfile) — todos testados OK.
 
 ### Fase 5 — Geração de vídeo
 - [ ] Decidir caminho: comprar GPU vs. alugar GPU na nuvem por hora
 - [ ] Avaliar modelos abertos disponíveis no momento (CogVideoX, HunyuanVideo, LTX-Video, ou o que for atual)
+
+**Solução provisória em CPU (`video_generator_flask.py`, porta 5001)** — GIF, não vídeo real. 3 modos, medidos nesta máquina:
+| Modo | Como funciona | Tempo (2s @ 8fps, Turbo, 384px) |
+|---|---|---|
+| `camera` (Ken Burns) | 1 imagem SD-Turbo + zoom/pan por frame (recorte, ~grátis) | **~40 s** (16 frames) |
+| `evolucao` (img2img) | frame 1 completo, seguintes por img2img `strength 0.45` a partir do anterior | ~30 s + ~25 s/frame |
+| `frames` | N imagens txt2img independentes (conteúdo varia, não é animação) | lento: ~gen completa × N |
+Parâmetros expostos na interface: modo, resolução (512/384), steps (auto/1–30), Turbo. Para vídeo de verdade continua sendo GPU alugada.
 
 ### Fase 6.5 — Modo híbrido (opcional): escalar para Claude quando necessário
 - [ ] Ferramenta `perguntar_claude(pergunta)` — chama a API da Anthropic para tarefas complexas demais pro modelo local

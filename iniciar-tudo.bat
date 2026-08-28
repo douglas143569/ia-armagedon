@@ -8,6 +8,8 @@ echo  ARMAGEDON - Iniciando...
 echo ================================
 echo.
 
+cd /d "%~dp0"
+
 REM Iniciar Ollama em background
 echo Iniciando Ollama...
 start "ARMAGEDON - Ollama" ollama serve
@@ -15,9 +17,16 @@ start "ARMAGEDON - Ollama" ollama serve
 REM Aguardar Ollama inicializar
 timeout /t 5 /nobreak
 
-REM Abrir Interface
+REM Iniciar o Hub (server.js) em background
+echo Iniciando Hub...
+start "ARMAGEDON - Hub" node server.js
+
+REM Aguardar o Hub subir
+timeout /t 3 /nobreak
+
+REM Abrir Interface no navegador
 echo Abrindo interface...
-start "" "c:\Users\7700781010\Desktop\iadouglas\ia-douglas\interface.html"
+start "" http://localhost:3000
 
 echo.
 echo ================================

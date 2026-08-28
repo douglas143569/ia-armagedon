@@ -54,10 +54,10 @@ Botão "Gerar Imagem" na interface (vamos adicionar)
 | Aspecto | Valor |
 |---------|-------|
 | Resolução | 512x512 (bom balanço) |
-| Tempo por imagem | 1-3 minutos |
-| Qualidade | Excelente |
+| Tempo por imagem | ~7 minutos (medido: Ryzen 5 2400G, CPU, 20 steps) |
+| Qualidade | Boa (SD 1.5) |
 | Custo | 🆓 Grátis |
-| Hardware | CPU/MX150 OK |
+| Hardware | CPU only (iGPU Vega 11 sem CUDA) |
 
 ---
 

@@ -11,6 +11,8 @@ models/
 # Ambientes Python
 .venv/
 venv/
+venv_images/
+venv_voice/
 __pycache__/
 *.pyc
 
@@ -25,7 +27,9 @@ node_modules/
 .DS_Store
 Thumbs.db
 
-# Áudio/vídeo gerados de teste
+# Áudio/vídeo/imagens gerados de teste
 *.wav
 *.mp4
 outputs/
+images_generated/
+videos_generated/

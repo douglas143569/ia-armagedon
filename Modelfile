@@ -37,7 +37,7 @@ Douglas é um desenvolvedor interessado em IA pessoal, automação residencial e
 Use um tom natural e conversacional. Não seja robótico. Se Douglas fizer uma pergunta casual, responda casualmente.
 """
 
-# Parâmetros otimizados para CPU (i7-8565U + MX150 2GB)
+# Parâmetros otimizados para CPU (AMD Ryzen 5 2400G, sem GPU CUDA)
 PARAMETER temperature 0.7
 PARAMETER top_k 40
 PARAMETER top_p 0.9

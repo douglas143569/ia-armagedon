@@ -17,7 +17,7 @@
 ### ✅ Fase 2 — Customização
 - Modelfile customizado criado
 - System prompt definindo personalidade do ARMAGEDON
-- Parâmetros otimizados para CPU (i7-8565U)
+- Parâmetros otimizados para CPU (Ryzen 5 2400G)
 - Responde em português com personalidade própria
 - **Status:** COMPLETO
 
@@ -41,14 +41,14 @@
 ## 🖥️ Hardware Confirmado
 
 ```
-CPU:    Intel Core i7-8565U (4c/8t @ 1.8GHz)
-RAM:    34GB ✅ (excelente)
-GPU:    NVIDIA GeForce MX150 2GB ✅
-SSD:    474GB total (320GB livre) ✅
-OS:     Windows 11 Pro 10.0.22631
+CPU:    AMD Ryzen 5 2400G (APU, 4c/8t, até 3.6GHz)
+RAM:    16GB (~14GB utilizáveis — ~2GB reservados p/ a iGPU)
+GPU:    AMD Radeon RX Vega 11 integrada (sem CUDA/ROCm no Windows → CPU)
+Disco:  C: 476GB (386 livre) + D: 931GB + E: 894GB
+OS:     Windows 10 Pro (build 19045)
 ```
 
-**Conclusão:** Hardware perfeitamente adequado para rodar ARMAGEDON localmente!
+**Conclusão:** OK para chat com modelos 3B–8B quantizados. Geração de imagem roda só em CPU (~7 min por imagem). Vídeo e fine-tuning pesado vão exigir GPU alugada na nuvem.
 
 ---
 

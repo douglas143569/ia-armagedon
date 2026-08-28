@@ -133,7 +133,7 @@ pip install home-assistant-api
 ```
 
 ### Fase 4: Otimizações
-- Usar GPU do MX150 pra Whisper (mais rápido)
+- Whisper roda em CPU (a iGPU Vega 11 não tem suporte CUDA/ROCm no Windows) — usar modelo `base` ou `small` p/ equilíbrio velocidade/qualidade
 - Cache de modelos Whisper
 - Resposta em tempo real (streaming)
 
@@ -162,9 +162,9 @@ voice.interactive_loop(max_iterations=5)
 ## Hardware Usado
 
 ```
-CPU: i7-8565U (processamento de Whisper)
-GPU: MX150 (opcional - não otimizado ainda)
-RAM: 34GB (Whisper usa ~500MB)
+CPU: AMD Ryzen 5 2400G (processamento de Whisper em CPU)
+GPU: Radeon RX Vega 11 integrada (não usada — sem CUDA/ROCm no Windows)
+RAM: 16GB (~14GB utilizáveis; Whisper base usa ~1GB)
 Latência: ~3-5s por ciclo (gravação + transcrição + LLM + TTS)
 ```
 

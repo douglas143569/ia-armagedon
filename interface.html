@@ -342,9 +342,9 @@
                 <strong>ARMAGEDON v1.0</strong><br>
                 Assistente de IA Pessoal<br><br>
                 <strong>Hardware:</strong><br>
-                CPU: i7-8565U<br>
-                RAM: 34GB<br>
-                GPU: MX150<br><br>
+                CPU: Ryzen 5 2400G<br>
+                RAM: 16GB (~14GB úteis)<br>
+                GPU: Radeon Vega 11 (CPU only)<br><br>
                 <strong>Status:</strong><br>
                 ✅ Ollama: Conectado<br>
                 ✅ Modelos: Carregados
@@ -366,13 +366,25 @@
                 <button id="stopBtn" onclick="stopResponse()" style="display: none; background: #ff6f00;">Parar</button>
                 <button id="imageBtn" onclick="toggleImageGenerator()" style="background: linear-gradient(135deg, #00ff41 0%, #00d4ff 100%); color: #000; font-weight: bold;">🎨 Imagem</button>
                 <button id="videoBtn" onclick="toggleVideoGenerator()" style="background: linear-gradient(135deg, #ff6f00 0%, #ff1744 100%); color: #fff; font-weight: bold;">🎬 Vídeo</button>
+                <button id="procBtn" onclick="toggleProcessPanel()" style="background: #334155; color: #fff; font-weight: bold;">⚙️ Processos</button>
+            </div>
+
+            <div id="processPanel" style="display: none; padding: 16px 20px; border-top: 2px solid #334155; background: rgba(51, 65, 85, 0.12);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <strong style="font-size: 13px;">Processos em execução</strong>
+                    <span id="procServers" style="font-size: 11px; color: #888;"></span>
+                </div>
+                <div id="procList" style="font-size: 12px; color: #cbd5e1;">Carregando...</div>
             </div>
 
             <div id="imageGenerator" style="display: none; padding: 20px; border-top: 2px solid var(--accent); background: rgba(0, 255, 65, 0.05);">
-                <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                <div style="display: flex; gap: 10px; margin-bottom: 8px;">
                     <input id="imagePrompt" type="text" placeholder="Descreva a imagem que quer gerar..." style="flex: 1; padding: 10px; border: 1px solid var(--accent); border-radius: 8px; background: #1a1a1a; color: var(--text);">
                     <button id="gerarBtn" onclick="generateImage()" style="padding: 10px 20px; background: linear-gradient(135deg, #00ff41 0%, #00d4ff 100%); color: #000; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">Gerar</button>
                 </div>
+                <label style="font-size: 12px; color: #00d4ff; cursor: pointer; user-select: none;">
+                    <input id="imageTurbo" type="checkbox" style="vertical-align: middle;"> ⚡ Turbo (SD-Turbo, ~4x mais rápido — 4 steps)
+                </label>
 
                 <div id="imageProgressContainer" style="display: none; margin-top: 15px;">
                     <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 12px;">
@@ -382,8 +394,9 @@
                     <div style="width: 100%; height: 8px; background: #222; border-radius: 4px; overflow: hidden; border: 1px solid var(--accent);">
                         <div id="progressBar" style="height: 100%; width: 0%; background: linear-gradient(90deg, #00ff41 0%, #00d4ff 100%); transition: width 0.3s;"></div>
                     </div>
-                    <div style="margin-top: 8px; font-size: 11px; color: #888;">
+                    <div style="margin-top: 8px; font-size: 11px; color: #888; display: flex; justify-content: space-between; align-items: center;">
                         <span id="progressTime">Tempo estimado: 7-10 minutos</span>
+                        <button id="pararImagemBtn" onclick="cancelCurrentImage()" style="display:none;padding:4px 12px;background:#ff1744;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:11px;">Parar</button>
                     </div>
                 </div>
 
@@ -391,11 +404,40 @@
             </div>
 
             <div id="videoGenerator" style="display: none; padding: 20px; border-top: 2px solid #ff6f00; background: rgba(255, 111, 0, 0.05);">
-                <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                    <input id="videoPrompt" type="text" placeholder="Descreva o vídeo que quer gerar..." style="flex: 1; padding: 10px; border: 1px solid #ff6f00; border-radius: 8px; background: #1a1a1a; color: var(--text);">
-                    <input id="videoDuration" type="number" min="2" max="10" value="4" placeholder="Duração (seg)" style="width: 80px; padding: 10px; border: 1px solid #ff6f00; border-radius: 8px; background: #1a1a1a; color: var(--text);">
+                <div style="display: flex; gap: 10px; margin-bottom: 8px; align-items: flex-end; flex-wrap: wrap;">
+                    <label style="flex: 1; min-width: 200px; font-size: 11px; color: #ff9e40;">Descrição
+                        <input id="videoPrompt" type="text" placeholder="Descreva o vídeo que quer gerar..." style="width: 100%; margin-top: 3px; padding: 10px; border: 1px solid #ff6f00; border-radius: 8px; background: #1a1a1a; color: var(--text);">
+                    </label>
+                    <label style="font-size: 11px; color: #ff9e40;">Duração (s)
+                        <input id="videoDuration" type="number" min="1" max="10" value="1" oninput="updateVideoEstimate()" style="display: block; width: 70px; margin-top: 3px; padding: 10px; border: 1px solid #ff6f00; border-radius: 8px; background: #1a1a1a; color: var(--text);">
+                    </label>
+                    <label style="font-size: 11px; color: #ff9e40;">FPS
+                        <input id="videoFps" type="number" min="1" max="24" value="4" oninput="updateVideoEstimate()" style="display: block; width: 64px; margin-top: 3px; padding: 10px; border: 1px solid #ff6f00; border-radius: 8px; background: #1a1a1a; color: var(--text);">
+                    </label>
                     <button id="gerarVideoBtn" onclick="generateVideo()" style="padding: 10px 20px; background: linear-gradient(135deg, #ff6f00 0%, #ff1744 100%); color: #fff; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">Gerar</button>
                 </div>
+                <div style="display: flex; gap: 10px; margin-bottom: 6px; align-items: flex-end; flex-wrap: wrap;">
+                    <label style="font-size: 11px; color: #ff9e40;">Modo
+                        <select id="videoMode" onchange="updateVideoEstimate()" style="display: block; margin-top: 3px; padding: 9px; border: 1px solid #ff6f00; border-radius: 8px; background: #1a1a1a; color: var(--text);">
+                            <option value="camera">Câmera (rápido)</option>
+                            <option value="frames">Frames independentes</option>
+                            <option value="evolucao">Evolução (img2img)</option>
+                        </select>
+                    </label>
+                    <label style="font-size: 11px; color: #ff9e40;">Resolução
+                        <select id="videoSize" onchange="updateVideoEstimate()" style="display: block; margin-top: 3px; padding: 9px; border: 1px solid #ff6f00; border-radius: 8px; background: #1a1a1a; color: var(--text);">
+                            <option value="512">512 px</option>
+                            <option value="384">384 px (mais rápido)</option>
+                        </select>
+                    </label>
+                    <label style="font-size: 11px; color: #ff9e40;">Steps
+                        <input id="videoSteps" type="number" min="1" max="30" placeholder="auto" oninput="updateVideoEstimate()" style="display: block; width: 70px; margin-top: 3px; padding: 10px; border: 1px solid #ff6f00; border-radius: 8px; background: #1a1a1a; color: var(--text);">
+                    </label>
+                    <label style="font-size: 12px; color: #ff9e40; cursor: pointer; user-select: none; padding-bottom: 9px;">
+                        <input id="videoTurbo" type="checkbox" checked onchange="updateVideoEstimate()" style="vertical-align: middle;"> ⚡ Turbo
+                    </label>
+                </div>
+                <div id="videoEstimate" style="font-size: 11px; color: #888; margin: 4px 0 10px;"></div>
 
                 <div id="videoProgressContainer" style="display: none; margin-top: 15px;">
                     <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 12px;">
@@ -405,8 +447,9 @@
                     <div style="width: 100%; height: 8px; background: #222; border-radius: 4px; overflow: hidden; border: 1px solid #ff6f00;">
                         <div id="videoProgressBar" style="height: 100%; width: 0%; background: linear-gradient(90deg, #ff6f00 0%, #ff1744 100%); transition: width 0.3s;"></div>
                     </div>
-                    <div style="margin-top: 8px; font-size: 11px; color: #888;">
+                    <div style="margin-top: 8px; font-size: 11px; color: #888; display: flex; justify-content: space-between; align-items: center;">
                         <span id="videoProgressTime">Tempo estimado: 20-40 minutos</span>
+                        <button id="pararVideoBtn" onclick="cancelCurrentVideo()" style="display:none;padding:4px 12px;background:#ff1744;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:11px;">Parar</button>
                     </div>
                 </div>
 
@@ -454,6 +497,111 @@
         function toggleVideoGenerator() {
             const generator = document.getElementById('videoGenerator');
             generator.style.display = generator.style.display === 'none' ? 'block' : 'none';
+            updateVideoEstimate();
+        }
+
+        // Estimativa por modo (aprox., CPU deste PC)
+        function updateVideoEstimate() {
+            const el = document.getElementById('videoEstimate');
+            if (!el) return;
+            const d = parseInt(document.getElementById('videoDuration').value) || 1;
+            const f = parseInt(document.getElementById('videoFps').value) || 4;
+            const turbo = document.getElementById('videoTurbo').checked;
+            const mode = document.getElementById('videoMode').value;
+            const size = parseInt(document.getElementById('videoSize').value) || 512;
+            const stepsIn = parseInt(document.getElementById('videoSteps').value);
+            const steps = stepsIn > 0 ? stepsIn : (turbo ? 4 : 15);
+            const resFactor = (size / 512) * (size / 512);
+            const perStepS = (turbo ? 10 : 20) * resFactor;   // segundos por step
+            const genS = steps * perStepS;                    // 1 geração completa
+
+            let frames, totalS, desc;
+            if (mode === 'camera') {
+                frames = Math.max(4, d * f);
+                totalS = genS + frames * 0.1;                 // 1 geração + recortes ~grátis
+                desc = `1 geração + ${frames} frames de câmera`;
+            } else if (mode === 'evolucao') {
+                frames = Math.max(2, Math.floor(d * f / 2));
+                totalS = genS + (frames - 1) * Math.max(2, steps) * perStepS * 0.5;
+                desc = `${frames} frames img2img encadeados`;
+            } else {
+                frames = Math.max(2, Math.floor(d * f / 2));
+                totalS = frames * genS;
+                desc = `${frames} frames independentes`;
+            }
+            const m = Math.floor(totalS / 60), s = Math.round(totalS % 60);
+            el.textContent = `${desc} · ~${m > 0 ? m + ' min ' : ''}${s} s  (${turbo ? 'Turbo' : 'SD-1.5'}, ${steps} steps, ${size}px)`;
+        }
+
+        // ===== Painel de processos =====
+        let procInterval = null;
+
+        function toggleProcessPanel() {
+            const panel = document.getElementById('processPanel');
+            const show = panel.style.display === 'none';
+            panel.style.display = show ? 'block' : 'none';
+            if (show) {
+                refreshProcesses();
+                procInterval = setInterval(refreshProcesses, 2000);
+            } else {
+                clearInterval(procInterval);
+                procInterval = null;
+            }
+        }
+
+        async function refreshProcesses() {
+            const listEl = document.getElementById('procList');
+            const srvEl = document.getElementById('procServers');
+            try {
+                const resp = await fetch('/api/processes');
+                const data = await resp.json();
+                const s = data.servers || {};
+                srvEl.textContent = `imagem: ${s['imagem'] ? 'online' : 'offline'} · vídeo: ${s['vídeo'] ? 'online' : 'offline'}`;
+
+                const jobs = data.jobs || [];
+                if (!jobs.length) {
+                    listEl.innerHTML = '<span style="color:#888;">Nenhum processo.</span>';
+                    return;
+                }
+                listEl.innerHTML = jobs.map(j => {
+                    const min = Math.floor(j.elapsed / 60), sec = j.elapsed % 60;
+                    const tempo = `${min}m${String(sec).padStart(2, '0')}s`;
+                    const cor = j.active ? '#ff9e40' : (j.status === 'concluído' ? '#00ff41' : '#888');
+                    const btn = j.active
+                        ? `<button onclick="cancelJob('${j.server}','${j.id}')" style="padding:4px 10px;background:#ff1744;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:11px;">Parar</button>`
+                        : '';
+                    return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #2a3441;">
+                        <span style="flex:1;">
+                            <strong style="color:${cor};">${j.type}</strong>
+                            ${j.model === 'turbo' ? '<span style="color:#00d4ff;font-size:10px;"> ⚡turbo</span>' : ''}
+                            <span style="color:#94a3b8;"> "${(j.prompt || '').slice(0, 40)}"</span><br>
+                            <span style="font-size:11px;color:#888;">${j.status} · ${j.percent}% · ${j.message || ''} · ${tempo}</span>
+                        </span>
+                        ${btn}
+                    </div>`;
+                }).join('');
+            } catch (e) {
+                listEl.innerHTML = '<span style="color:#ff1744;">Hub sem resposta.</span>';
+            }
+        }
+
+        async function cancelJob(serverName, jobId) {
+            try {
+                await fetch('/api/cancel', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ server: serverName, job_id: jobId })
+                });
+                refreshProcesses();
+            } catch (e) {
+                alert('Falha ao cancelar: ' + e.message);
+            }
+        }
+
+        let currentVideoJob = null;
+
+        function cancelCurrentVideo() {
+            if (currentVideoJob) cancelJob('vídeo', currentVideoJob);
         }
 
         async function generateVideo() {
@@ -464,8 +612,10 @@
                 alert('Erro: campo de vídeo não encontrado');
                 return;
             }
+            const fpsInput = document.getElementById('videoFps');
             const prompt = promptInput.value ? promptInput.value.trim() : '';
-            const duration = parseInt(durationInput.value) || 4;
+            const duration = parseInt(durationInput.value) || 1;
+            const fps = parseInt(fpsInput && fpsInput.value) || 4;
 
             if (!prompt) {
                 alert('Digite uma descrição para o vídeo!');
@@ -483,10 +633,15 @@
 
             try {
                 // 1. Solicitar geração (retorna job_id)
+                const turbo = document.getElementById('videoTurbo').checked;
+                const mode = document.getElementById('videoMode').value;
+                const size = parseInt(document.getElementById('videoSize').value) || 512;
+                const stepsIn = parseInt(document.getElementById('videoSteps').value);
+                const steps = stepsIn > 0 ? stepsIn : undefined;
                 const startResp = await fetch('/api/generate-video', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ prompt, duration, fps: 12 })
+                    body: JSON.stringify({ prompt, duration, fps, turbo, mode, size, steps })
                 });
 
                 const startData = await startResp.json();
@@ -495,6 +650,8 @@
                 }
 
                 const jobId = startData.job_id;
+                currentVideoJob = jobId;
+                document.getElementById('pararVideoBtn').style.display = 'inline-block';
                 console.log('🎬 Job iniciado:', jobId);
 
                 // 2. Polling de progresso
@@ -533,13 +690,25 @@
                                 addMessage('video', `🎬 ${prompt}\n📁 ${status.result.filename}`);
                                 promptInput.value = '';
                                 progressContainer.style.display = 'none';
+                                document.getElementById('pararVideoBtn').style.display = 'none';
+                                currentVideoJob = null;
                                 gerarBtn.disabled = false;
                                 gerarBtn.style.opacity = '1';
                             }, 1000);
+                        } else if (status.status === 'cancelado') {
+                            clearInterval(pollInterval);
+                            statusDiv.textContent = '⏹️ Geração cancelada';
+                            progressContainer.style.display = 'none';
+                            document.getElementById('pararVideoBtn').style.display = 'none';
+                            currentVideoJob = null;
+                            gerarBtn.disabled = false;
+                            gerarBtn.style.opacity = '1';
                         } else if (status.status === 'erro') {
                             clearInterval(pollInterval);
                             statusDiv.textContent = `❌ Erro: ${status.error}`;
                             progressContainer.style.display = 'none';
+                            document.getElementById('pararVideoBtn').style.display = 'none';
+                            currentVideoJob = null;
                             gerarBtn.disabled = false;
                             gerarBtn.style.opacity = '1';
                         }
@@ -580,6 +749,12 @@
             }
         }
 
+        let currentImageJob = null;
+
+        function cancelCurrentImage() {
+            if (currentImageJob) cancelJob('imagem', currentImageJob);
+        }
+
         async function generateImage() {
             const promptInput = document.getElementById('imagePrompt');
             if (!promptInput) {
@@ -595,56 +770,64 @@
             const statusDiv = document.getElementById('imageStatus');
             const progressContainer = document.getElementById('imageProgressContainer');
             const gerarBtn = document.getElementById('gerarBtn');
+            const pararBtn = document.getElementById('pararImagemBtn');
 
-            // Mostrar barra de progresso
             progressContainer.style.display = 'block';
             statusDiv.textContent = '';
             gerarBtn.disabled = true;
             gerarBtn.style.opacity = '0.5';
+            updateProgress(0);
 
-            // Simular progresso
-            let progress = 0;
-            updateProgress(progress);
-            progressInterval = setInterval(() => {
-                progress += Math.random() * 8;
-                if (progress > 95) progress = 95;
-                updateProgress(progress);
-            }, 500);
-
-            try {
-                const body = JSON.stringify({ prompt: prompt });
-                const response = await fetch('/api/generate-image', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: body
-                });
-
-                clearInterval(progressInterval);
-                updateProgress(100);
-
-                const result = await response.json();
-
-                if (result.success) {
-                    setTimeout(() => {
-                        statusDiv.textContent = `✅ Imagem gerada: ${result.filename}`;
-                        addMessage('image', `🎨 ${prompt}\n📁 ${result.filename}`);
-                        promptInput.value = '';
-                        progressContainer.style.display = 'none';
-                        gerarBtn.disabled = false;
-                        gerarBtn.style.opacity = '1';
-                    }, 1000);
-                } else {
-                    statusDiv.textContent = `❌ Erro: ${result.error || 'Falha ao gerar imagem'}`;
-                    progressContainer.style.display = 'none';
-                    gerarBtn.disabled = false;
-                    gerarBtn.style.opacity = '1';
-                }
-            } catch (error) {
-                clearInterval(progressInterval);
-                statusDiv.textContent = `❌ Erro: ${error.message}`;
+            const finish = () => {
                 progressContainer.style.display = 'none';
+                pararBtn.style.display = 'none';
                 gerarBtn.disabled = false;
                 gerarBtn.style.opacity = '1';
+                currentImageJob = null;
+            };
+
+            try {
+                const turbo = document.getElementById('imageTurbo') && document.getElementById('imageTurbo').checked;
+                const startResp = await fetch('/api/generate-image', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt, turbo })
+                });
+                const startData = await startResp.json();
+                if (!startData.job_id) throw new Error(startData.error || 'Erro ao iniciar geração');
+
+                currentImageJob = startData.job_id;
+                pararBtn.style.display = 'inline-block';
+
+                const poll = setInterval(async () => {
+                    try {
+                        const st = await (await fetch(`/api/image-status/${currentImageJob}`)).json();
+                        updateProgress(st.percent || 0);
+                        document.getElementById('progressLabel').textContent = st.message || 'Gerando imagem...';
+
+                        if (st.status === 'concluído') {
+                            clearInterval(poll);
+                            updateProgress(100);
+                            statusDiv.textContent = `✅ Imagem gerada: ${st.result.filename}`;
+                            addMessage('image', `🎨 ${prompt}\n📁 ${st.result.filename}`);
+                            promptInput.value = '';
+                            setTimeout(finish, 800);
+                        } else if (st.status === 'cancelado') {
+                            clearInterval(poll);
+                            statusDiv.textContent = '⏹️ Geração cancelada';
+                            finish();
+                        } else if (st.status === 'erro') {
+                            clearInterval(poll);
+                            statusDiv.textContent = `❌ Erro: ${st.error || 'falha'}`;
+                            finish();
+                        }
+                    } catch (e) {
+                        console.error('status imagem:', e);
+                    }
+                }, 1000);
+            } catch (error) {
+                statusDiv.textContent = `❌ Erro: ${error.message}`;
+                finish();
             }
         }
 

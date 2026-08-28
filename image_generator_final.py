@@ -1,109 +1,184 @@
 #!/usr/bin/env python3
-"""ARMAGEDON - Gerador Final"""
-from http.server import HTTPServer, BaseHTTPRequestHandler
-import json, os, sys
+"""ARMAGEDON - Gerador de Imagens (Flask + jobs + cancelamento + SD-Turbo)
+
+Endpoints:
+  POST /generate        {prompt, turbo?}    -> {job_id}         (assíncrono, entra na fila)
+  GET  /status/<job_id>                     -> estado de 1 job
+  GET  /jobs                                -> lista todos os jobs
+  POST /cancel/<job_id>                     -> marca job para cancelar
+  GET  /health                              -> {status, model}
+
+Modelos:
+  sd15  (padrão) : Stable Diffusion 1.5 - 20 steps, guidance 7.5
+  turbo          : SD-Turbo - 4 steps, guidance 0.0  (~4x mais rápido)
+Só um modelo fica na RAM por vez; trocar de modelo recarrega (leva 1-2 min,
+e o Turbo baixa ~5 GB na primeira vez).
+"""
+import os, sys, gc, threading, uuid, time
 from datetime import datetime
+from flask import Flask, request, jsonify
 import torch
 from diffusers import StableDiffusionPipeline
 
+app = Flask(__name__)
 IMAGES_DIR = os.path.join(os.path.dirname(__file__), "images_generated")
 os.makedirs(IMAGES_DIR, exist_ok=True)
 
-print("=" * 50)
-print("🚀 ARMAGEDON - Gerador Final")
-print("=" * 50)
-print("📥 Carregando modelo...")
-sys.stdout.flush()
+MODELS = {
+    "sd15":  {"repo": "runwayml/stable-diffusion-v1-5", "steps": 20, "guidance": 7.5},
+    "turbo": {"repo": "stabilityai/sd-turbo",           "steps": 4,  "guidance": 0.0},
+}
 
-pipe = StableDiffusionPipeline.from_pretrained(
-    "runwayml/stable-diffusion-v1-5",
-    torch_dtype=torch.float32,
-    safety_checker=None,
-)
-print("✅ Modelo baixado")
-sys.stdout.flush()
+jobs = {}
+jobs_lock = threading.Lock()      # protege o dict jobs
+gen_lock = threading.Lock()       # serializa geração: 1 por vez (é a "fila")
+_pipe_state = {"key": None, "pipe": None}
 
-pipe = pipe.to("cpu")
-print("✅ Movido para CPU")
-sys.stdout.flush()
 
-pipe.enable_attention_slicing()
-print("✅ Attention slicing OK")
-sys.stdout.flush()
+def get_pipe(key):
+    """Retorna o pipeline do modelo pedido, recarregando se for outro."""
+    if _pipe_state["key"] == key and _pipe_state["pipe"] is not None:
+        return _pipe_state["pipe"]
+    if _pipe_state["pipe"] is not None:
+        _pipe_state["pipe"] = None
+        _pipe_state["key"] = None
+        gc.collect()
+    cfg = MODELS[key]
+    print(f"Carregando modelo '{key}' ({cfg['repo']})...")
+    sys.stdout.flush()
+    p = StableDiffusionPipeline.from_pretrained(
+        cfg["repo"], torch_dtype=torch.float32, safety_checker=None
+    )
+    p = p.to("cpu")
+    p.enable_attention_slicing()
+    _pipe_state["pipe"] = p
+    _pipe_state["key"] = key
+    print(f"Modelo '{key}' pronto.")
+    sys.stdout.flush()
+    return p
 
-print("✅ Modelo pronto!\n")
-sys.stdout.flush()
 
-class Handler(BaseHTTPRequestHandler):
-    def do_POST(self):
-        if self.path == '/generate':
-            try:
-                # Ler e decodificar requisição
-                content_length = int(self.headers.get('Content-Length', 0))
-                if content_length == 0:
-                    raise ValueError("Content-Length é 0")
+def _prune_old_jobs():
+    done = [j for j in jobs.values() if j["status"] in ("concluído", "erro", "cancelado")]
+    if len(done) > 30:
+        done.sort(key=lambda j: j["created"])
+        for j in done[:-30]:
+            jobs.pop(j["id"], None)
 
-                body = self.rfile.read(content_length).decode('utf-8')
-                data = json.loads(body)
-                prompt = data.get('prompt', 'landscape')
 
-                print(f"🎨 Gerando: {prompt}")
-
-                # Gerar imagem
-                with torch.no_grad():
-                    image = pipe(
-                        prompt,
-                        height=512,
-                        width=512,
-                        num_inference_steps=20,
-                        guidance_scale=7.5
-                    ).images[0]
-
-                # Salvar
-                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                filename = f"armagedon_{timestamp}.png"
-                filepath = os.path.join(IMAGES_DIR, filename)
-                image.save(filepath)
-
-                print(f"✅ Salva: {filepath}\n")
-
-                # Responder
-                response = {
-                    'success': True,
-                    'message': 'Imagem gerada com sucesso',
-                    'filename': filename,
-                    'path': filepath
-                }
-
-                response_json = json.dumps(response)
-                self.send_response(200)
-                self.send_header('Content-Type', 'application/json')
-                self.send_header('Content-Length', str(len(response_json)))
-                self.end_headers()
-                self.wfile.write(response_json.encode('utf-8'))
-
-            except Exception as e:
-                print(f"❌ Erro: {e}\n")
-                response = {'success': False, 'error': str(e)}
-                response_json = json.dumps(response)
-                self.send_response(500)
-                self.send_header('Content-Type', 'application/json')
-                self.send_header('Content-Length', str(len(response_json)))
-                self.end_headers()
-                self.wfile.write(response_json.encode('utf-8'))
-        else:
-            self.send_response(404)
-            self.end_headers()
-
-    def log_message(self, *args):
-        pass
-
-if __name__ == '__main__':
-    print("🌐 http://localhost:5000")
-    print("⏸️  Pronto! Pressione Ctrl+C para parar\n")
-
-    server = HTTPServer(('localhost', 5000), Handler)
+def run_job(job_id, prompt, model_key):
+    job = jobs[job_id]
     try:
-        server.serve_forever()
-    except KeyboardInterrupt:
-        print("\n👋 Parado")
+        cfg = MODELS[model_key]
+        job["message"] = "Na fila..."
+        with gen_lock:
+            if job.get("cancel"):
+                job["status"] = "cancelado"; job["message"] = "Cancelado pelo usuário"; return
+            job["status"] = "gerando"
+            job["message"] = f"Carregando modelo {model_key}..."
+            pipe = get_pipe(model_key)
+            steps = cfg["steps"]
+            job["message"] = "Gerando..."
+
+            def on_step(pipe_ref, step, timestep, cb_kwargs):
+                if job.get("cancel"):
+                    pipe_ref._interrupt = True
+                else:
+                    job["percent"] = int((step + 1) / steps * 100)
+                    job["message"] = f"Step {step + 1}/{steps}"
+                return cb_kwargs
+
+            pipe._interrupt = False
+            with torch.no_grad():
+                out = pipe(
+                    prompt, height=512, width=512,
+                    num_inference_steps=steps, guidance_scale=cfg["guidance"],
+                    callback_on_step_end=on_step,
+                )
+
+        if job.get("cancel"):
+            job["status"] = "cancelado"; job["message"] = "Cancelado pelo usuário"
+            print(f"Job {job_id} cancelado\n"); return
+
+        image = out.images[0]
+        filename = f"armagedon_{datetime.now():%Y%m%d_%H%M%S}.png"
+        image.save(os.path.join(IMAGES_DIR, filename))
+        job.update(status="concluído", percent=100, message="Concluído!",
+                   result={"success": True, "filename": filename})
+        print(f"Job {job_id} salvo: {filename}\n")
+
+    except Exception as e:
+        if job.get("cancel"):
+            job["status"] = "cancelado"; job["message"] = "Cancelado pelo usuário"
+        else:
+            job.update(status="erro", message=str(e),
+                       result={"success": False, "error": str(e)})
+            print(f"Job {job_id} erro: {e}\n")
+
+
+@app.route("/generate", methods=["POST"])
+def generate():
+    data = request.get_json(silent=True) or {}
+    prompt = (data.get("prompt") or "landscape").strip()
+    model_key = "turbo" if data.get("turbo") else "sd15"
+    job_id = str(uuid.uuid4())[:8]
+    with jobs_lock:
+        jobs[job_id] = {
+            "id": job_id, "type": "imagem", "prompt": prompt, "model": model_key,
+            "status": "na fila", "percent": 0, "message": "Na fila",
+            "created": time.time(), "cancel": False, "result": None,
+        }
+        _prune_old_jobs()
+    threading.Thread(target=run_job, args=(job_id, prompt, model_key), daemon=True).start()
+    return jsonify({"job_id": job_id}), 200
+
+
+@app.route("/status/<job_id>", methods=["GET"])
+def status(job_id):
+    job = jobs.get(job_id)
+    if not job:
+        return jsonify({"error": "Job não encontrado"}), 404
+    resp = {k: job[k] for k in ("status", "percent", "message", "prompt", "type", "model")}
+    if job["status"] == "concluído":
+        resp["result"] = job["result"]
+    elif job["status"] in ("erro", "cancelado"):
+        resp["error"] = job["message"]
+    return jsonify(resp), 200
+
+
+@app.route("/jobs", methods=["GET"])
+def list_jobs():
+    now = time.time()
+    out = [{
+        "id": j["id"], "type": j["type"], "prompt": j["prompt"], "model": j.get("model"),
+        "status": j["status"], "percent": j["percent"], "message": j["message"],
+        "elapsed": int(now - j["created"]),
+        "active": j["status"] in ("na fila", "gerando"),
+    } for j in sorted(jobs.values(), key=lambda x: x["created"], reverse=True)]
+    return jsonify({"jobs": out}), 200
+
+
+@app.route("/cancel/<job_id>", methods=["POST"])
+def cancel(job_id):
+    job = jobs.get(job_id)
+    if not job:
+        return jsonify({"error": "Job não encontrado"}), 404
+    job["cancel"] = True
+    if job["status"] in ("na fila",):
+        job["status"] = "cancelado"; job["message"] = "Cancelado pelo usuário"
+    return jsonify({"ok": True}), 200
+
+
+@app.route("/health", methods=["GET"])
+def health():
+    return jsonify({"status": "ok", "model": _pipe_state["key"]}), 200
+
+
+if __name__ == "__main__":
+    print("=" * 50)
+    print("ARMAGEDON - Gerador de Imagens (SD-1.5 + SD-Turbo)")
+    print("=" * 50)
+    get_pipe("sd15")  # pré-carrega o padrão
+    print("http://localhost:5000\n")
+    sys.stdout.flush()
+    app.run(host="localhost", port=5000, debug=False, threaded=True)
