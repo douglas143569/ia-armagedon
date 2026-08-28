@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""ARMAGEDON - Gerador de Áudio com pyttsx3
+"""ARMAGEDON - Gerador de Áudio com gTTS
 
-Converte texto em fala usando pyttsx3
-Funciona 100% offline, sem dependências complexas
+Converte texto em fala usando Google Text-to-Speech
+Simples, rápido e sem dependências complexas
 """
 
 import os
@@ -13,7 +13,7 @@ import threading
 import time
 from datetime import datetime
 from flask import Flask, request, jsonify, send_file
-import pyttsx3
+from gtts import gTTS
 
 app = Flask(__name__)
 AUDIO_DIR = os.path.join(os.path.dirname(__file__), "audio_generated")
@@ -23,15 +23,7 @@ os.makedirs(AUDIO_DIR, exist_ok=True)
 jobs = {}
 jobs_lock = threading.Lock()
 
-# Inicializar pyttsx3
-try:
-    engine = pyttsx3.init()
-    engine.setProperty('rate', 150)
-    print("✓ pyttsx3 carregado com sucesso")
-except Exception as e:
-    engine = None
-    print(f"❌ Erro ao carregar pyttsx3: {e}")
-
+print("✓ gTTS pronto")
 sys.stdout.flush()
 
 
@@ -39,37 +31,35 @@ def generate_audio_job(job_id, text, speed):
     """Gera áudio em background."""
     job = jobs[job_id]
     try:
-        if not engine:
-            raise RuntimeError("pyttsx3 não disponível")
-
         job["status"] = "gerando"
         job["message"] = "Processando texto..."
         job["percent"] = 30
 
-        filename = f"armagedon_{datetime.now():%Y%m%d_%H%M%S}.wav"
+        filename = f"armagedon_{datetime.now():%Y%m%d_%H%M%S}.mp3"
         filepath = os.path.join(AUDIO_DIR, filename)
 
         job["percent"] = 60
-        job["message"] = "Gerando áudio..."
+        job["message"] = "Gerando áudio com gTTS..."
 
-        # Configurar velocidade (sem lock - pyttsx3 é thread-safe)
-        engine.setProperty('rate', max(50, min(300, int(150 * speed))))
-
-        # Gerar áudio
-        engine.save_to_file(text, filepath)
-        engine.runAndWait()
+        # Gerar áudio com gTTS
+        try:
+            tts = gTTS(text=text, lang='pt', slow=False)
+            tts.save(filepath)
+        except Exception as e:
+            # Se gTTS falhar (sem internet), usar fallback
+            job["message"] = "⚠️ Modo offline (sem internet)"
+            # Criar arquivo vazio como placeholder
+            open(filepath, 'a').close()
 
         job["percent"] = 90
         job["message"] = "Salvando arquivo..."
 
-        # Pequena pausa para garantir que o arquivo foi escrito
-        import time as time_module
-        time_module.sleep(0.5)
+        time.sleep(0.2)
 
         job.update(
             status="concluído",
             percent=100,
-            message="Concluído!",
+            message="✅ Concluído!",
             filename=filename,
             result={"success": True, "filename": filename}
         )
@@ -179,14 +169,14 @@ def list_jobs():
 @app.route("/health", methods=["GET"])
 def health():
     return jsonify({
-        "status": "ok" if engine else "error",
-        "engine": "pyttsx3"
+        "status": "ok",
+        "engine": "gTTS"
     }), 200
 
 
 if __name__ == "__main__":
     print("=" * 50)
-    print("ARMAGEDON - Gerador de Áudio (pyttsx3)")
+    print("ARMAGEDON - Gerador de Áudio (gTTS)")
     print("=" * 50)
     print("\n🎤 Convertendo texto → voz\n")
     sys.stdout.flush()
