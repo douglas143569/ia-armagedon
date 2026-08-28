@@ -348,9 +348,8 @@
                 CPU: Ryzen 5 2400G<br>
                 RAM: 16GB (~14GB úteis)<br>
                 GPU: Radeon Vega 11 (CPU only)<br><br>
-                <strong>Status:</strong><br>
-                ✅ Ollama: Conectado<br>
-                ✅ Modelos: Carregados
+                <strong>Status dos serviços:</strong>
+                <div id="svcStatus" style="margin-top:4px;">verificando...</div>
             </div>
         </div>
 
@@ -1180,8 +1179,29 @@
             messageInput.value = '';
         }
 
+        // Status dos serviços no painel lateral
+        async function refreshStatus() {
+            const el = document.getElementById('svcStatus');
+            if (!el) return;
+            const dot = (ok) => `<span style="color:${ok ? '#22c55e' : '#ef4444'};">${ok ? '●' : '○'}</span>`;
+            try {
+                const s = await (await fetch('/api/status')).json();
+                el.innerHTML =
+                    `${dot(s.ollama)} Ollama ${s.ollama_version ? 'v' + s.ollama_version : ''}<br>` +
+                    `${dot(s.cerebro)} Cérebro (RAG/web)<br>` +
+                    `${dot(s.imagem)} Gerador de imagens<br>` +
+                    `${dot(s.video)} Gerador de vídeos<br>` +
+                    (s.modelos_carregados && s.modelos_carregados.length
+                        ? `<span style="color:#64748b;">na RAM: ${s.modelos_carregados.join(', ')}</span>` : '');
+            } catch (e) {
+                el.innerHTML = '<span style="color:#ef4444;">hub sem resposta</span>';
+            }
+        }
+
         window.addEventListener('load', function() {
             newChat();
+            refreshStatus();
+            setInterval(refreshStatus, 5000);
         });
     </script>
 </body>

@@ -78,6 +78,7 @@ Eu (Douglas) só converso com o **ARMAGEDON**, num lugar só (chat/hub — Fase 
   - [ ] Ferramenta de resumo de redes sociais: Instagram, Facebook, LinkedIn (+ outra a confirmar) via API oficial de cada plataforma — **somente leitura/resumo**, sem publicar ou responder automaticamente
 
 ### Fase 2.5 — Interface gráfica personalizada (hub central do computador)
+- [x] **Launcher único + supervisor** (`armagedon.ps1` / `ARMAGEDON.bat`) — sobe os 5 serviços na ordem, espera cada health check, abre o navegador e reinicia sozinho o que cair (checa a cada 15s). Flags `-Stop`, `-WithVideo`, `-Once`, `-NoBrowser`. Status ao vivo no painel lateral (`GET /api/status`). Logs em `logs/`. Ver `INICIAR.md`. Falta: entrada no Agendador de Tarefas p/ subir no logon (instruções no `INICIAR.md`).
 - [ ] Decidir stack de empacotamento: **Tauri** (recomendado — leve, frontend em HTML/CSS/JS) ou Electron (100% JS, mais pesado)
 - [ ] Frontend de chat consumindo a API local do Ollama diretamente (HTTP)
 - [ ] Painel de status: voz ativa, automação residencial, últimas ações do ARMAGEDON

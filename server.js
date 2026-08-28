@@ -58,6 +58,29 @@ const server = http.createServer(async (req, res) => {
         return;
     }
 
+    // Status de todos os serviços (pro painel lateral da interface)
+    if (req.url === '/api/status' && req.method === 'GET') {
+        const [ver, ps, brain, image, video] = await Promise.all([
+            getJson(11434, '/api/version'),
+            getJson(11434, '/api/ps'),
+            getJson(5002, '/health'),
+            getJson(5000, '/health'),
+            getJson(5001, '/health'),
+        ]);
+        const loaded = (ps && ps.models || []).map(m => m.name);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+            hub: true,
+            ollama: !!ver,
+            ollama_version: ver && ver.version || null,
+            modelos_carregados: loaded,
+            cerebro: !!brain,
+            imagem: !!image,
+            video: !!video,
+        }));
+        return;
+    }
+
     // Lista unificada de processos (imagem + vídeo)
     if (req.url === '/api/processes' && req.method === 'GET') {
         const [img, vid] = await Promise.all([
