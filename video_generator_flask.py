@@ -66,13 +66,16 @@ def get_pipe(key):
     print(f"Carregando modelo '{key}' ({cfg['repo']})...")
     sys.stdout.flush()
     p = StableDiffusionPipeline.from_pretrained(
-        cfg["repo"], torch_dtype=torch.float16, safety_checker=None
+        cfg["repo"], torch_dtype=torch.float32, safety_checker=None
     ).to("cpu")
     p.enable_attention_slicing()
-    p.enable_memory_efficient_attention()
+    try:
+        p.enable_xformers_memory_efficient_attention()
+    except:
+        pass
     p = quantize_model(p)
     _pipe_state.update(pipe=p, i2i=None, key=key)
-    print(f"Modelo '{key}' pronto (float16 + quantização INT8).")
+    print(f"Modelo '{key}' pronto (quantização INT8 + attention slicing).")
     sys.stdout.flush()
     return p
 
