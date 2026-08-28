@@ -47,11 +47,12 @@ def get_pipe(key):
     print(f"Carregando modelo '{key}' ({cfg['repo']})...")
     sys.stdout.flush()
     p = StableDiffusionPipeline.from_pretrained(
-        cfg["repo"], torch_dtype=torch.float32, safety_checker=None
+        cfg["repo"], torch_dtype=torch.float16, safety_checker=None
     ).to("cpu")
     p.enable_attention_slicing()
+    p.enable_memory_efficient_attention()
     _pipe_state.update(pipe=p, i2i=None, key=key)
-    print(f"Modelo '{key}' pronto.")
+    print(f"Modelo '{key}' pronto (float16, otimizado para CPU).")
     sys.stdout.flush()
     return p
 
@@ -72,7 +73,7 @@ def _prune_old_jobs():
 
 
 def ken_burns_frames(base, n, out_size):
-    """Gera n frames aplicando zoom-in + pan suave sobre a imagem base."""
+    """Gera n frames aplicando zoom-in + pan suave sobre a imagem base (otimizado)."""
     W, H = base.size
     frames = []
     for i in range(n):
@@ -81,7 +82,7 @@ def ken_burns_frames(base, n, out_size):
         cw, ch = int(W / zoom), int(H / zoom)
         x = int((W - cw) * (0.15 + 0.70 * t))
         y = int((H - ch) * (0.10 + 0.55 * t))
-        frame = base.crop((x, y, x + cw, y + ch)).resize((out_size, out_size), Image.LANCZOS)
+        frame = base.crop((x, y, x + cw, y + ch)).resize((out_size, out_size), Image.FAST)
         frames.append(frame)
     return frames
 
@@ -197,8 +198,8 @@ def generate():
         prompt = (data.get("prompt") or "landscape").strip()
         duration = max(1, int(data.get("duration", 4)))
         fps = max(1, int(data.get("fps", 6)))
-        model_key = "turbo" if data.get("turbo") else "sd15"
-        mode = data.get("mode") if data.get("mode") in ("frames", "camera", "evolucao") else "frames"
+        model_key = "sd15" if data.get("turbo") is False else "turbo"
+        mode = data.get("mode") if data.get("mode") in ("frames", "camera", "evolucao") else "camera"
         size = 384 if int(data.get("size", 512)) <= 384 else 512
         steps = data.get("steps")
         steps = max(1, min(30, int(steps))) if steps else None
