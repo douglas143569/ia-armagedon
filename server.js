@@ -8,7 +8,7 @@ const url = require('url');
 
 const PORT = 3000;
 const OLLAMA_URL = 'http://localhost:11434';
-const GEN_PORTS = { imagem: 5000, 'vídeo': 5001 };
+const GEN_PORTS = { imagem: 5000, 'vídeo': 5001, 'áudio': 5002 };
 
 // GET JSON de um gerador local; resolve com null se estiver offline
 function getJson(port, path) {
@@ -245,6 +245,99 @@ const server = http.createServer(async (req, res) => {
             ollamaReq.write(body);
             ollamaReq.end();
         });
+        return;
+    }
+
+    // Proxy para gerador de voz (TTS)
+    if (req.url === '/api/generate-voice' && req.method === 'POST') {
+        let body = '';
+        req.on('data', chunk => body += chunk);
+        req.on('error', (err) => {
+            res.writeHead(400);
+            res.end(JSON.stringify({ error: 'Erro ao ler requisição' }));
+        });
+        req.on('end', () => {
+            if (!body) {
+                res.writeHead(400);
+                res.end(JSON.stringify({ error: 'Body vazio' }));
+                return;
+            }
+            const voiceReq = http.request(
+                'http://localhost:5002/generate',
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Content-Length': Buffer.byteLength(body)
+                    },
+                    timeout: 300000
+                },
+                (voiceRes) => {
+                    let responseData = '';
+                    voiceRes.on('data', chunk => { responseData += chunk; });
+                    voiceRes.on('end', () => {
+                        res.writeHead(voiceRes.statusCode || 200, { 'Content-Type': 'application/json' });
+                        res.end(responseData || JSON.stringify({ error: 'Vazio' }));
+                    });
+                }
+            );
+            voiceReq.on('error', (err) => {
+                res.writeHead(503);
+                res.end(JSON.stringify({ error: 'Gerador de voz offline: ' + err.message }));
+            });
+            voiceReq.on('timeout', () => {
+                voiceReq.destroy();
+                res.writeHead(504);
+                res.end(JSON.stringify({ error: 'Timeout' }));
+            });
+            voiceReq.write(body);
+            voiceReq.end();
+        });
+        return;
+    }
+
+    if (req.url.startsWith('/api/voice-status/') && req.method === 'GET') {
+        const jobId = req.url.split('/').pop();
+        const voiceReq = http.request(
+            `http://localhost:5002/status/${jobId}`,
+            { method: 'GET', timeout: 30000 },
+            (voiceRes) => {
+                let data = '';
+                voiceRes.on('data', chunk => data += chunk);
+                voiceRes.on('end', () => {
+                    res.writeHead(voiceRes.statusCode, { 'Content-Type': 'application/json' });
+                    res.end(data);
+                });
+            }
+        );
+        voiceReq.on('error', () => {
+            res.writeHead(503);
+            res.end(JSON.stringify({ error: 'Servidor offline' }));
+        });
+        voiceReq.end();
+        return;
+    }
+
+    if (req.url.startsWith('/api/download-voice/') && req.method === 'GET') {
+        const jobId = req.url.split('/').pop();
+        const voiceReq = http.request(
+            `http://localhost:5002/download/${jobId}`,
+            { method: 'GET', timeout: 30000 },
+            (voiceRes) => {
+                if (voiceRes.statusCode === 200) {
+                    res.writeHead(200, voiceRes.headers);
+                    voiceRes.pipe(res);
+                } else {
+                    res.writeHead(voiceRes.statusCode);
+                    res.end('Arquivo não encontrado');
+                }
+            }
+        );
+        voiceReq.on('error', () => {
+            res.writeHead(503);
+            res.end('Erro ao baixar');
+        });
+        voiceReq.end();
         return;
     }
 
