@@ -302,10 +302,71 @@ def config():
             "preloaded": _pipe_state["key"] is not None
         },
         "performance": {
-            "expected_time_per_video": "2-3 minutes",
-            "speedup": "3.5x faster than baseline"
+            "expected_time_per_video": "1-1.5 minutes",
+            "speedup": "5-7x faster than baseline"
+        },
+        "limits": {
+            "max_fps": 30,
+            "max_duration": 30,
+            "min_duration": 1,
+            "sizes": [384, 512]
         }
     }), 200
+
+
+def estimate_time(duration, fps, mode, model):
+    """Estima tempo de geração baseado nos parâmetros."""
+    times = {
+        "camera": {"turbo": 30, "sd15": 90},
+        "frames": {"turbo": 60, "sd15": 180},
+        "evolucao": {"turbo": 80, "sd15": 240}
+    }
+    base_time = times.get(mode, {}).get(model, 60)
+    model_multiplier = 1.0 if model == "turbo" else 2.0
+    generation_time = base_time * model_multiplier
+    return int(generation_time)
+
+
+@app.route("/estimate", methods=["POST"])
+def estimate():
+    """Calcula tempo estimado de geração."""
+    try:
+        data = request.get_json(silent=True) or {}
+        duration = max(1, min(30, int(data.get("duration", 4))))
+        fps = max(1, min(30, int(data.get("fps", 6))))
+        model_key = "sd15" if data.get("turbo") is False else "turbo"
+        mode = data.get("mode") if data.get("mode") in ("frames", "camera", "evolucao") else "camera"
+        size = 384 if int(data.get("size", 512)) <= 384 else 512
+
+        est_time = estimate_time(duration, fps, mode, model_key)
+        num_frames = max(2, duration * fps // 2) if mode != "camera" else 1
+
+        return jsonify({
+            "estimated_seconds": est_time,
+            "estimated_minutes": round(est_time / 60, 1),
+            "frames": num_frames if mode != "camera" else 1,
+            "total_pixels": size * size * num_frames,
+            "configuration": {
+                "duration": duration,
+                "fps": fps,
+                "model": model_key,
+                "mode": mode,
+                "size": size
+            }
+        }), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+
+@app.route("/ui", methods=["GET"])
+def serve_ui():
+    """Serve a interface de controle."""
+    try:
+        ui_path = os.path.join(os.path.dirname(__file__), "video_control_ui.html")
+        with open(ui_path, 'r', encoding='utf-8') as f:
+            return f.read(), 200, {'Content-Type': 'text/html; charset=utf-8'}
+    except:
+        return "<h1>Interface não encontrada</h1>", 404
 
 
 if __name__ == "__main__":
@@ -316,6 +377,8 @@ if __name__ == "__main__":
     get_pipe("turbo")
     print("✓ Pronto!\n")
     sys.stdout.flush()
-    print("http://localhost:5001\n")
+    print("🌐 Interface Web: http://localhost:5001/ui")
+    print("📡 API REST: http://localhost:5001")
+    print("=" * 50 + "\n")
     sys.stdout.flush()
     app.run(host="localhost", port=5001, debug=False, threaded=True)
