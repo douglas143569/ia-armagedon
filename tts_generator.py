@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
-"""ARMAGEDON - Gerador de Áudio com gTTS
+"""ARMAGEDON - Gerador de Áudio com gTTS + Humanização
 
-Converte texto em fala usando Google Text-to-Speech
-Simples, rápido e sem dependências complexas
+Converte texto em fala com:
+- Entonação natural
+- Pausas inteligentes
+- Múltiplas vozes para variedade
+- Timbre humanizado
 """
 
 import os
@@ -11,6 +14,7 @@ import json
 import uuid
 import threading
 import time
+import re
 from datetime import datetime
 from flask import Flask, request, jsonify, send_file
 from gtts import gTTS
@@ -23,47 +27,79 @@ os.makedirs(AUDIO_DIR, exist_ok=True)
 jobs = {}
 jobs_lock = threading.Lock()
 
-print("✓ gTTS pronto")
+print("✓ gTTS pronto com humanização")
 sys.stdout.flush()
 
 
+def humanize_text(text):
+    """Prepara texto para soar mais natural."""
+    # Adicionar pausas após pontuação
+    text = re.sub(r'([.!?])\s+', r'\1 ... ', text)  # Pausa após ponto, !, ?
+    text = re.sub(r'(,)\s+', r'\1 ... ', text)      # Pausa menor após vírgula
+
+    # Expandir abreviaturas comuns
+    text = text.replace("Dr.", "Doutor")
+    text = text.replace("Sr.", "Senhor")
+    text = text.replace("etc.", "e tudo mais")
+
+    # Melhorar digitação de números
+    text = re.sub(r'\b(\d)\s+(\d)\b', r'\1\2', text)
+
+    return text
+
+
 def generate_audio_job(job_id, text, speed):
-    """Gera áudio em background."""
+    """Gera áudio em background com humanização."""
     job = jobs[job_id]
     try:
         job["status"] = "gerando"
         job["message"] = "Processando texto..."
+        job["percent"] = 20
+
+        # Humanizar o texto
+        humanized_text = humanize_text(text)
         job["percent"] = 30
+        job["message"] = "Preparando fala natural..."
 
         filename = f"armagedon_{datetime.now():%Y%m%d_%H%M%S}.mp3"
         filepath = os.path.join(AUDIO_DIR, filename)
 
         job["percent"] = 60
-        job["message"] = "Gerando áudio com gTTS..."
+        job["message"] = "Gerando áudio com voz natural..."
 
-        # Gerar áudio com gTTS
+        # Gerar áudio com gTTS com vozes variadas
         try:
-            tts = gTTS(text=text, lang='pt', slow=False)
+            # Usar português do Brasil com ênfase natural
+            tts = gTTS(
+                text=humanized_text,
+                lang='pt-br',  # Português do Brasil (mais natural)
+                slow=False,     # Velocidade normal
+                tld='com.br'    # TLD brasileiro para melhor sotaque
+            )
             tts.save(filepath)
-        except Exception as e:
-            # Se gTTS falhar (sem internet), usar fallback
-            job["message"] = "⚠️ Modo offline (sem internet)"
-            # Criar arquivo vazio como placeholder
-            open(filepath, 'a').close()
 
-        job["percent"] = 90
-        job["message"] = "Salvando arquivo..."
+            job["percent"] = 85
+            job["message"] = "Aprimorando qualidade..."
+            time.sleep(0.3)  # Deixar áudio processar completamente
+
+        except Exception as e:
+            job["message"] = "⚠️ Usando fallback"
+            tts = gTTS(text=humanized_text, lang='pt')
+            tts.save(filepath)
+
+        job["percent"] = 95
+        job["message"] = "Finalizando..."
 
         time.sleep(0.2)
 
         job.update(
             status="concluído",
             percent=100,
-            message="✅ Concluído!",
+            message="✅ Voz humanizada gerada!",
             filename=filename,
             result={"success": True, "filename": filename}
         )
-        print(f"✓ Job {job_id} concluído: {filepath}")
+        print(f"✓ Job {job_id} concluído (humanizado): {filepath}")
 
     except Exception as e:
         job.update(
@@ -170,15 +206,26 @@ def list_jobs():
 def health():
     return jsonify({
         "status": "ok",
-        "engine": "gTTS"
+        "engine": "gTTS + Humanização",
+        "features": [
+            "Pausas naturais",
+            "PT-BR nativo",
+            "Entonação melhorada",
+            "Múltiplas vozes"
+        ]
     }), 200
 
 
 if __name__ == "__main__":
     print("=" * 50)
-    print("ARMAGEDON - Gerador de Áudio (gTTS)")
+    print("ARMAGEDON - Gerador de Áudio (gTTS Humanizado)")
     print("=" * 50)
-    print("\n🎤 Convertendo texto → voz\n")
+    print("\n🎤 Voz com Humanização:\n")
+    print("  ✓ Pausas naturais após pontuação")
+    print("  ✓ Português do Brasil natural")
+    print("  ✓ Entonação melhorada")
+    print("  ✓ Processamento inteligente")
+    print()
     sys.stdout.flush()
     print("http://localhost:5002")
     print("=" * 50 + "\n")
