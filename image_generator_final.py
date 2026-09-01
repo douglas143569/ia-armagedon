@@ -29,14 +29,17 @@ MODELS = {
     "turbo": {"repo": "stabilityai/sd-turbo",           "steps": 4,  "guidance": 0.0},
 }
 
+IDLE_UNLOAD_SEC = int(os.environ.get("SD_IDLE_UNLOAD_SEC", "600"))  # solta o modelo da RAM após 10 min ocioso
+
 jobs = {}
 jobs_lock = threading.Lock()      # protege o dict jobs
 gen_lock = threading.Lock()       # serializa geração: 1 por vez (é a "fila")
-_pipe_state = {"key": None, "pipe": None}
+_pipe_state = {"key": None, "pipe": None, "last_used": time.time()}
 
 
 def get_pipe(key):
-    """Retorna o pipeline do modelo pedido, recarregando se for outro."""
+    """Retorna o pipeline do modelo pedido, recarregando se for outro (ou se foi descarregado)."""
+    _pipe_state["last_used"] = time.time()
     if _pipe_state["key"] == key and _pipe_state["pipe"] is not None:
         return _pipe_state["pipe"]
     if _pipe_state["pipe"] is not None:
@@ -53,9 +56,28 @@ def get_pipe(key):
     p.enable_attention_slicing()
     _pipe_state["pipe"] = p
     _pipe_state["key"] = key
+    _pipe_state["last_used"] = time.time()
     print(f"Modelo '{key}' pronto.")
     sys.stdout.flush()
     return p
+
+
+def _idle_watchdog():
+    """Descarrega o Stable Diffusion da RAM quando ficar IDLE_UNLOAD_SEC sem uso."""
+    while True:
+        time.sleep(60)
+        if _pipe_state["pipe"] is None:
+            continue
+        if gen_lock.locked():                    # tem geração rodando
+            _pipe_state["last_used"] = time.time()
+            continue
+        ocioso = time.time() - _pipe_state["last_used"]
+        if ocioso >= IDLE_UNLOAD_SEC:
+            print(f"[idle {int(ocioso)}s] descarregando modelo '{_pipe_state['key']}' da RAM")
+            _pipe_state["pipe"] = None
+            _pipe_state["key"] = None
+            gc.collect()
+            sys.stdout.flush()
 
 
 def _prune_old_jobs():
@@ -103,6 +125,7 @@ def run_job(job_id, prompt, model_key):
         image = out.images[0]
         filename = f"armagedon_{datetime.now():%Y%m%d_%H%M%S}.png"
         image.save(os.path.join(IMAGES_DIR, filename))
+        _pipe_state["last_used"] = time.time()
         job.update(status="concluído", percent=100, message="Concluído!",
                    result={"success": True, "filename": filename})
         print(f"Job {job_id} salvo: {filename}\n")
@@ -171,14 +194,17 @@ def cancel(job_id):
 
 @app.route("/health", methods=["GET"])
 def health():
-    return jsonify({"status": "ok", "model": _pipe_state["key"]}), 200
+    return jsonify({"status": "ok", "model": _pipe_state["key"],
+                    "carregado": _pipe_state["pipe"] is not None,
+                    "ocioso_s": int(time.time() - _pipe_state["last_used"])}), 200
 
 
 if __name__ == "__main__":
     print("=" * 50)
     print("ARMAGEDON - Gerador de Imagens (SD-1.5 + SD-Turbo)")
     print("=" * 50)
-    get_pipe("sd15")  # pré-carrega o padrão
+    print(f"modelo carrega sob demanda; solta da RAM após {IDLE_UNLOAD_SEC}s ocioso")
+    threading.Thread(target=_idle_watchdog, daemon=True).start()
     print("http://localhost:5000\n")
     sys.stdout.flush()
     app.run(host="localhost", port=5000, debug=False, threaded=True)

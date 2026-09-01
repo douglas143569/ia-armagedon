@@ -30,6 +30,12 @@ function Log($msg) {
     Add-Content -Path $MainLog -Value $line
 }
 
+# --- economia de RAM ------------------------------------------------------
+# modelos saem da RAM 2 min apos o ultimo uso; no maximo 2 carregados (embed + 1 chat)
+$env:OLLAMA_KEEP_ALIVE = "2m"
+$env:OLLAMA_MAX_LOADED_MODELS = "2"
+$env:SD_IDLE_UNLOAD_SEC = "600"   # gerador de imagem/video solta o Stable Diffusion apos 10 min ocioso
+
 # --- definicao dos servicos -------------------------------------------------
 $Services = @(
     @{ Name = "ollama"; Port = 11434; Health = "http://localhost:11434/api/version";
