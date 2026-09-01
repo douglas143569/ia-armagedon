@@ -45,3 +45,8 @@ finetune/out/
 
 # Launcher/supervisor: logs e status em runtime
 logs/
+
+# gpu-video: venv e saídas (rodam no pod alugado, não versionar)
+gpu-video/venv/
+gpu-video/videos_out/
+gpu-video/__pycache__/

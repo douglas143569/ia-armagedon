@@ -115,8 +115,9 @@ Eu (Douglas) só converso com o **ARMAGEDON**, num lugar só (chat/hub — Fase 
 Node.js 24.19 e Ollama 0.33.1 instalados via winget. Modelos Ollama: `qwen2.5:7b`, `dolphin-llama3`, `armagedon` (do Modelfile) — todos testados OK.
 
 ### Fase 5 — Geração de vídeo
-- [ ] Decidir caminho: comprar GPU vs. alugar GPU na nuvem por hora
-- [ ] Avaliar modelos abertos disponíveis no momento (CogVideoX, HunyuanVideo, LTX-Video, ou o que for atual)
+- [x] Decidir caminho: **alugar GPU por hora** (RunPod/Vast) — comprar GPU discreta não compensa pro uso pontual
+- [x] Avaliar modelos abertos — presets em `gpu-video/config.yaml` e `gpu-video/models.md`: LTX-Video (rápido/barato, 12-24 GB), CogVideoX-5b-I2V, Wan 2.1 I2V 14B (40-48 GB), HunyuanVideo I2V (48-80 GB)
+- [x] **Kit pronto pra GPU alugada** (`gpu-video/`): `setup.sh` (prepara o pod), `pipeline.py` (gera clipes de ~5 s e emenda pelo último frame até `target_seconds`, interpola/upscale/áudio via ffmpeg), `server.py` (API igual à do gerador local, porta 5001), `README-GPU.md` (runbook). O hub aponta pra GPU com `ARMAGEDON_VIDEO_URL=http://pod:5001`. **Escrito sem GPU pra testar** — 1ª execução no pod pode exigir ajuste de versão em `build_pipe()`.
 
 **Solução provisória em CPU (`video_generator_flask.py`, porta 5001)** — GIF, não vídeo real. 3 modos, medidos nesta máquina:
 | Modo | Como funciona | Tempo (2s @ 8fps, Turbo, 384px) |

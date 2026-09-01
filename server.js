@@ -10,6 +10,9 @@ const { execFile } = require('child_process');
 
 const PORT = 3000;
 const OLLAMA_URL = 'http://localhost:11434';
+// Gerador de vídeo: local por padrão; aponte pra GPU alugada com ARMAGEDON_VIDEO_URL
+// (ex: ARMAGEDON_VIDEO_URL=http://SEU_POD:5001). Ver gpu-video/README-GPU.md
+const VIDEO_URL = (process.env.ARMAGEDON_VIDEO_URL || 'http://localhost:5001').replace(/\/$/, '');
 const GEN_PORTS = { imagem: 5000, 'vídeo': 5001 };
 
 // --- Amostragem de GPU (Windows perf counters), com cache pra não pesar ------
@@ -42,10 +45,12 @@ function getGpu() {
     });
 }
 
-// GET JSON de um gerador local; resolve com null se estiver offline
-function getJson(port, path) {
+const _vu = new URL(VIDEO_URL);
+
+// GET JSON de um serviço; resolve com null se estiver offline
+function getJson(port, path, host = 'localhost') {
     return new Promise((resolve) => {
-        const r = http.request({ host: 'localhost', port, path, method: 'GET', timeout: 5000 }, (resp) => {
+        const r = http.request({ host, port, path, method: 'GET', timeout: 5000 }, (resp) => {
             let d = '';
             resp.on('data', c => d += c);
             resp.on('end', () => { try { resolve(JSON.parse(d)); } catch { resolve(null); } });
@@ -117,7 +122,7 @@ const server = http.createServer(async (req, res) => {
             getJson(11434, '/api/ps'),
             getJson(5002, '/health'),
             getJson(5000, '/health'),
-            getJson(5001, '/health'),
+            getJson(_vu.port || 5001, '/health', _vu.hostname),
         ]);
         const loaded = (ps && ps.models || []).map(m => m.name);
         res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -137,7 +142,7 @@ const server = http.createServer(async (req, res) => {
     if (req.url === '/api/processes' && req.method === 'GET') {
         const [img, vid] = await Promise.all([
             getJson(5000, '/jobs'),
-            getJson(5001, '/jobs'),
+            getJson(_vu.port || 5001, '/jobs', _vu.hostname),
         ]);
         const out = {
             servers: { imagem: img !== null, 'vídeo': vid !== null },
@@ -164,8 +169,10 @@ const server = http.createServer(async (req, res) => {
                 res.end(JSON.stringify({ error: 'server ou job_id inválido' }));
                 return;
             }
+            const host = parsed.server === 'vídeo' ? _vu.hostname : 'localhost';
+            const cPort = parsed.server === 'vídeo' ? (_vu.port || 5001) : port;
             const cReq = http.request(
-                { host: 'localhost', port, path: `/cancel/${parsed.job_id}`, method: 'POST', timeout: 10000 },
+                { host, port: cPort, path: `/cancel/${parsed.job_id}`, method: 'POST', timeout: 10000 },
                 (cRes) => {
                     let d = '';
                     cRes.on('data', c => d += c);
@@ -207,7 +214,7 @@ const server = http.createServer(async (req, res) => {
     if (req.url.startsWith('/api/video-status/') && req.method === 'GET') {
         const jobId = req.url.split('/').pop();
         const videoReq = http.request(
-            `http://localhost:5001/status/${jobId}`,
+            `${VIDEO_URL}/status/${jobId}`,
             { method: 'GET', timeout: 30000 },
             (videoRes) => {
                 let data = '';
@@ -241,7 +248,7 @@ const server = http.createServer(async (req, res) => {
                 return;
             }
             const videoReq = http.request(
-                'http://localhost:5001/generate',
+                `${VIDEO_URL}/generate`,
                 {
                     method: 'POST',
                     headers: {

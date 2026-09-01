@@ -1,0 +1,15 @@
+# Instalar DEPOIS do torch com CUDA (o setup.sh faz na ordem certa).
+diffusers>=0.32
+transformers>=4.46
+accelerate>=1.1
+safetensors
+sentencepiece
+ftfy
+imageio
+imageio-ffmpeg
+opencv-python-headless
+pyyaml
+flask
+# opcional (upscale) — descomente se for usar:
+# realesrgan
+# basicsr
