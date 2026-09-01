@@ -33,7 +33,7 @@ function Log($msg) {
 # --- definicao dos servicos -------------------------------------------------
 $Services = @(
     @{ Name = "ollama"; Port = 11434; Health = "http://localhost:11434/api/version";
-       Match = "ollama"; StartupSec = 20; Auto = $true
+       Match = "ollama"; StartupSec = 25; Auto = $true; NoKill = $true
        Start = { Start-Process "ollama" -ArgumentList "serve" -WindowStyle Hidden } }
 
     @{ Name = "cerebro"; Port = 5002; Health = "http://localhost:5002/health";
@@ -61,15 +61,20 @@ $Services = @(
                     -RedirectStandardError  (Join-Path $LogDir "video.err.log") } }
 )
 
-function Test-Svc($svc) {
-    try {
-        $r = Invoke-WebRequest -Uri $svc.Health -UseBasicParsing -TimeoutSec 3
-        return ($r.StatusCode -ge 200 -and $r.StatusCode -lt 500)
-    } catch { return $false }
+function Test-Svc($svc, $tries = 1) {
+    for ($i = 0; $i -lt $tries; $i++) {
+        try {
+            $r = Invoke-WebRequest -Uri $svc.Health -UseBasicParsing -TimeoutSec 6
+            if ($r.StatusCode -ge 200 -and $r.StatusCode -lt 500) { return $true }
+        } catch {}
+        if ($i -lt $tries - 1) { Start-Sleep -Seconds 3 }
+    }
+    return $false
 }
 
 function Kill-Svc($svc) {
-    Get-CimInstance Win32_Process -Filter "Name='python.exe' OR Name='node.exe' OR Name='ollama.exe'" |
+    if ($svc.NoKill) { return }   # Ollama é serviço de sistema — nunca matar
+    Get-CimInstance Win32_Process -Filter "Name='python.exe' OR Name='node.exe'" |
         Where-Object { $_.CommandLine -match $svc.Match } |
         ForEach-Object { Stop-Process -Id $_.ProcessId -Force; Log "  matei PID $($_.ProcessId) ($($svc.Name))" }
 }
@@ -116,18 +121,25 @@ if ($Once) {
 }
 
 # --- supervisor --------------------------------------------------------------
-Log "Supervisor ativo. Verifica a cada 15s e reinicia o que cair. Ctrl+C para parar (os servicos continuam)."
+Log "Supervisor ativo. Verifica a cada 20s e reinicia o que cair. Ctrl+C para parar (os servicos continuam)."
 $lastRestart = @{}
 while ($true) {
-    Start-Sleep -Seconds 15
+    Start-Sleep -Seconds 20
     foreach ($s in $Services) {
         if (-not $s.Auto) { continue }
         if (Test-Svc $s) { continue }
+        # 3 tentativas ao longo de ~9s antes de dar como caido (evita falso-positivo com CPU cheia)
+        if (Test-Svc $s 3) { continue }
         $prev = $lastRestart[$s.Name]
-        if ($prev -and ((Get-Date) - $prev).TotalSeconds -lt 60) { continue }  # backoff
-        Log "$($s.Name): CAIU - reiniciando"
-        Kill-Svc $s
-        & $s.Start
+        if ($prev -and ((Get-Date) - $prev).TotalSeconds -lt 90) { continue }  # backoff
+        if ($s.NoKill) {
+            Log "$($s.Name): sem resposta - tentando iniciar (sem matar)"
+            & $s.Start
+        } else {
+            Log "$($s.Name): CAIU - reiniciando"
+            Kill-Svc $s
+            & $s.Start
+        }
         $lastRestart[$s.Name] = Get-Date
     }
     Write-Status
