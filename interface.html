@@ -350,6 +350,9 @@
                 GPU: Radeon Vega 11 (CPU only)<br><br>
                 <strong>Status dos serviços:</strong>
                 <div id="svcStatus" style="margin-top:4px;">verificando...</div>
+
+                <strong style="display:block; margin-top:10px;">Recursos:</strong>
+                <div id="metrics" style="margin-top:4px;">...</div>
             </div>
         </div>
 
@@ -1198,10 +1201,41 @@
             }
         }
 
+        // Uso de RAM / GPU no painel lateral
+        function bar(pct, color) {
+            const p = Math.max(0, Math.min(100, pct));
+            return `<div style="background:#1e293b; border-radius:4px; height:7px; overflow:hidden; margin:2px 0 4px;">
+                <div style="width:${p}%; height:100%; background:${color};"></div></div>`;
+        }
+        async function refreshMetrics() {
+            const el = document.getElementById('metrics');
+            if (!el) return;
+            try {
+                const m = await (await fetch('/api/metrics')).json();
+                const r = m.ram;
+                const ramColor = r.pct >= 90 ? '#ef4444' : r.pct >= 75 ? '#f59e0b' : '#22c55e';
+                let html = `RAM ${r.usada_gb} / ${r.total_gb} GB (${r.pct}%)` + bar(r.pct, ramColor);
+                if (m.modelos_ollama_gb > 0)
+                    html += `<span style="color:#64748b;">modelos no Ollama: ${m.modelos_ollama_gb} GB</span><br>`;
+                if (m.gpu) {
+                    const g = m.gpu;
+                    html += `GPU ${g.util_pct}% · vídeo-mem ${g.mem_dedicada_mb + g.mem_compartilhada_mb} MB`
+                        + bar(g.util_pct, '#38bdf8');
+                } else {
+                    html += `<span style="color:#64748b;">GPU: sem leitura</span>`;
+                }
+                el.innerHTML = html;
+            } catch (e) {
+                el.innerHTML = '<span style="color:#ef4444;">sem leitura</span>';
+            }
+        }
+
         window.addEventListener('load', function() {
             newChat();
             refreshStatus();
+            refreshMetrics();
             setInterval(refreshStatus, 5000);
+            setInterval(refreshMetrics, 5000);
         });
     </script>
 </body>

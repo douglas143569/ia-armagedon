@@ -5,10 +5,42 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const url = require('url');
+const os = require('os');
+const { execFile } = require('child_process');
 
 const PORT = 3000;
 const OLLAMA_URL = 'http://localhost:11434';
 const GEN_PORTS = { imagem: 5000, 'vídeo': 5001 };
+
+// --- Amostragem de GPU (Windows perf counters), com cache pra não pesar ------
+let _gpuCache = { ts: 0, data: null };
+// saída: "<util>;<dedicada_MB>;<compartilhada_MB>" com ponto decimal (cultura invariante)
+const GPU_PS = "$ci=[Globalization.CultureInfo]::InvariantCulture;" +
+    "$eu=[double](((Get-Counter '\\GPU Engine(*)\\Utilization Percentage' -EA SilentlyContinue).CounterSamples|Measure-Object CookedValue -Sum).Sum);" +
+    "$d=[double](((Get-Counter '\\GPU Adapter Memory(*)\\Dedicated Usage' -EA SilentlyContinue).CounterSamples|Measure-Object CookedValue -Sum).Sum);" +
+    "$s=[double](((Get-Counter '\\GPU Adapter Memory(*)\\Shared Usage' -EA SilentlyContinue).CounterSamples|Measure-Object CookedValue -Sum).Sum);" +
+    "$eu.ToString('F1',$ci)+';'+($d/1MB).ToString('F0',$ci)+';'+($s/1MB).ToString('F0',$ci)";
+
+const num = (x) => { const n = Number(x); return Number.isFinite(n) ? n : 0; };
+
+function getGpu() {
+    return new Promise((resolve) => {
+        if (process.platform !== 'win32') return resolve(null);
+        if (Date.now() - _gpuCache.ts < 4500) return resolve(_gpuCache.data);
+        execFile('powershell', ['-NoProfile', '-NonInteractive', '-Command', GPU_PS],
+            { timeout: 8000, windowsHide: true }, (err, stdout) => {
+                if (err || !stdout) { _gpuCache = { ts: Date.now(), data: null }; return resolve(null); }
+                const [util, ded, shr] = stdout.trim().split(';');
+                const data = {
+                    util_pct: Math.round(num(util) * 10) / 10,
+                    mem_dedicada_mb: num(ded),
+                    mem_compartilhada_mb: num(shr),
+                };
+                _gpuCache = { ts: Date.now(), data };
+                resolve(data);
+            });
+    });
+}
 
 // GET JSON de um gerador local; resolve com null se estiver offline
 function getJson(port, path) {
@@ -55,6 +87,26 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'OPTIONS') {
         res.writeHead(200);
         res.end();
+        return;
+    }
+
+    // Métricas: RAM do sistema + GPU + tamanho dos modelos no Ollama
+    if (req.url === '/api/metrics' && req.method === 'GET') {
+        const totalB = os.totalmem(), freeB = os.freemem();
+        const usedB = totalB - freeB;
+        const [gpu, ps] = await Promise.all([getGpu(), getJson(11434, '/api/ps')]);
+        const modelosB = (ps && ps.models || []).reduce((a, m) => a + (m.size || 0), 0);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+            ram: {
+                total_gb: +(totalB / 1073741824).toFixed(1),
+                usada_gb: +(usedB / 1073741824).toFixed(1),
+                livre_gb: +(freeB / 1073741824).toFixed(1),
+                pct: Math.round(usedB / totalB * 100),
+            },
+            modelos_ollama_gb: +(modelosB / 1073741824).toFixed(1),
+            gpu: gpu,   // pode ser null (não-Windows ou contador indisponível)
+        }));
         return;
     }
 
