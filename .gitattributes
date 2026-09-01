@@ -1,0 +1,5 @@
+# Scripts que rodam em Linux (pod de GPU) precisam de LF, nunca CRLF
+*.sh text eol=lf
+gpu-video/*.py text eol=lf
+gpu-video/*.sh text eol=lf
+gpu-video/*.yaml text eol=lf
