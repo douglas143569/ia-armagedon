@@ -42,3 +42,5 @@ PARAMETER temperature 0.7
 PARAMETER top_k 40
 PARAMETER top_p 0.9
 PARAMETER repeat_penalty 1.1
+# contexto maior p/ caber histórico da conversa + RAG + web
+PARAMETER num_ctx 4096

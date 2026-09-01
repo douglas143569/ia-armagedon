@@ -349,49 +349,63 @@ const server = http.createServer(async (req, res) => {
         return;
     }
 
-    // Proxy para Ollama API (com RAG + memória injetados pelo cérebro, se disponível)
-    if (req.url === '/api/generate' && req.method === 'POST') {
+    // Proxy pro Ollama (RAG + memória + web + roteador injetados pelo cérebro).
+    // Aceita /api/generate (1 turno) e /api/chat (com histórico: payload.messages[]).
+    if ((req.url === '/api/generate' || req.url === '/api/chat') && req.method === 'POST') {
         let body = '';
         req.on('data', chunk => body += chunk);
         req.on('end', async () => {
             let payload;
             try { payload = JSON.parse(body); } catch { payload = null; }
 
+            const isChat = payload && Array.isArray(payload.messages) && payload.messages.length > 0;
+            // texto da pergunta atual (última mensagem do usuário, ou o prompt)
+            let queryText = '';
+            if (isChat) {
+                for (let i = payload.messages.length - 1; i >= 0; i--) {
+                    if (payload.messages[i].role === 'user') { queryText = payload.messages[i].content || ''; break; }
+                }
+            } else if (payload && typeof payload.prompt === 'string') {
+                queryText = payload.prompt;
+            }
+
             let sources = [];
             let routerModel = '';
             let routerReason = '';
             let webUsed = false;
             const wantsAuto = payload && (payload.model === 'auto' || !payload.model);
-            // use_web: true (sempre) | false (nunca) | ausente => "auto" (heurística)
-            const useWeb = payload && ('use_web' in payload)
-                ? payload.use_web : 'auto';
+            const useWeb = payload && ('use_web' in payload) ? payload.use_web : 'auto';
 
-            if (payload && typeof payload.prompt === 'string' &&
+            if (payload && queryText &&
                 (payload.use_rag !== false || wantsAuto || useWeb !== false)) {
                 const aug = await postJson(BRAIN_PORT, '/augment', {
-                    prompt: payload.prompt,
+                    prompt: queryText,
                     use_rag: payload.use_rag !== false,
                     use_web: useWeb,
                     route: wantsAuto,
-                }, 45000);   // web search + fetch de páginas pode passar de 30s
+                }, 45000);
                 if (aug && aug.system_block) {
-                    payload.prompt = aug.system_block +
-                        '\n\n=== PERGUNTA DE DOUGLAS ===\n' + payload.prompt;
+                    const wrapped = aug.system_block + '\n\n=== PERGUNTA DE DOUGLAS ===\n' + queryText;
+                    if (isChat) {
+                        for (let i = payload.messages.length - 1; i >= 0; i--) {
+                            if (payload.messages[i].role === 'user') { payload.messages[i].content = wrapped; break; }
+                        }
+                    } else {
+                        payload.prompt = wrapped;
+                    }
                 }
                 if (aug) sources = aug.sources || [];
                 if (aug && aug.web_usada) webUsed = true;
                 if (aug && aug.model) { routerModel = aug.model; routerReason = aug.route_reason || ''; }
             }
 
-            // Define o modelo: roteado, ou fallback se o cérebro estiver offline
             if (wantsAuto) payload.model = routerModel || 'armagedon';
-
-            // remove flags internas antes de mandar pro Ollama
             if (payload) { delete payload.use_rag; delete payload.use_web; }
             const outBody = payload ? JSON.stringify(payload) : body;
+            const ollamaPath = isChat ? '/api/chat' : '/api/generate';
 
             const ollamaReq = http.request(
-                `${OLLAMA_URL}/api/generate`,
+                `${OLLAMA_URL}${ollamaPath}`,
                 { method: 'POST', headers: { 'Content-Type': 'application/json' } },
                 (ollamaRes) => {
                     const headers = Object.assign({}, ollamaRes.headers, {

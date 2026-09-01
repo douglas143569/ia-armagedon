@@ -512,6 +512,24 @@
 
         let abortController = null;
 
+        // Histórico da conversa atual (memória de curto prazo) — vai como messages[] pro /api/chat
+        const MAX_TURNS = 8;            // últimos 8 pares user/assistente
+        const HIST_KEY = 'armagedon_conversa';
+        let conversationHistory = [];
+        try {
+            const saved = localStorage.getItem(HIST_KEY);
+            if (saved) conversationHistory = JSON.parse(saved) || [];
+        } catch (e) { conversationHistory = []; }
+
+        function saveHistory() {
+            conversationHistory = conversationHistory.slice(-MAX_TURNS * 2);
+            try { localStorage.setItem(HIST_KEY, JSON.stringify(conversationHistory)); } catch (e) {}
+        }
+        function resetHistory() {
+            conversationHistory = [];
+            try { localStorage.removeItem(HIST_KEY); } catch (e) {}
+        }
+
         messageInput.addEventListener('input', function() {
             this.style.height = 'auto';
             this.style.height = Math.min(this.scrollHeight, 100) + 'px';
@@ -976,13 +994,17 @@
                 const useRagEl = document.getElementById('useRag');
                 const useWebEl = document.getElementById('useWeb');
                 const webMap = { auto: 'auto', always: true, never: false };
-                const response = await fetch('/api/generate', {
+                const messages = [
+                    ...conversationHistory.slice(-MAX_TURNS * 2),
+                    { role: 'user', content: message }
+                ];
+                const response = await fetch('/api/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     signal: abortController.signal,
                     body: JSON.stringify({
                         model: modelSelect.value,
-                        prompt: message,
+                        messages: messages,
                         stream: true,
                         use_rag: !useRagEl || useRagEl.checked,
                         use_web: webMap[useWebEl ? useWebEl.value : 'auto']
@@ -1074,13 +1096,25 @@
                         if (!line.trim()) continue;
                         try {
                             const json = JSON.parse(line);
-                            if (json.thinking) thinking += json.thinking;
-                            if (json.response) fullResponse += json.response;
-                            if (json.thinking || json.response) render();
+                            // /api/chat -> json.message.{content,thinking}; /api/generate -> json.{response,thinking}
+                            const msg = json.message || json;
+                            const tk = msg.thinking || json.thinking;
+                            const ct = msg.content || json.response;
+                            if (tk) thinking += tk;
+                            if (ct) fullResponse += ct;
+                            if (tk || ct) render();
                         } catch (e) { /* linha parcial */ }
                     }
                 }
                 if (thinkBox.style.display === 'block') thinkBox.open = false;
+
+                // guarda o turno no histórico da conversa (só a resposta limpa, sem <think>)
+                const cleanAnswer = fullResponse.replace(/<think>[\s\S]*?<\/think>/, '').trim();
+                if (cleanAnswer) {
+                    conversationHistory.push({ role: 'user', content: message });
+                    conversationHistory.push({ role: 'assistant', content: cleanAnswer });
+                    saveHistory();
+                }
 
                 const webSrc = ragSources.filter(s => s.web);
                 const docSrc = ragSources.filter(s => !s.web);
@@ -1174,12 +1208,25 @@
         function newChat() {
             messagesDiv.innerHTML = '';
             messageInput.value = '';
+            resetHistory();
             addMessage('assistant', 'Olá! Sou o ARMAGEDON, seu assistente de IA pessoal. Como posso ajudá-lo hoje?');
         }
 
         function clearChat() {
             messagesDiv.innerHTML = '';
             messageInput.value = '';
+            resetHistory();
+        }
+
+        // Re-renderiza a conversa salva (após um F5). Retorna true se havia algo.
+        function restoreConversation() {
+            if (!conversationHistory.length) return false;
+            messagesDiv.innerHTML = '';
+            for (const m of conversationHistory) {
+                addMessage(m.role === 'assistant' ? 'assistant' : 'user', m.content);
+            }
+            statusDiv.textContent = '↻ conversa anterior restaurada • ' + (conversationHistory.length / 2) + ' turno(s)';
+            return true;
         }
 
         // Status dos serviços no painel lateral
@@ -1231,7 +1278,7 @@
         }
 
         window.addEventListener('load', function() {
-            newChat();
+            if (!restoreConversation()) newChat();
             refreshStatus();
             refreshMetrics();
             setInterval(refreshStatus, 5000);
