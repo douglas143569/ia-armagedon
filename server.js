@@ -14,6 +14,15 @@ const OLLAMA_URL = 'http://localhost:11434';
 // (ex: ARMAGEDON_VIDEO_URL=http://SEU_POD:5001). Ver gpu-video/README-GPU.md
 const VIDEO_URL = (process.env.ARMAGEDON_VIDEO_URL || 'http://localhost:5001').replace(/\/$/, '');
 const GEN_PORTS = { imagem: 5000, 'vídeo': 5001 };
+// Pastas onde os geradores locais salvam (image_generator_final.py / video_generator_flask.py)
+const MEDIA_DIRS = {
+    images: path.join(__dirname, 'images_generated'),
+    videos: path.join(__dirname, 'videos_generated'),
+};
+const MEDIA_TYPES = {
+    '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp',
+    '.gif': 'image/gif', '.mp4': 'video/mp4', '.webm': 'video/webm',
+};
 
 // --- Amostragem de GPU (Windows perf counters), com cache pra não pesar ------
 let _gpuCache = { ts: 0, data: null };
@@ -431,6 +440,22 @@ const server = http.createServer(async (req, res) => {
             });
             ollamaReq.write(outBody);
             ollamaReq.end();
+        });
+        return;
+    }
+
+    // Mídia gerada (pra interface mostrar o resultado) — só essas duas pastas, sem path traversal
+    const media = req.method === 'GET' && req.url.match(/^\/media\/(images|videos)\/([^/?#]+)$/);
+    if (media) {
+        let name;
+        try { name = path.basename(decodeURIComponent(media[2])); } catch { name = ''; }
+        const type = MEDIA_TYPES[path.extname(name).toLowerCase()];
+        if (!name || !type) { res.writeHead(404); res.end('Não encontrado'); return; }
+        fs.readFile(path.join(MEDIA_DIRS[media[1]], name), (err, data) => {
+            if (err) { res.writeHead(404); res.end('Não encontrado'); return; }
+            // nomes têm timestamp → nunca mudam, pode cachear pra sempre
+            res.writeHead(200, { 'Content-Type': type, 'Cache-Control': 'public, max-age=31536000, immutable' });
+            res.end(data);
         });
         return;
     }
