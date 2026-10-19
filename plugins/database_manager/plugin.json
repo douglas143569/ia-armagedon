@@ -1,0 +1,82 @@
+{
+  "name": "Database Manager",
+  "version": "1.0.0",
+  "description": "Gerenciador de banco de dados para histórico de chats, imagens, vídeos e áudios",
+  "author": "ARMAGEDON",
+  "enabled": true,
+  "config": {
+    "db_type": "sqlite",
+    "db_path": "armagedon.db",
+    "auto_backup": true,
+    "backup_interval_hours": 24
+  },
+  "hooks": [
+    {
+      "event": "chat_message",
+      "method": "on_chat_message"
+    },
+    {
+      "event": "image_generated",
+      "method": "on_image_generated"
+    },
+    {
+      "event": "video_generated",
+      "method": "on_video_generated"
+    },
+    {
+      "event": "voice_generated",
+      "method": "on_voice_generated"
+    }
+  ],
+  "endpoints": [
+    {
+      "path": "/api/db/chat-history",
+      "method": "GET",
+      "description": "Obtém histórico de chats"
+    },
+    {
+      "path": "/api/db/chat-save",
+      "method": "POST",
+      "description": "Salva mensagem no BD"
+    },
+    {
+      "path": "/api/db/images",
+      "method": "GET",
+      "description": "Lista imagens geradas"
+    },
+    {
+      "path": "/api/db/videos",
+      "method": "GET",
+      "description": "Lista vídeos gerados"
+    },
+    {
+      "path": "/api/db/audios",
+      "method": "GET",
+      "description": "Lista áudios gerados"
+    },
+    {
+      "path": "/api/db/search",
+      "method": "POST",
+      "description": "Busca em histórico"
+    },
+    {
+      "path": "/api/db/backup",
+      "method": "POST",
+      "description": "Criar backup"
+    },
+    {
+      "path": "/api/db/stats",
+      "method": "GET",
+      "description": "Estatísticas do sistema"
+    }
+  ],
+  "features": [
+    "SQLite local (sem servidor necessário)",
+    "Salvar chats, imagens, vídeos, áudios",
+    "Busca avançada com filtros",
+    "Backup automático",
+    "Exportar dados (JSON, CSV)",
+    "Estatísticas de uso",
+    "Sincronização em tempo real"
+  ]
+}

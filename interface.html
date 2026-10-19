@@ -4,534 +4,1296 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>⚡ ARMAGEDON — Apocalipse Digital</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         :root {
             --primary: #ff1744;
             --secondary: #ff6f00;
-            --dark: #0a0a0a;
-            --light: #1a1a1a;
-            --border: #333333;
-            --text: #ffffff;
+            --ember: #ff9e40;
             --accent: #00ff41;
+            --bg: #07050a;
+            --panel: rgba(24, 13, 17, 0.62);
+            --panel-strong: rgba(18, 10, 13, 0.88);
+            --line: rgba(255, 90, 60, 0.16);
+            --line-soft: rgba(255, 255, 255, 0.07);
+            --text: #f5ece9;
+            --muted: #b09a94;
+            --dim: #74615c;
+            --grad: linear-gradient(135deg, #ff1744 0%, #ff6f00 100%);
+            --radius: 20px;
+            --font: 'Sora', 'Segoe UI', system-ui, sans-serif;
+            --font-logo: 'Orbitron', 'Segoe UI', sans-serif;
         }
+
+        html, body { height: 100%; }
 
         body {
-            font-family: 'Courier New', monospace;
-            background: linear-gradient(135deg, #000000 0%, #1a0000 50%, #000000 100%);
+            font-family: var(--font);
+            background:
+                radial-gradient(900px 500px at 70% -10%, rgba(255, 23, 68, 0.10), transparent 60%),
+                radial-gradient(700px 400px at 0% 100%, rgba(255, 111, 0, 0.06), transparent 60%),
+                var(--bg);
             color: var(--text);
-            height: 100vh;
             overflow: hidden;
-            background-attachment: fixed;
+            -webkit-font-smoothing: antialiased;
         }
 
+        /* Scanlines — assinatura Armagedon */
         body::before {
             content: '';
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background:
-                repeating-linear-gradient(
-                    0deg,
-                    rgba(255, 23, 68, 0.03),
-                    rgba(255, 23, 68, 0.03) 1px,
-                    transparent 1px,
-                    transparent 2px
-                );
+            inset: 0;
+            background: repeating-linear-gradient(0deg, rgba(255, 23, 68, 0.025), rgba(255, 23, 68, 0.025) 1px, transparent 1px, transparent 3px);
             pointer-events: none;
-            z-index: 1;
+            z-index: 50;
         }
+        body.focus::before { display: none; }
 
-        .container {
-            display: flex;
-            height: 100vh;
-            gap: 0;
-            position: relative;
-            z-index: 2;
-        }
+        button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+        input, select, textarea { font-family: inherit; }
+        svg.i { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
 
+        .app { display: flex; height: 100vh; position: relative; z-index: 2; }
+
+        /* ================= SIDEBAR ================= */
         .sidebar {
-            width: 300px;
-            background: linear-gradient(180deg, #1a1a1a 0%, #0f0f0f 100%);
-            border-right: 2px solid var(--primary);
-            padding: 20px;
+            width: 252px;
+            flex-shrink: 0;
+            padding: 22px 14px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
             overflow-y: auto;
-            box-shadow: 0 0 30px rgba(255, 23, 68, 0.3), inset 0 0 20px rgba(255, 23, 68, 0.05);
         }
 
-        .logo {
-            font-size: 28px;
-            font-weight: bold;
-            margin-bottom: 30px;
-            color: var(--primary);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            text-shadow: 0 0 10px rgba(255, 23, 68, 0.8);
-            letter-spacing: 2px;
-            animation: pulse-glow 2s ease-in-out infinite;
-        }
+        .logo { display: flex; align-items: center; gap: 12px; padding: 4px 10px 22px; }
+        .logo svg { width: 36px; height: 36px; filter: drop-shadow(0 0 10px rgba(255, 23, 68, 0.7)); animation: pulse-glow 3s ease-in-out infinite; }
+        .logo-name { font-family: var(--font-logo); font-weight: 800; font-size: 19px; letter-spacing: 2.5px; }
+        .logo-sub { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
 
         @keyframes pulse-glow {
-            0%, 100% { text-shadow: 0 0 10px rgba(255, 23, 68, 0.8); }
-            50% { text-shadow: 0 0 20px rgba(255, 23, 68, 1); }
+            0%, 100% { filter: drop-shadow(0 0 8px rgba(255, 23, 68, 0.6)); }
+            50% { filter: drop-shadow(0 0 18px rgba(255, 111, 0, 0.95)); }
         }
 
-        .model-selector {
-            margin-bottom: 20px;
+        .nav-item {
+            display: flex; align-items: center; gap: 14px;
+            padding: 11px 14px;
+            border-radius: 14px;
+            font-size: 14.5px;
+            color: #d9c9c4;
+            text-align: left;
+            width: 100%;
+            border: 1px solid transparent;
+            transition: background 0.2s, color 0.2s, border-color 0.2s;
         }
-
-        .model-selector label {
-            display: block;
-            font-size: 12px;
-            font-weight: 600;
-            color: #64748b;
-            margin-bottom: 8px;
-            text-transform: uppercase;
+        .nav-item svg.i { color: var(--muted); transition: color 0.2s; }
+        .nav-item:hover { background: rgba(255, 255, 255, 0.04); color: #fff; }
+        .nav-item:hover svg.i { color: var(--ember); }
+        .nav-item.active {
+            background: linear-gradient(90deg, rgba(255, 23, 68, 0.28), rgba(255, 111, 0, 0.08));
+            border-color: rgba(255, 60, 60, 0.28);
+            color: #fff;
+            box-shadow: 0 0 24px rgba(255, 23, 68, 0.15);
         }
+        .nav-item.active svg.i { color: #ff5a4a; }
 
+        .model-selector { padding: 14px 6px 4px; }
+        .model-selector label { display: block; font-size: 10.5px; letter-spacing: 1.4px; text-transform: uppercase; color: var(--dim); margin: 0 0 8px 8px; }
         .model-selector select {
             width: 100%;
-            padding: 10px;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            font-size: 14px;
-            background: white;
-            cursor: pointer;
-        }
-
-        .btn-group {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin-top: 20px;
-        }
-
-        button {
-            padding: 10px 15px;
-            border: none;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-            color: white;
-            border: 1px solid var(--primary);
-        }
-
-        .btn-primary:hover {
-            box-shadow: 0 0 20px rgba(255, 23, 68, 0.8);
-            transform: translateY(-2px);
-            background: linear-gradient(135deg, #ff4757 0%, #ff6f00 100%);
-        }
-
-        .btn-secondary {
-            background: rgba(255, 23, 68, 0.1);
-            color: var(--primary);
-            border: 1px solid var(--primary);
-        }
-
-        .btn-secondary:hover {
-            background: rgba(255, 23, 68, 0.2);
-            box-shadow: 0 0 15px rgba(255, 23, 68, 0.5);
-        }
-
-        .chat-container {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            background: #0a0a0a;
-        }
-
-        .chat-header {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-            color: white;
-            padding: 20px;
-            font-size: 20px;
-            font-weight: bold;
-            text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-            box-shadow: 0 0 30px rgba(255, 23, 68, 0.5), inset 0 -2px 10px rgba(0, 0, 0, 0.3);
-            letter-spacing: 1px;
-        }
-
-        .messages {
-            flex: 1;
-            overflow-y: auto;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .message {
-            display: flex;
-            gap: 10px;
-            animation: slideIn 0.3s ease-out;
-        }
-
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .message.user {
-            justify-content: flex-end;
-        }
-
-        .message-content {
-            max-width: 70%;
-            padding: 12px 16px;
+            padding: 11px 12px;
             border-radius: 12px;
-            word-wrap: break-word;
-            line-height: 1.4;
+            border: 1px solid var(--line);
+            background: rgba(255, 255, 255, 0.03);
+            color: var(--text);
+            font-size: 12.5px;
+            outline: none;
+            cursor: pointer;
+        }
+        .model-selector select:focus { border-color: rgba(255, 90, 60, 0.5); }
+        .model-selector option { background: #140b0e; }
+
+        .side-spacer { flex: 1; min-height: 16px; }
+
+        .side-quote {
+            position: relative;
+            height: 150px;
+            border-radius: 18px;
+            overflow: hidden;
+            border: 1px solid var(--line-soft);
+            background: linear-gradient(180deg, #120a10 0%, #2a0c10 55%, #4a160c 78%, #1a0807 100%);
+            padding: 22px 18px;
+            margin-top: 10px;
+        }
+        .side-quote p { position: relative; z-index: 2; font-size: 16px; line-height: 1.45; font-weight: 300; }
+        .side-quote .mtn { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 80px; }
+
+        .focus-card {
+            margin-top: 10px;
+            border-radius: 18px;
+            border: 1px solid var(--line-soft);
+            background: var(--panel);
+            padding: 16px 18px;
+        }
+        .focus-head { display: flex; align-items: center; justify-content: space-between; }
+        .focus-head span { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+        .focus-card small { display: block; color: var(--muted); font-size: 12px; margin-top: 6px; line-height: 1.5; }
+
+        .voice-card {
+            margin-top: 10px;
+            border-radius: 18px;
+            border: 1px solid var(--line);
+            background: linear-gradient(160deg, rgba(255, 23, 68, 0.10), rgba(255, 111, 0, 0.03)), var(--panel);
+            padding: 16px 18px;
+        }
+        .voice-state { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); margin-top: 8px; min-height: 18px; }
+        .voice-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 12px; }
+        .voice-actions button {
+            min-width: 0;
+            display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+            padding: 8px 4px;
+            border-radius: 10px;
+            font-size: 11.5px;
+            color: #e6d6d1;
+            border: 1px solid var(--line-soft);
+            background: rgba(255, 255, 255, 0.03);
+        }
+        .voice-actions button:hover:not(:disabled) { border-color: rgba(255, 90, 60, 0.5); color: #fff; }
+        .voice-actions button:disabled { opacity: 0.35; cursor: default; }
+        .voice-actions button.on { background: rgba(255, 23, 68, 0.2); border-color: rgba(255, 60, 60, 0.5); }
+        .voice-actions svg.i { width: 14px; height: 14px; }
+        .dot.wait { background: var(--ember); box-shadow: 0 0 10px var(--ember); animation: blinkdot 1s infinite; }
+        @keyframes blinkdot { 50% { opacity: 0.3; } }
+
+        .voice-chip {
+            display: none;
+            align-items: center; gap: 8px;
+            padding: 8px 14px;
+            border-radius: 999px;
+            border: 1px solid var(--line);
+            background: rgba(255, 23, 68, 0.1);
+            font-size: 12px;
+            color: #ffd9cf;
+        }
+        body.v-on .voice-chip { display: inline-flex; }
+        .voice-chip svg.i { width: 15px; height: 15px; color: var(--ember); }
+        body.v-awake .voice-chip { background: rgba(255, 111, 0, 0.25); color: #fff; }
+
+        .switch { width: 42px; height: 24px; border-radius: 12px; background: rgba(255, 255, 255, 0.12); position: relative; transition: background 0.25s; }
+        .switch::after { content: ''; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: transform 0.25s; }
+        .switch.on { background: var(--grad); box-shadow: 0 0 14px rgba(255, 23, 68, 0.5); }
+        .switch.on::after { transform: translateX(18px); }
+
+        /* ================= MAIN ================= */
+        .main {
+            flex: 1;
+            min-width: 0;
+            margin: 16px 16px 16px 0;
+            border-radius: 30px;
+            border: 1px solid var(--line-soft);
+            background: linear-gradient(180deg, rgba(14, 8, 11, 0.9), rgba(9, 6, 9, 0.95));
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
         }
 
-        .message.assistant .message-content {
-            background: linear-gradient(135deg, rgba(255, 23, 68, 0.1) 0%, rgba(255, 111, 0, 0.1) 100%);
-            color: var(--accent);
-            border-left: 3px solid var(--accent);
-            box-shadow: 0 0 10px rgba(0, 255, 65, 0.2);
-        }
+        .main-scroll { position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden; }
 
-        .message.user .message-content {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-            color: white;
-            box-shadow: 0 0 15px rgba(255, 23, 68, 0.5);
+        /* Cenário apocalíptico */
+        .scene {
+            position: absolute;
+            top: 0; right: 0;
+            width: 72%;
+            height: 560px;
+            pointer-events: none;
+            z-index: 0;
+            -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 35%), linear-gradient(180deg, #000 55%, transparent 100%);
+            -webkit-mask-composite: source-in;
+            mask-image: linear-gradient(90deg, transparent 0%, #000 35%), linear-gradient(180deg, #000 55%, transparent 100%);
+            mask-composite: intersect;
+            overflow: hidden;
         }
+        .sky {
+            position: absolute; inset: 0;
+            background:
+                radial-gradient(600px 180px at 62% 78%, rgba(255, 111, 0, 0.55), transparent 70%),
+                radial-gradient(900px 260px at 60% 82%, rgba(255, 23, 68, 0.35), transparent 70%),
+                linear-gradient(180deg, #0b0609 0%, #1a070c 45%, #3a0d0e 70%, #120607 100%);
+        }
+        .eclipse {
+            position: absolute;
+            width: 560px; height: 560px;
+            border-radius: 50%;
+            top: -40px; right: -330px;
+            background: radial-gradient(circle at 40% 40%, #0d0608 60%, #160709 100%);
+            box-shadow: -6px -2px 0 -1px rgba(255, 70, 50, 0.9), -10px -4px 40px rgba(255, 23, 68, 0.55), 0 0 120px rgba(255, 60, 20, 0.25);
+        }
+        .scene .mtn { position: absolute; left: 0; bottom: 70px; width: 100%; height: 190px; }
+        .lake {
+            position: absolute; left: 0; right: 0; bottom: 0; height: 70px;
+            background: linear-gradient(180deg, rgba(255, 90, 30, 0.22), rgba(10, 5, 7, 0.9));
+        }
+        .ember {
+            position: absolute;
+            bottom: 60px;
+            width: 3px; height: 3px;
+            border-radius: 50%;
+            background: #ffb070;
+            box-shadow: 0 0 6px 1px rgba(255, 120, 40, 0.9);
+            opacity: 0;
+            animation: rise linear infinite;
+        }
+        @keyframes rise {
+            0% { transform: translate(0, 0); opacity: 0; }
+            10% { opacity: 1; }
+            100% { transform: translate(-40px, -420px); opacity: 0; }
+        }
+        .meteor {
+            position: absolute;
+            width: 160px; height: 2px;
+            background: linear-gradient(90deg, rgba(255, 180, 90, 0.95), transparent);
+            border-radius: 2px;
+            transform: rotate(-28deg);
+            opacity: 0;
+            animation: meteor 9s ease-in infinite;
+        }
+        .meteor.m2 { animation-delay: 4.5s; top: 40px !important; }
+        @keyframes meteor {
+            0%, 82% { opacity: 0; transform: rotate(-28deg) translateX(0); }
+            85% { opacity: 1; }
+            100% { opacity: 0; transform: rotate(-28deg) translateX(-520px); }
+        }
+        body.focus .ember, body.focus .meteor { display: none; }
+
+        .content { position: relative; z-index: 1; padding: 20px 34px 34px; }
+
+        /* Topbar */
+        .topbar { display: flex; align-items: center; gap: 12px; justify-content: flex-end; }
+        .icon-btn.menu-btn { display: none; }
+        .status-pill {
+            margin-right: auto;
+            display: inline-flex; align-items: center; gap: 9px;
+            padding: 8px 14px;
+            border-radius: 999px;
+            background: rgba(0, 0, 0, 0.35);
+            border: 1px solid var(--line-soft);
+            font-size: 12px;
+            color: var(--muted);
+            backdrop-filter: blur(8px);
+            max-width: 60%;
+        }
+        .status-pill #status { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--dim); flex-shrink: 0; }
+        .dot.on { background: var(--accent); box-shadow: 0 0 10px var(--accent); }
+        .dot.off { background: var(--primary); box-shadow: 0 0 10px var(--primary); }
+
+        .icon-btn {
+            width: 42px; height: 42px;
+            border-radius: 50%;
+            display: grid; place-items: center;
+            color: var(--muted);
+            transition: background 0.2s, color 0.2s;
+        }
+        .icon-btn:hover { background: rgba(255, 255, 255, 0.07); color: #fff; }
+        .icon-btn.rec { color: #fff; background: rgba(255, 23, 68, 0.35); animation: recpulse 1.2s infinite; }
+        @keyframes recpulse { 50% { box-shadow: 0 0 0 8px rgba(255, 23, 68, 0); } 0% { box-shadow: 0 0 0 0 rgba(255, 23, 68, 0.6); } }
+
+        .profile { display: flex; align-items: center; gap: 10px; font-size: 13px; color: #d9c9c4; }
+        .mini-orb {
+            width: 36px; height: 36px; border-radius: 50%;
+            background: radial-gradient(circle at 50% 55%, #1a0508, #070203);
+            box-shadow: inset 0 0 10px rgba(255, 23, 68, 0.8), 0 0 14px rgba(255, 23, 68, 0.4);
+            position: relative;
+            flex-shrink: 0;
+        }
+        .mini-orb::before, .mini-orb::after {
+            content: ''; position: absolute; top: 14px;
+            width: 7px; height: 4px;
+            border: 2px solid var(--ember); border-bottom: none;
+            border-radius: 7px 7px 0 0;
+        }
+        .mini-orb::before { left: 9px; }
+        .mini-orb::after { right: 9px; }
+
+        /* Hero */
+        .hero {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            grid-template-areas: "orb greet" "orb composer";
+            column-gap: 40px;
+            align-items: center;
+            padding-top: 10px;
+        }
+        .orb-block { grid-area: orb; display: flex; flex-direction: column; align-items: center; gap: 14px; align-self: start; padding-top: 18px; }
+        .orb {
+            width: 210px; height: 210px;
+            border-radius: 50%;
+            position: relative;
+            background:
+                radial-gradient(circle at 32% 26%, rgba(255, 140, 80, 0.22), transparent 40%),
+                radial-gradient(circle at 50% 58%, #170609 0%, #090304 62%, #22060b 100%);
+            box-shadow:
+                inset 0 0 40px rgba(255, 23, 68, 0.5),
+                inset -14px -18px 50px rgba(255, 111, 0, 0.35),
+                0 0 60px rgba(255, 23, 68, 0.35),
+                0 0 160px rgba(255, 70, 0, 0.18);
+            animation: float 6s ease-in-out infinite;
+        }
+        .orb::before {
+            content: '';
+            position: absolute; inset: -5px;
+            border-radius: 50%;
+            padding: 3px;
+            background: conic-gradient(from 0deg, #ff1744, #ff6f00, transparent 35%, #ff9e40 55%, #ff1744 75%, transparent 90%, #ff1744);
+            -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            filter: blur(0.6px) drop-shadow(0 0 6px rgba(255, 60, 30, 0.9));
+            animation: spin 9s linear infinite;
+        }
+        .orb::after {
+            content: '';
+            position: absolute;
+            top: 14%; left: 20%;
+            width: 34%; height: 18%;
+            border-radius: 50%;
+            background: radial-gradient(ellipse, rgba(255, 220, 200, 0.16), transparent 70%);
+            transform: rotate(-25deg);
+        }
+        .eye {
+            position: absolute;
+            top: 44%;
+            width: 34px; height: 17px;
+            border: 4px solid var(--ember);
+            border-bottom: none;
+            border-radius: 34px 34px 0 0;
+            filter: drop-shadow(0 0 6px rgba(255, 111, 0, 0.95));
+            animation: blink 6s infinite;
+            transform-origin: center bottom;
+        }
+        .eye.l { left: 26%; }
+        .eye.r { right: 26%; }
+        .orb-shadow { width: 150px; height: 18px; border-radius: 50%; background: radial-gradient(ellipse, rgba(255, 50, 30, 0.35), transparent 70%); margin-top: -4px; }
+        .orb-name { font-size: 12.5px; letter-spacing: 1.5px; display: flex; align-items: center; gap: 8px; font-family: var(--font-logo); }
+        .orb-sub { font-size: 12px; color: var(--muted); margin-top: -8px; }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes float { 50% { transform: translateY(-8px); } }
+        @keyframes blink { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(0.1); } }
+
+        body.thinking .orb::before, body.v-thinking .orb::before { animation-duration: 1.2s; }
+        body.thinking .eye, body.v-thinking .eye { animation: think 1s ease-in-out infinite; }
+        body.v-on .orb { cursor: pointer; }
+        body.v-awake .orb { box-shadow: inset 0 0 50px rgba(255, 60, 30, 0.7), inset -14px -18px 50px rgba(255, 140, 0, 0.5), 0 0 90px rgba(255, 60, 30, 0.6), 0 0 200px rgba(255, 90, 0, 0.3); }
+        body.v-awake .orb::before { animation-duration: 3s; filter: blur(0.4px) drop-shadow(0 0 12px rgba(255, 120, 40, 1)); }
+        body.v-awake .eye { border-color: #ffd0a0; animation: none; }
+        body.v-speaking .orb { animation: speak 0.45s ease-in-out infinite alternate; }
+        @keyframes speak { from { transform: scale(1); } to { transform: scale(1.035); box-shadow: inset 0 0 50px rgba(255, 23, 68, 0.6), inset -14px -18px 50px rgba(255, 111, 0, 0.45), 0 0 80px rgba(255, 23, 68, 0.55), 0 0 180px rgba(255, 70, 0, 0.25); } }
+        .message.voice .message-content::after { content: '🎙 voz'; display: block; margin-top: 4px; font-size: 10px; opacity: 0.55; }
+        @keyframes think { 50% { transform: translateY(-3px); border-color: #ff1744; } }
+        body.focus .orb, body.focus .orb::before { animation: none; }
+
+        .greeting { grid-area: greet; padding-top: 40px; position: relative; }
+        .greeting h1 { font-size: clamp(30px, 3.5vw, 46px); font-weight: 600; line-height: 1.18; letter-spacing: -0.5px; }
+        .grad-text { background: linear-gradient(90deg, #ff3d55, #ff8a2a); -webkit-background-clip: text; background-clip: text; color: transparent; }
+        .greeting p { margin-top: 16px; color: var(--muted); font-size: 15px; font-weight: 300; }
+        .hero-quote {
+            position: absolute; top: 40px; right: 0;
+            text-align: right;
+            color: #d6c3bd;
+            font-size: 15px; font-weight: 300; line-height: 1.6;
+            max-width: 200px;
+        }
+        .hero-quote::after { content: ''; display: block; width: 40px; height: 1px; background: var(--ember); margin: 14px 0 0 auto; opacity: 0.7; }
+
+        .composer-block { grid-area: composer; margin-top: 34px; position: relative; }
 
         .input-area {
-            padding: 20px;
-            border-top: 2px solid var(--primary);
-            display: flex;
-            gap: 10px;
-            background: #0a0a0a;
-            box-shadow: inset 0 2px 10px rgba(255, 23, 68, 0.1);
+            display: flex; align-items: flex-end; gap: 6px;
+            padding: 9px 9px 9px 10px;
+            border-radius: 26px;
+            background: rgba(16, 8, 11, 0.78);
+            border: 1px solid rgba(255, 80, 50, 0.38);
+            box-shadow: 0 0 0 4px rgba(255, 23, 68, 0.04), 0 14px 40px rgba(0, 0, 0, 0.55), 0 0 32px rgba(255, 23, 68, 0.12);
+            backdrop-filter: blur(16px);
+            transition: border-color 0.2s, box-shadow 0.2s;
         }
+        .input-area:focus-within { border-color: rgba(255, 110, 60, 0.75); box-shadow: 0 0 0 4px rgba(255, 23, 68, 0.08), 0 14px 40px rgba(0, 0, 0, 0.55), 0 0 40px rgba(255, 60, 30, 0.22); }
 
         #messageInput {
             flex: 1;
-            padding: 12px 16px;
-            border: 1px solid var(--primary);
-            border-radius: 8px;
-            font-size: 14px;
-            font-family: inherit;
-            resize: none;
-            max-height: 100px;
-            background: #1a1a1a;
-            color: var(--text);
-        }
-
-        #messageInput:focus {
+            background: transparent;
+            border: none;
             outline: none;
-            border-color: var(--accent);
-            box-shadow: 0 0 20px rgba(0, 255, 65, 0.3);
+            color: var(--text);
+            font-size: 15px;
+            line-height: 1.5;
+            padding: 10px 6px;
+            resize: none;
+            max-height: 160px;
         }
+        #messageInput::placeholder { color: var(--dim); }
 
-        #sendBtn {
-            padding: 12px 24px;
-            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-            color: white;
-            border: 1px solid var(--primary);
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            text-transform: uppercase;
-            font-size: 12px;
-            letter-spacing: 1px;
-        }
-
-        #sendBtn:hover {
-            box-shadow: 0 0 20px rgba(255, 23, 68, 0.8);
-            transform: translateY(-2px);
-        }
-
-        .loading {
-            display: flex;
-            gap: 5px;
-            padding: 12px 16px;
-        }
-
-        .loading span {
-            width: 8px;
-            height: 8px;
+        .send-btn {
+            width: 48px; height: 48px;
             border-radius: 50%;
-            background: var(--accent);
-            animation: bounce 1.4s infinite;
-            box-shadow: 0 0 10px rgba(0, 255, 65, 0.6);
+            display: grid; place-items: center;
+            background: var(--grad);
+            color: #fff;
+            box-shadow: 0 0 22px rgba(255, 23, 68, 0.55);
+            transition: transform 0.2s, box-shadow 0.2s;
+            flex-shrink: 0;
         }
+        .send-btn:hover { transform: scale(1.06); box-shadow: 0 0 32px rgba(255, 60, 30, 0.85); }
+        #stopBtn { background: linear-gradient(135deg, #ff6f00, #ff9e40); }
 
-        .loading span:nth-child(2) {
-            animation-delay: 0.2s;
+        .plus-menu {
+            position: absolute;
+            left: 0; bottom: calc(100% + 10px);
+            min-width: 210px;
+            padding: 8px;
+            border-radius: 16px;
+            background: var(--panel-strong);
+            border: 1px solid var(--line);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(16px);
+            display: none;
+            z-index: 20;
         }
+        .plus-menu.open { display: block; }
+        .plus-menu button { display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 12px; border-radius: 10px; font-size: 13.5px; text-align: left; }
+        .plus-menu button:hover { background: rgba(255, 255, 255, 0.06); }
 
-        .loading span:nth-child(3) {
-            animation-delay: 0.4s;
+        .chips { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+        .chip {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 10px 18px;
+            border-radius: 999px;
+            border: 1px solid var(--line-soft);
+            background: rgba(255, 255, 255, 0.025);
+            font-size: 13.5px;
+            color: #e6d6d1;
+            transition: border-color 0.2s, background 0.2s, color 0.2s;
         }
+        .chip:hover { border-color: rgba(255, 90, 60, 0.5); background: rgba(255, 23, 68, 0.08); color: #fff; }
+        .chip svg.i { width: 15px; height: 15px; color: var(--ember); }
 
-        @keyframes bounce {
-            0%, 80%, 100% { transform: scale(1); }
-            40% { transform: scale(1.2); }
+        /* Painéis de ferramentas */
+        .tool-panel {
+            --tone: #ff6f00; --tone-2: #ff1744;
+            margin-top: 16px;
+            padding: 18px 20px;
+            border-radius: 18px;
+            background: var(--panel);
+            border: 1px solid var(--line-soft);
+            border-top: 2px solid var(--tone);
+            backdrop-filter: blur(14px);
+            animation: slideIn 0.25s ease-out;
         }
+        .tool-panel.image { --tone: #00ff41; --tone-2: #00d4ff; }
+        .tool-panel.video { --tone: #ff6f00; --tone-2: #ff1744; }
+        .tool-panel.voice { --tone: #a855f7; --tone-2: #ec4899; }
+        .tool-panel.proc { --tone: #94a3b8; --tone-2: #64748b; }
+        .panel-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+        .panel-head strong { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 600; }
+        .panel-head strong svg.i { color: var(--tone); }
+        .panel-head .icon-btn { width: 32px; height: 32px; }
+        .panel-head .icon-btn svg.i { width: 16px; height: 16px; }
 
-        .status {
-            padding: 10px 20px;
-            background: #f0f9ff;
-            border-bottom: 1px solid var(--border);
-            font-size: 12px;
-            color: #0369a1;
+        .row { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 10px; }
+        .lbl { display: flex; flex-direction: column; gap: 5px; font-size: 10.5px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); }
+        .field {
+            padding: 10px 12px;
+            border-radius: 11px;
+            border: 1px solid rgba(255, 255, 255, 0.09);
+            background: rgba(0, 0, 0, 0.35);
+            color: var(--text);
+            font-size: 13px;
+            outline: none;
+            transition: border-color 0.2s;
         }
-
-        ::-webkit-scrollbar {
-            width: 8px;
+        .field:focus { border-color: var(--tone); }
+        .field:disabled { opacity: 0.4; cursor: not-allowed; }
+        select.field option, select.field optgroup { background: #140b0e; }
+        .check { font-size: 12px; color: var(--tone-2); cursor: pointer; user-select: none; display: inline-flex; align-items: center; gap: 6px; }
+        .check input { accent-color: var(--tone); }
+        .btn-tone {
+            padding: 10px 22px;
+            border-radius: 11px;
+            background: linear-gradient(135deg, var(--tone), var(--tone-2));
+            color: #fff;
+            font-weight: 600;
+            font-size: 13px;
+            transition: box-shadow 0.2s, opacity 0.2s;
         }
-
-        ::-webkit-scrollbar-track {
-            background: #f1f5f9;
+        .tool-panel.image .btn-tone { color: #001a08; }
+        .btn-tone:hover { box-shadow: 0 0 18px color-mix(in srgb, var(--tone) 60%, transparent); }
+        .btn-mini { padding: 5px 12px; background: var(--primary); color: #fff; border-radius: 8px; font-size: 11px; font-weight: 600; }
+        .hint { font-size: 11.5px; color: var(--dim); margin-top: 4px; }
+        .progress-meta { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 12px; color: #d9c9c4; }
+        .progress { width: 100%; height: 7px; border-radius: 7px; overflow: hidden; background: rgba(255, 255, 255, 0.06); }
+        .progress > div { height: 100%; width: 0%; background: linear-gradient(90deg, var(--tone), var(--tone-2)); transition: width 0.3s; box-shadow: 0 0 12px var(--tone); }
+        .progress-foot { margin-top: 8px; font-size: 11px; color: var(--dim); display: flex; justify-content: space-between; align-items: center; }
+        .panel-status { font-size: 12px; color: var(--tone); margin-top: 10px; }
+        .base-box { margin: 2px 0 12px; }
+        .base-empty {
+            display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+            padding: 12px 14px;
+            border: 1px dashed rgba(255, 255, 255, 0.14);
+            border-radius: 12px;
         }
+        .tool-panel.dragover .base-empty, .tool-panel.dragover .base-editor { border-color: var(--tone); background: rgba(0, 255, 65, 0.06); }
+        .base-editor { display: flex; gap: 16px; flex-wrap: wrap; padding: 12px; border: 1px solid var(--line-soft); border-radius: 12px; }
+        .canvas-wrap { position: relative; width: 300px; max-width: 100%; align-self: flex-start; line-height: 0; }
+        .canvas-wrap img { width: 100%; border-radius: 10px; user-select: none; }
+        .canvas-wrap canvas { position: absolute; inset: 0; width: 100%; height: 100%; border-radius: 10px; opacity: 0.55; pointer-events: none; touch-action: none; }
+        .canvas-wrap.painting canvas { pointer-events: auto; cursor: crosshair; }
+        .base-tools { flex: 1; min-width: 220px; display: flex; flex-direction: column; gap: 12px; }
+        .base-tools .hint { margin: 0; line-height: 1.5; }
+        .seg { display: inline-flex; border: 1px solid var(--line-soft); border-radius: 11px; overflow: hidden; width: max-content; max-width: 100%; }
+        .seg button { padding: 8px 14px; font-size: 12.5px; color: var(--muted); }
+        .seg button.on { background: rgba(0, 255, 65, 0.14); color: #fff; }
 
-        ::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 4px;
+        .advanced { margin-top: 2px; font-size: 12px; color: var(--muted); }
+        .advanced summary { cursor: pointer; user-select: none; width: max-content; }
+        .advanced summary:hover { color: var(--text); }
+        .image-result { display: flex; gap: 16px; margin-top: 14px; flex-wrap: wrap; }
+        .image-result img { width: 220px; max-width: 100%; border-radius: 12px; border: 1px solid var(--line-soft); cursor: zoom-in; }
+        .image-result .meta { flex: 1; min-width: 200px; font-size: 12px; color: var(--muted); line-height: 1.6; }
+        .image-result .meta code { display: block; margin: 4px 0 10px; padding: 8px 10px; border-radius: 8px; background: rgba(0, 0, 0, 0.35); color: #d9c9c4; font-size: 11.5px; white-space: pre-wrap; word-break: break-word; }
+        .image-result .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+        .message .gen-image { display: block; margin-top: 8px; width: 320px; max-width: 100%; border-radius: 12px; cursor: zoom-in; }
+        .lightbox { position: fixed; inset: 0; z-index: 9998; background: rgba(0, 0, 0, 0.88); display: none; place-items: center; cursor: zoom-out; padding: 20px; }
+        .lightbox.open { display: grid; }
+        .lightbox img { max-width: 100%; max-height: 100%; border-radius: 12px; box-shadow: 0 0 60px rgba(255, 23, 68, 0.3); }
+
+        .tip { font-size: 11px; color: var(--muted); margin-top: 14px; padding: 12px 14px; border-left: 2px solid var(--tone); background: rgba(255, 255, 255, 0.02); border-radius: 6px; line-height: 1.7; }
+        .tip strong { color: #e6d6d1; }
+
+        /* Chat */
+        .chat-panel {
+            display: none;
+            flex-direction: column;
+            border-radius: var(--radius);
+            border: 1px solid var(--line-soft);
+            background: rgba(14, 8, 11, 0.6);
+            backdrop-filter: blur(14px);
+            min-height: 0;
         }
+        .chat-head { display: flex; align-items: center; gap: 12px; padding: 14px 18px; border-bottom: 1px solid var(--line-soft); }
+        .chat-head h2 { font-size: 15px; font-weight: 600; }
+        .chat-head .model-tag { font-size: 11px; color: var(--ember); padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); }
+        .chat-head .grow { flex: 1; }
+        .ghost-btn { display: inline-flex; align-items: center; gap: 7px; padding: 7px 13px; border-radius: 10px; font-size: 12.5px; color: var(--muted); border: 1px solid var(--line-soft); }
+        .ghost-btn:hover { color: #fff; border-color: rgba(255, 90, 60, 0.45); }
+        .ghost-btn svg.i { width: 15px; height: 15px; }
 
-        ::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8;
+        #chat-controls { padding: 12px 18px 0; margin-bottom: 0 !important; }
+        #chat-controls .btn-control {
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--line-soft);
+            color: var(--muted);
+            font-size: 11.5px;
+            font-weight: 500;
+        }
+        #chat-controls .btn-control:hover { color: #fff; border-color: rgba(255, 90, 60, 0.45); box-shadow: none; }
+
+        .messages { flex: 1; overflow-y: auto; padding: 18px; display: flex; flex-direction: column; gap: 16px; min-height: 0; }
+        .message { display: flex; gap: 12px; animation: slideIn 0.3s ease-out; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .message.user { justify-content: flex-end; }
+        .message:not(.user)::before {
+            content: '';
+            width: 30px; height: 30px; border-radius: 50%;
+            flex-shrink: 0;
+            background: radial-gradient(circle at 50% 55%, #1a0508, #070203);
+            box-shadow: inset 0 0 8px rgba(255, 23, 68, 0.9), 0 0 12px rgba(255, 23, 68, 0.35);
+        }
+        .message-content {
+            max-width: 74%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+            line-height: 1.6;
+            font-size: 14.5px;
+        }
+        .message.assistant .message-content {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--line-soft);
+            border-top-left-radius: 6px;
+        }
+        .message.user .message-content {
+            background: var(--grad);
+            color: #fff;
+            border-top-right-radius: 6px;
+            box-shadow: 0 6px 24px rgba(255, 23, 68, 0.3);
+        }
+        .message.error .message-content { background: rgba(255, 23, 68, 0.1); border: 1px solid rgba(255, 23, 68, 0.4); color: #ffb3c0; border-top-left-radius: 6px; }
+        .message.image .message-content { background: rgba(0, 255, 65, 0.06); border: 1px solid rgba(0, 255, 65, 0.3); color: #b8ffcb; border-top-left-radius: 6px; }
+        .message.video .message-content { background: rgba(255, 111, 0, 0.08); border: 1px solid rgba(255, 111, 0, 0.35); color: #ffd2a8; border-top-left-radius: 6px; }
+
+        .loading { display: flex; gap: 6px; padding: 14px 16px; border-radius: 18px; background: rgba(255, 255, 255, 0.04); border: 1px solid var(--line-soft); }
+        .loading span { width: 8px; height: 8px; border-radius: 50%; background: var(--ember); animation: bounce 1.4s infinite; box-shadow: 0 0 10px rgba(255, 111, 0, 0.7); }
+        .loading span:nth-child(2) { animation-delay: 0.2s; }
+        .loading span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes bounce { 0%, 80%, 100% { transform: scale(1); opacity: 0.6; } 40% { transform: scale(1.3); opacity: 1; } }
+
+        /* Cards */
+        .cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-top: 46px; }
+        .feature-card {
+            --tone: #ff6f00;
+            position: relative;
+            text-align: left;
+            padding: 22px 22px 24px;
+            border-radius: var(--radius);
+            border: 1px solid var(--line-soft);
+            background: linear-gradient(160deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.01)), var(--panel);
+            transition: transform 0.25s, border-color 0.25s, box-shadow 0.25s;
+        }
+        .feature-card:hover { transform: translateY(-4px); border-color: color-mix(in srgb, var(--tone) 45%, transparent); box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45), 0 0 30px color-mix(in srgb, var(--tone) 18%, transparent); }
+        .feature-card .tile {
+            width: 46px; height: 46px; border-radius: 14px;
+            display: grid; place-items: center;
+            color: var(--tone);
+            background: color-mix(in srgb, var(--tone) 14%, transparent);
+            box-shadow: 0 0 22px color-mix(in srgb, var(--tone) 25%, transparent);
+            margin-bottom: 18px;
+        }
+        .feature-card .tile svg.i { width: 22px; height: 22px; }
+        .feature-card h3 { font-size: 17px; font-weight: 600; line-height: 1.3; }
+        .feature-card p { font-size: 13px; color: var(--muted); margin-top: 8px; line-height: 1.55; }
+        .feature-card .arrow { position: absolute; top: 24px; right: 22px; color: var(--muted); transition: transform 0.2s, color 0.2s; }
+        .feature-card:hover .arrow { transform: translateX(4px); color: var(--tone); }
+
+        /* Bottom grid */
+        .bottom-grid { display: grid; grid-template-columns: 1.15fr 1.15fr 1fr; gap: 18px; margin-top: 18px; }
+        .panel-card {
+            border-radius: var(--radius);
+            border: 1px solid var(--line-soft);
+            background: var(--panel);
+            padding: 22px 24px;
+            min-width: 0;
+        }
+        .card-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+        .card-head h3 { display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 600; }
+        .card-head h3 svg.i { color: var(--ember); }
+        .card-link { font-size: 12px; color: #ff6a4a; display: inline-flex; align-items: center; gap: 5px; }
+        .card-link svg.i { width: 14px; height: 14px; }
+        .card-link:hover { color: var(--ember); }
+
+        .model-item { display: flex; align-items: center; gap: 14px; width: 100%; padding: 10px 8px; border-radius: 12px; text-align: left; transition: background 0.2s; }
+        .model-item:hover { background: rgba(255, 255, 255, 0.04); }
+        .model-item.active { background: rgba(255, 23, 68, 0.1); }
+        .model-item .m-ico { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; background: rgba(255, 111, 0, 0.14); color: var(--ember); flex-shrink: 0; }
+        .model-item .m-ico svg.i { width: 17px; height: 17px; }
+        .model-item .m-name { flex: 1; font-size: 14px; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .model-item .m-tag { font-size: 10.5px; color: var(--muted); padding: 3px 9px; border-radius: 999px; border: 1px solid var(--line-soft); white-space: nowrap; }
+        .model-item.active .m-tag { color: #fff; border-color: rgba(255, 90, 60, 0.5); }
+
+        .sys-row { display: flex; align-items: center; gap: 16px; padding: 11px 0; border-bottom: 1px solid var(--line-soft); }
+        .sys-row:last-child { border-bottom: none; }
+        .sys-row .k { width: 56px; font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+        .sys-row .v { flex: 1; font-size: 14px; }
+        .ring { width: 18px; height: 18px; border-radius: 50%; border: 2px solid rgba(255, 106, 74, 0.7); flex-shrink: 0; }
+        .ring.ok { border-color: var(--accent); background: radial-gradient(circle, var(--accent) 35%, transparent 40%); box-shadow: 0 0 8px rgba(0, 255, 65, 0.4); }
+        .ring.bad { border-color: var(--primary); background: radial-gradient(circle, var(--primary) 35%, transparent 40%); }
+
+        .quote-card { padding: 0; overflow: hidden; display: flex; flex-direction: column; }
+        .quote-art {
+            position: relative; flex: 1; min-height: 190px;
+            background: linear-gradient(180deg, #130910 0%, #2b0b10 45%, #5a1a0c 75%, #1d0907 100%);
+            padding: 24px 26px;
+        }
+        .quote-art p { position: relative; z-index: 2; font-size: 19px; font-weight: 300; line-height: 1.45; max-width: 220px; }
+        .quote-art p::after { content: ''; display: block; width: 40px; height: 2px; background: var(--grad); margin-top: 26px; }
+        .quote-art .mtn { position: absolute; right: 0; bottom: 0; width: 100%; height: 150px; }
+        .quote-foot { display: flex; gap: 14px; align-items: center; padding: 18px 24px; border-top: 1px solid var(--line-soft); }
+        .quote-foot svg.i { width: 26px; height: 26px; color: var(--ember); stroke-width: 3; filter: drop-shadow(0 0 6px rgba(255, 111, 0, 0.6)); }
+        .quote-foot strong { font-size: 14px; font-weight: 600; display: block; }
+        .quote-foot small { font-size: 12px; color: var(--muted); }
+
+        /* ===== Modo conversa ===== */
+        body.chatting .main-scroll { overflow: hidden; }
+        body.chatting .content { height: 100%; display: flex; flex-direction: column; padding-bottom: 22px; }
+        body.chatting .hero { display: contents; }
+        body.chatting .greeting, body.chatting .cards, body.chatting .bottom-grid, body.chatting .orb-block { display: none; }
+        body.chatting .chat-panel { display: flex; flex: 1; margin-top: 16px; order: 2; }
+        body.chatting .composer-block { order: 3; margin-top: 14px; }
+        body.chatting .tool-panels { max-height: 38vh; overflow-y: auto; }
+        body.chatting .chips { display: none; }
+        body.chatting .scene { height: 300px; opacity: 0.6; }
+
+        /* Modal de histórico (chat-history.js) */
+        #history-modal { backdrop-filter: blur(6px); }
+        #history-modal > div { background: var(--panel-strong) !important; border: 1px solid var(--line) !important; border-radius: 20px !important; margin-top: 8vh !important; }
+        #history-modal h2 { font-family: var(--font); font-weight: 600; color: var(--text) !important; }
+        #history-modal input { border-radius: 12px !important; background: rgba(0, 0, 0, 0.4) !important; border-color: var(--line-soft) !important; }
+        #history-modal .history-item { border-radius: 12px; background: rgba(255, 255, 255, 0.03); border-color: var(--line-soft); }
+        #btn-close-modal { background: var(--grad) !important; border-radius: 12px !important; }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 90, 60, 0.22); border-radius: 8px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255, 90, 60, 0.4); }
+
+        /* Responsivo */
+        @media (max-width: 1280px) {
+            .cards { grid-template-columns: repeat(2, 1fr); }
+            .bottom-grid { grid-template-columns: 1fr 1fr; }
+            .quote-card { grid-column: span 2; }
+            .hero-quote { display: none; }
+        }
+        @media (max-width: 1020px) {
+            .hero { grid-template-columns: 1fr; grid-template-areas: "orb" "greet" "composer"; }
+            .orb-block { padding-top: 0; }
+            .orb { width: 150px; height: 150px; }
+            .eye { width: 26px; height: 13px; border-width: 3px; }
+            .greeting { padding-top: 24px; text-align: center; }
+        }
+        @media (max-width: 860px) {
+            .sidebar {
+                position: fixed; left: 0; top: 0; bottom: 0; z-index: 40;
+                background: #0b0609;
+                border-right: 1px solid var(--line);
+                transform: translateX(-100%);
+                transition: transform 0.3s;
+            }
+            body.nav-open .sidebar { transform: none; box-shadow: 20px 0 60px rgba(0, 0, 0, 0.7); }
+            .main { margin: 0; border-radius: 0; border: none; }
+            .icon-btn.menu-btn { display: grid; }
+            .scene { width: 100%; }
+        }
+        @media (max-width: 600px) {
+            .content { padding: 14px 16px 24px; }
+            .cards, .bottom-grid { grid-template-columns: 1fr; }
+            .quote-card { grid-column: auto; }
+            .profile span, .status-pill { display: none; }
+            .message-content { max-width: 88%; }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="sidebar">
-            <div class="logo">⚡ ARMAGEDON ⚡</div>
+    <!-- Sprite de ícones -->
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+        <defs>
+            <linearGradient id="gFire" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#ff1744"/><stop offset="1" stop-color="#ff9e40"/>
+            </linearGradient>
+            <linearGradient id="gPeak" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#7a2a1a"/><stop offset="1" stop-color="#1a0706"/>
+            </linearGradient>
+        </defs>
+        <symbol id="i-star" viewBox="0 0 24 24"><path fill="url(#gFire)" d="M12 1c.8 5.6 4.4 9.2 11 11-6.6 1.8-10.2 5.4-11 11-.8-5.6-4.4-9.2-11-11 6.6-1.8 10.2-5.4 11-11z"/></symbol>
+        <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></symbol>
+        <symbol id="i-chat" viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></symbol>
+        <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+        <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></symbol>
+        <symbol id="i-video" viewBox="0 0 24 24"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="m22 8-6 4 6 4z"/></symbol>
+        <symbol id="i-voice" viewBox="0 0 24 24"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></symbol>
+        <symbol id="i-cpu" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"/></symbol>
+        <symbol id="i-plug" viewBox="0 0 24 24"><path d="M9 2v6M15 2v6M6 8h12v4a6 6 0 0 1-12 0zM12 18v4"/></symbol>
+        <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+        <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v5"/></symbol>
+        <symbol id="i-send" viewBox="0 0 24 24"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"/></symbol>
+        <symbol id="i-stop" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor"/></symbol>
+        <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+        <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+        <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></symbol>
+        <symbol id="i-moon" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></symbol>
+        <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+        <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12 2 10 5-10 5L2 7z"/><path d="m2 17 10 5 10-5M2 12l10 5 10-5"/></symbol>
+        <symbol id="i-server" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="7" rx="2"/><rect x="3" y="14" width="18" height="7" rx="2"/><path d="M7 6.5h.01M7 17.5h.01"/></symbol>
+        <symbol id="i-bars" viewBox="0 0 24 24"><path d="M6 20v-8M12 20V5M18 20v-5"/></symbol>
+        <symbol id="i-doc" viewBox="0 0 24 24"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></symbol>
+        <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></symbol>
+        <symbol id="i-bulb" viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></symbol>
+        <symbol id="i-code" viewBox="0 0 24 24"><path d="m8 7-5 5 5 5M16 7l5 5-5 5"/></symbol>
+        <symbol id="i-dots" viewBox="0 0 24 24"><path d="M5 12h.01M12 12h.01M19 12h.01" stroke-width="3"/></symbol>
+        <symbol id="mtn" viewBox="0 0 600 200" preserveAspectRatio="xMidYMax slice">
+            <path style="fill: var(--m1, #22080b)" d="M0 200V130l60-20 50 15 60-45 60 35 60-45 50 30 60-45 55 40 55-20 50 30 40-15v110z"/>
+            <path style="fill: var(--m2, #0d0406)" d="M0 200v-40l80-20 60 18 70-30 60 22 60-30 50 25 60-35 60 30 60-15 40 15v60z"/>
+        </symbol>
+        <symbol id="peak" viewBox="0 0 600 200" preserveAspectRatio="xMaxYMax slice">
+            <path fill="#1c0808" d="M0 200v-60l120-22 80 12 100-70 40 25 50-50 70 75 80 6 60-12v96z"/>
+            <path fill="url(#gPeak)" opacity=".85" d="m390 35-25 95 75-20z"/>
+            <path fill="#0b0405" d="M0 200v-25l100-15 90 12 120-30 90 20 100-18 100 12v44z"/>
+        </symbol>
+    </svg>
+
+    <div class="app">
+        <!-- ================= SIDEBAR ================= -->
+        <aside class="sidebar" id="sidebar">
+            <div class="logo">
+                <svg><use href="#i-star"/></svg>
+                <div>
+                    <div class="logo-name">ARMAGEDON</div>
+                    <div class="logo-sub">Apocalipse Digital</div>
+                </div>
+            </div>
+
+            <button class="nav-item active" data-nav="home" onclick="goHome()"><svg class="i"><use href="#i-home"/></svg>Início</button>
+            <button class="nav-item" data-nav="chat" onclick="setChatMode(true)"><svg class="i"><use href="#i-chat"/></svg>Conversa atual</button>
+            <button class="nav-item" onclick="chatHistory.showHistory()"><svg class="i"><use href="#i-doc"/></svg>Histórico</button>
+            <button class="nav-item" onclick="newChat()"><svg class="i"><use href="#i-plus"/></svg>Nova conversa</button>
+            <button class="nav-item" onclick="toggleImageGenerator()"><svg class="i"><use href="#i-image"/></svg>Imagem</button>
+            <button class="nav-item" onclick="toggleVideoGenerator()"><svg class="i"><use href="#i-video"/></svg>Vídeo</button>
+            <button class="nav-item" onclick="toggleVoiceGenerator()"><svg class="i"><use href="#i-voice"/></svg>Voz</button>
+            <button class="nav-item" onclick="toggleProcessPanel()"><svg class="i"><use href="#i-cpu"/></svg>Processos</button>
+            <button class="nav-item" onclick="window.location.href='interface-plugins.html'"><svg class="i"><use href="#i-plug"/></svg>Plugins</button>
 
             <div class="model-selector">
-                <label>Modelo</label>
+                <label for="modelSelect">Modelo</label>
                 <select id="modelSelect">
+                    <option value="mistral-uncensored">Mistral Uncensored (TOTALMENTE SEM FILTROS)</option>
+                    <option value="neural-chat">Neural Chat (SEM FILTROS)</option>
+                    <option value="dolphin-llama3">Dolphin-Llama3 (Menos censurado)</option>
                     <option value="armagedon">ARMAGEDON (customizado)</option>
                     <option value="qwen2.5:7b">Qwen2.5 7B</option>
-                    <option value="dolphin-llama3">Dolphin-Llama3</option>
                 </select>
             </div>
 
-            <div class="btn-group">
-                <button class="btn-primary" onclick="newChat()">Nova Conversa</button>
-                <button class="btn-secondary" onclick="clearChat()">Limpar</button>
+            <div class="side-spacer"></div>
+
+            <div class="side-quote">
+                <p>“Do caos nasce a criação.”</p>
+                <svg class="mtn"><use href="#mtn"/></svg>
             </div>
 
-            <hr style="margin: 20px 0; border: none; border-top: 1px solid var(--border);">
-
-            <div style="font-size: 12px; color: #64748b; line-height: 1.6;">
-                <strong>ARMAGEDON v1.0</strong><br>
-                Assistente de IA Pessoal<br><br>
-                <strong>Hardware:</strong><br>
-                CPU: Ryzen 5 2400G<br>
-                RAM: 16GB (~14GB úteis)<br>
-                GPU: Radeon Vega 11 (CPU only)<br><br>
-                <strong>Status:</strong><br>
-                ✅ Ollama: Conectado<br>
-                ✅ Modelos: Carregados
-            </div>
-        </div>
-
-        <div class="chat-container">
-            <div class="chat-header">
-                💬 ARMAGEDON — Seu Assistente de IA Pessoal
+            <div class="voice-card">
+                <div class="focus-head">
+                    <span><svg class="i" style="width:17px;height:17px;color:var(--ember)"><use href="#i-mic"/></svg>Assistente de voz</span>
+                    <button class="switch" id="voiceSwitch" onclick="toggleVoice()" aria-label="Ligar assistente de voz"></button>
+                </div>
+                <div class="voice-state"><span class="dot" id="voiceDot"></span><span id="voiceState">Desligado</span></div>
+                <div class="voice-actions">
+                    <button id="voiceWakeBtn" onclick="voiceControl('wake')" disabled><svg class="i"><use href="#i-mic"/></svg>Falar</button>
+                    <button id="voiceMuteBtn" onclick="voiceControl(voice.muted ? 'unmute' : 'mute')" disabled><svg class="i"><use href="#i-x"/></svg>Mudo</button>
+                    <button id="voiceStopBtn" onclick="voiceControl('stop')" disabled><svg class="i"><use href="#i-stop"/></svg>Parar</button>
+                </div>
             </div>
 
-            <div class="status" id="status">Conectado ao Ollama • Pronto para conversar</div>
+            <div class="focus-card">
+                <div class="focus-head">
+                    <span><svg class="i" style="width:17px;height:17px"><use href="#i-moon"/></svg>Modo Foco</span>
+                    <button class="switch" id="focusSwitch" onclick="toggleFocus()" aria-label="Modo Foco"></button>
+                </div>
+                <small>Menos efeitos, mais foco.</small>
+            </div>
+        </aside>
 
-            <div class="messages" id="messages"></div>
-
-            <div class="input-area">
-                <textarea id="messageInput" placeholder="Digite sua pergunta... (Shift+Enter para quebra de linha)" rows="1"></textarea>
-                <button id="sendBtn" onclick="sendMessage()">Enviar</button>
-                <button id="stopBtn" onclick="stopResponse()" style="display: none; background: #ff6f00;">Parar</button>
-                <button id="imageBtn" onclick="toggleImageGenerator()" style="background: linear-gradient(135deg, #00ff41 0%, #00d4ff 100%); color: #000; font-weight: bold;">🎨 Imagem</button>
-                <button id="videoBtn" onclick="toggleVideoGenerator()" style="background: linear-gradient(135deg, #ff6f00 0%, #ff1744 100%); color: #fff; font-weight: bold;">🎬 Vídeo</button>
-                <button id="voiceBtn" onclick="toggleVoiceGenerator()" style="background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%); color: #fff; font-weight: bold;">🔊 Voz</button>
-                <button id="procBtn" onclick="toggleProcessPanel()" style="background: #334155; color: #fff; font-weight: bold;">⚙️ Processos</button>
+        <!-- ================= MAIN ================= -->
+        <main class="main">
+            <div class="scene" aria-hidden="true">
+                <div class="sky"></div>
+                <div class="eclipse"></div>
+                <div class="meteor" style="top: 90px; right: 8%;"></div>
+                <div class="meteor m2" style="right: 30%;"></div>
+                <svg class="mtn"><use href="#mtn"/></svg>
+                <div class="lake"></div>
+                <div id="embers"></div>
             </div>
 
-            <div id="processPanel" style="display: none; padding: 16px 20px; border-top: 2px solid #334155; background: rgba(51, 65, 85, 0.12);">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                    <strong style="font-size: 13px;">Processos em execução</strong>
-                    <span id="procServers" style="font-size: 11px; color: #888;"></span>
+            <div class="main-scroll">
+                <div class="content">
+                    <header class="topbar">
+                        <button class="icon-btn menu-btn" onclick="document.body.classList.toggle('nav-open')" aria-label="Menu"><svg class="i"><use href="#i-menu"/></svg></button>
+                        <div class="status-pill"><span class="dot" id="statusDot"></span><span id="status">Conectado ao Ollama • Pronto para conversar</span></div>
+                        <button class="voice-chip" id="voiceChip" onclick="voiceControl('wake')" title="Clique para falar com o Armagedon"><svg class="i"><use href="#i-mic"/></svg><span id="voiceChipText">Ouvindo</span></button>
+                        <button class="icon-btn" onclick="chatHistory.showHistory()" aria-label="Buscar conversas"><svg class="i"><use href="#i-search"/></svg></button>
+                        <div class="profile"><div class="mini-orb"></div><span>Até o fim dos tempos</span></div>
+                    </header>
+
+                    <section class="hero">
+                        <div class="orb-block">
+                            <div class="orb" onclick="orbClick()" title="Clique para falar"><span class="eye l"></span><span class="eye r"></span></div>
+                            <div class="orb-shadow"></div>
+                            <div class="orb-name"><span class="dot on"></span>ARMAGEDON</div>
+                            <div class="orb-sub" id="orbSub">Sempre aprendendo com você</div>
+                        </div>
+
+                        <div class="greeting">
+                            <h1>Olá,<br>Como posso te <span class="grad-text">ajudar hoje?</span></h1>
+                            <p>Ideias, respostas, imagens, vídeos e voz. Todo o poder do fim do mundo em um só lugar.</p>
+                            <div class="hero-quote">“Tecnologia com propósito: dominar o caos.”</div>
+                        </div>
+
+                        <div class="chat-panel" id="chatPanel">
+                            <div class="chat-head">
+                                <h2>Conversa</h2>
+                                <span class="model-tag" id="chatModelTag"></span>
+                                <span class="grow"></span>
+                                <button class="ghost-btn" onclick="clearChat()"><svg class="i"><use href="#i-trash"/></svg>Limpar</button>
+                                <button class="ghost-btn" onclick="goHome()"><svg class="i"><use href="#i-home"/></svg>Início</button>
+                            </div>
+                            <div class="messages" id="messages"></div>
+                        </div>
+
+                        <div class="composer-block">
+                            <div class="plus-menu" id="plusMenu">
+                                <button onclick="toggleImageGenerator(); closePlus()"><svg class="i" style="color:#00ff41"><use href="#i-image"/></svg>Gerar imagem</button>
+                                <button onclick="toggleVideoGenerator(); closePlus()"><svg class="i" style="color:#ff6f00"><use href="#i-video"/></svg>Gerar vídeo</button>
+                                <button onclick="toggleVoiceGenerator(); closePlus()"><svg class="i" style="color:#a855f7"><use href="#i-voice"/></svg>Texto para voz</button>
+                                <button onclick="toggleProcessPanel(); closePlus()"><svg class="i" style="color:#94a3b8"><use href="#i-cpu"/></svg>Processos</button>
+                                <button onclick="window.location.href='interface-plugins.html'"><svg class="i" style="color:#ff9e40"><use href="#i-plug"/></svg>Plugins</button>
+                            </div>
+
+                            <div class="input-area">
+                                <button class="icon-btn" id="plusBtn" onclick="togglePlus(event)" aria-label="Ferramentas"><svg class="i"><use href="#i-plus"/></svg></button>
+                                <textarea id="messageInput" placeholder="Digite sua mensagem aqui... (Shift+Enter para quebra de linha)" rows="1"></textarea>
+                                <button class="icon-btn" id="micBtn" onclick="toggleDictation()" aria-label="Ditar"><svg class="i"><use href="#i-mic"/></svg></button>
+                                <button class="send-btn" id="sendBtn" onclick="sendMessage()" aria-label="Enviar"><svg class="i"><use href="#i-send"/></svg></button>
+                                <button class="send-btn" id="stopBtn" onclick="stopResponse()" style="display: none;" aria-label="Parar"><svg class="i"><use href="#i-stop"/></svg></button>
+                            </div>
+
+                            <div class="chips">
+                                <button class="chip" onclick="useChip('Resuma o seguinte texto:\n')"><svg class="i"><use href="#i-doc"/></svg>Resumir um texto</button>
+                                <button class="chip" onclick="useChip('Me ajude a planejar meu dia. Minhas tarefas são: ')"><svg class="i"><use href="#i-calendar"/></svg>Planejar meu dia</button>
+                                <button class="chip" onclick="useChip('Me dê 10 ideias criativas sobre: ')"><svg class="i"><use href="#i-bulb"/></svg>Gerar ideias</button>
+                                <button class="chip" onclick="useChip('Explique este código passo a passo:\n')"><svg class="i"><use href="#i-code"/></svg>Explicar código</button>
+                                <button class="chip" onclick="togglePlus(event)"><svg class="i"><use href="#i-dots"/></svg>Mais opções</button>
+                            </div>
+
+                            <div class="tool-panels">
+                                <!-- Processos -->
+                                <div id="processPanel" class="tool-panel proc" style="display: none;">
+                                    <div class="panel-head">
+                                        <strong><svg class="i"><use href="#i-cpu"/></svg>Processos em execução</strong>
+                                        <span style="display:flex;align-items:center;gap:10px;">
+                                            <span id="procServers" style="font-size: 11px; color: var(--muted);"></span>
+                                            <button class="icon-btn" onclick="toggleProcessPanel()" aria-label="Fechar"><svg class="i"><use href="#i-x"/></svg></button>
+                                        </span>
+                                    </div>
+                                    <div id="procList" style="font-size: 12px; color: #d9c9c4;">Carregando...</div>
+                                </div>
+
+                                <!-- Imagem -->
+                                <div id="imageGenerator" class="tool-panel image" style="display: none;">
+                                    <div class="panel-head">
+                                        <strong><svg class="i"><use href="#i-image"/></svg>Gerar imagem</strong>
+                                        <button class="icon-btn" onclick="toggleImageGenerator()" aria-label="Fechar"><svg class="i"><use href="#i-x"/></svg></button>
+                                    </div>
+                                    <div class="row">
+                                        <textarea id="imagePrompt" class="field" rows="2" placeholder="Descreva a imagem em português, com todos os detalhes que quiser..." style="flex: 1; min-width: 220px; resize: vertical;" onkeydown="if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); generateImage(); }"></textarea>
+                                        <button id="gerarBtn" class="btn-tone" onclick="generateImage()" style="align-self: stretch;">Gerar</button>
+                                    </div>
+
+                                    <!-- Imagem base para modificar -->
+                                    <div class="base-box">
+                                        <div class="base-empty" id="baseEmpty">
+                                            <input type="file" id="baseFile" accept="image/*" hidden onchange="if (this.files[0]) loadBaseFile(this.files[0]); this.value = '';">
+                                            <button class="ghost-btn" onclick="document.getElementById('baseFile').click()"><svg class="i"><use href="#i-image"/></svg>Modificar uma imagem do computador</button>
+                                            <span class="hint" style="margin:0;">ou arraste / cole (Ctrl+V) uma imagem aqui</span>
+                                        </div>
+                                        <div class="base-editor" id="baseEditor" style="display: none;">
+                                            <div class="canvas-wrap" id="canvasWrap">
+                                                <img id="baseImg" alt="Imagem a modificar" draggable="false">
+                                                <canvas id="maskCanvas"></canvas>
+                                            </div>
+                                            <div class="base-tools">
+                                                <div class="seg">
+                                                    <button id="toolWhole" class="on" onclick="setEditTool('whole')">🖼️ Transformar tudo</button>
+                                                    <button id="toolMask" onclick="setEditTool('mask')">🖌️ Pintar a área</button>
+                                                </div>
+                                                <div id="maskTools" class="row" style="display: none; margin: 0;">
+                                                    <label class="lbl">Pincel
+                                                        <input id="brushSize" type="range" min="6" max="120" value="40" style="width: 120px; accent-color: #00ff41;">
+                                                    </label>
+                                                    <button class="ghost-btn" onclick="clearMask()">Limpar pintura</button>
+                                                </div>
+                                                <label class="lbl">Quanto mudar: <span id="strengthVal" style="text-transform:none;color:var(--text);">60%</span>
+                                                    <input id="editStrength" type="range" min="10" max="100" value="60" style="width: 200px; accent-color: #00ff41;"
+                                                           oninput="document.getElementById('strengthVal').textContent = this.value + '%'">
+                                                </label>
+                                                <p class="hint" id="editHint"></p>
+                                                <button class="ghost-btn" onclick="clearBase()" style="width: max-content;">✕ Remover imagem</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <label class="lbl">Modelo
+                                            <select id="imageModel" class="field">
+                                                <option value="auto">Automático</option>
+                                                <option value="realista">Realista — Realistic Vision 6</option>
+                                                <option value="arte">Arte — DreamShaper 8</option>
+                                                <option value="anime">Anime — AnyLora Anime Mix</option>
+                                            </select>
+                                        </label>
+                                        <label class="lbl">Estilo
+                                            <select id="imageStyle" class="field">
+                                                <option value="auto">Automático</option>
+                                                <option value="foto">Foto realista</option>
+                                                <option value="arte">Arte digital</option>
+                                                <option value="anime">Anime</option>
+                                                <option value="pintura">Pintura a óleo</option>
+                                                <option value="3d">3D</option>
+                                                <option value="nenhum">Nenhum (só o meu texto)</option>
+                                            </select>
+                                        </label>
+                                        <label class="lbl">Formato
+                                            <select id="imageSize" class="field">
+                                                <option value="quadrado">Quadrado 512×512</option>
+                                                <option value="retrato">Retrato 512×768</option>
+                                                <option value="paisagem">Paisagem 768×512</option>
+                                            </select>
+                                        </label>
+                                        <span style="display:flex;flex-direction:column;gap:8px;padding-bottom:4px;">
+                                            <label class="check"><input id="imageTurbo" type="checkbox" checked> ⚡ Rápido (~2–3 min · desmarque para qualidade máxima, ~10 min)</label>
+                                            <label class="check"><input id="imageEnhance" type="checkbox" checked> ✨ Melhorar prompt com IA (traduz pro inglês)</label>
+                                        </span>
+                                    </div>
+                                    <details class="advanced">
+                                        <summary>Avançado</summary>
+                                        <div class="row" style="margin-top: 10px;">
+                                            <label class="lbl">Passos
+                                                <input id="imageSteps" class="field" type="number" min="1" max="60" placeholder="auto" style="width: 90px;">
+                                            </label>
+                                            <label class="lbl">Semente
+                                                <input id="imageSeed" class="field" type="text" placeholder="aleatória" style="width: 130px;">
+                                            </label>
+                                            <label class="lbl" style="flex: 1; min-width: 200px;">Evitar na imagem (em inglês)
+                                                <input id="imageNegative" class="field" type="text" placeholder="ex.: hat, glasses, red">
+                                            </label>
+                                        </div>
+                                    </details>
+
+                                    <div id="imageProgressContainer" style="display: none; margin-top: 15px;">
+                                        <div class="progress-meta"><span id="progressLabel">Gerando imagem...</span><span id="progressPercent">0%</span></div>
+                                        <div class="progress"><div id="progressBar"></div></div>
+                                        <div class="progress-foot">
+                                            <span id="progressTime"></span>
+                                            <button id="pararImagemBtn" class="btn-mini" onclick="cancelCurrentImage()" style="display:none;">Parar</button>
+                                        </div>
+                                    </div>
+                                    <div id="imageStatus" class="panel-status"></div>
+                                    <div id="imageResult" class="image-result" style="display: none;"></div>
+                                </div>
+
+                                <!-- Vídeo -->
+                                <div id="videoGenerator" class="tool-panel video" style="display: none;">
+                                    <div class="panel-head">
+                                        <strong><svg class="i"><use href="#i-video"/></svg>Gerar vídeo</strong>
+                                        <button class="icon-btn" onclick="toggleVideoGenerator()" aria-label="Fechar"><svg class="i"><use href="#i-x"/></svg></button>
+                                    </div>
+                                    <div class="row">
+                                        <label class="lbl" style="flex: 1; min-width: 200px;">Descrição
+                                            <input id="videoPrompt" class="field" type="text" placeholder="Descreva o vídeo que quer gerar...">
+                                        </label>
+                                        <label class="lbl">Duração (s)
+                                            <input id="videoDuration" class="field" type="number" min="1" max="10" value="1" oninput="updateVideoEstimate()" style="width: 84px;">
+                                        </label>
+                                        <label class="lbl">FPS
+                                            <input id="videoFps" class="field" type="number" min="1" max="24" value="4" oninput="updateVideoEstimate()" style="width: 74px;">
+                                        </label>
+                                        <button id="gerarVideoBtn" class="btn-tone" onclick="generateVideo()">Gerar</button>
+                                    </div>
+                                    <div class="row">
+                                        <label class="lbl">Modo
+                                            <select id="videoMode" class="field" onchange="updateVideoEstimate()">
+                                                <option value="camera">Câmera (rápido)</option>
+                                                <option value="frames">Frames independentes</option>
+                                                <option value="evolucao">Evolução (img2img)</option>
+                                            </select>
+                                        </label>
+                                        <label class="lbl">Resolução
+                                            <select id="videoSize" class="field" onchange="updateVideoEstimate()">
+                                                <option value="512">512 px</option>
+                                                <option value="384">384 px (mais rápido)</option>
+                                            </select>
+                                        </label>
+                                        <label class="lbl">Steps
+                                            <input id="videoSteps" class="field" type="number" min="1" max="30" placeholder="auto" oninput="updateVideoEstimate()" style="width: 84px;">
+                                        </label>
+                                        <label class="check" style="padding-bottom: 11px;"><input id="videoTurbo" type="checkbox" checked onchange="updateVideoEstimate()"> ⚡ Turbo</label>
+                                    </div>
+                                    <div id="videoEstimate" class="hint"></div>
+
+                                    <div id="videoProgressContainer" style="display: none; margin-top: 15px;">
+                                        <div class="progress-meta"><span id="videoProgressLabel">Gerando vídeo...</span><span id="videoProgressPercent">0%</span></div>
+                                        <div class="progress"><div id="videoProgressBar"></div></div>
+                                        <div class="progress-foot">
+                                            <span id="videoProgressTime">Tempo estimado: 20-40 minutos</span>
+                                            <button id="pararVideoBtn" class="btn-mini" onclick="cancelCurrentVideo()" style="display:none;">Parar</button>
+                                        </div>
+                                    </div>
+                                    <div id="videoStatus" class="panel-status"></div>
+                                </div>
+
+                                <!-- Voz -->
+                                <div id="voiceGenerator" class="tool-panel voice" style="display: none;">
+                                    <div class="panel-head">
+                                        <strong><svg class="i"><use href="#i-voice"/></svg>Texto para voz</strong>
+                                        <button class="icon-btn" onclick="toggleVoiceGenerator()" aria-label="Fechar"><svg class="i"><use href="#i-x"/></svg></button>
+                                    </div>
+                                    <div class="row" style="align-items: stretch;">
+                                        <textarea id="voiceText" class="field" placeholder="Escreva o texto que quer converter em áudio..." style="flex: 1; min-width: 220px; min-height: 90px; resize: vertical;"></textarea>
+                                        <div style="display: flex; flex-direction: column; gap: 8px; justify-content: space-between;">
+                                            <label class="lbl">Voz & Idioma
+                                                <select id="voiceSelect" class="field" style="width: 160px;">
+                                                    <optgroup label="🇧🇷 Português">
+                                                        <option value="pt">PT-BR (Padrão)</option>
+                                                        <option value="pt-pt">PT-PT (Portugal)</option>
+                                                    </optgroup>
+                                                    <optgroup label="🇺🇸 Inglês">
+                                                        <option value="en">EN-US (Americano)</option>
+                                                        <option value="en-gb">EN-GB (Britânico)</option>
+                                                        <option value="en-au">EN-AU (Australiano)</option>
+                                                    </optgroup>
+                                                    <optgroup label="🇪🇸 Espanhol">
+                                                        <option value="es">ES (Espanha)</option>
+                                                        <option value="es-mx">ES-MX (México)</option>
+                                                    </optgroup>
+                                                    <optgroup label="🇫🇷 Francês">
+                                                        <option value="fr">FR (França)</option>
+                                                        <option value="fr-ca">FR-CA (Canadá)</option>
+                                                    </optgroup>
+                                                    <optgroup label="🇮🇹 Italiano">
+                                                        <option value="it">IT (Italiano)</option>
+                                                    </optgroup>
+                                                    <optgroup label="🇩🇪 Alemão">
+                                                        <option value="de">DE (Alemão)</option>
+                                                    </optgroup>
+                                                    <optgroup label="🇯🇵 Outros">
+                                                        <option value="ja">JA (Japonês)</option>
+                                                        <option value="ko">KO (Coreano)</option>
+                                                        <option value="zh-CN">ZH (Chinês)</option>
+                                                        <option value="ru">RU (Russo)</option>
+                                                        <option value="hi">HI (Hindi)</option>
+                                                    </optgroup>
+                                                </select>
+                                            </label>
+                                            <button id="gerarVozBtn" class="btn-tone" onclick="generateVoice()">Gerar</button>
+                                        </div>
+                                    </div>
+                                    <div class="row" style="gap: 16px;">
+                                        <label class="lbl">Gênero
+                                            <select id="voiceGender" class="field" style="width: 130px;">
+                                                <option value="neutral">👤 Neutro</option>
+                                                <option value="male">👨 Masculino</option>
+                                                <option value="female">👩 Feminino</option>
+                                            </select>
+                                        </label>
+                                        <label class="lbl">Tom Emocional
+                                            <select id="voiceEmotion" class="field" style="width: 130px;">
+                                                <option value="neutral">😐 Neutro</option>
+                                                <option value="alegre">😄 Alegre</option>
+                                                <option value="triste">😢 Triste</option>
+                                                <option value="zangado">😠 Zangado</option>
+                                                <option value="calmo">😌 Calmo</option>
+                                            </select>
+                                        </label>
+                                        <label class="lbl">Velocidade
+                                            <span style="display:flex;align-items:center;gap:8px;height:40px;text-transform:none;letter-spacing:0;font-size:12px;color:var(--text);">
+                                                <input id="voiceSpeed" type="range" min="0.5" max="2.0" step="0.1" value="1.0" oninput="updateVoiceSpeed()" style="width: 120px; accent-color: #a855f7; cursor: pointer;">
+                                                <span id="voiceSpeedValue">1.0x</span>
+                                            </span>
+                                        </label>
+                                    </div>
+                                    <div id="voiceEstimate" class="hint"></div>
+
+                                    <div id="voiceProgressContainer" style="display: none; margin-top: 15px;">
+                                        <div class="progress-meta"><span id="voiceProgressLabel">Gerando áudio...</span><span id="voiceProgressPercent">0%</span></div>
+                                        <div class="progress"><div id="voiceProgressBar"></div></div>
+                                    </div>
+
+                                    <div id="voicePlayer" style="display: none; margin-top: 15px; padding: 12px; background: rgba(168, 85, 247, 0.08); border-radius: 12px; border: 1px solid rgba(168, 85, 247, 0.4);">
+                                        <audio id="audioElement" controls style="width: 100%; margin-bottom: 10px;"></audio>
+                                        <button id="downloadAudioBtn" class="btn-tone" style="padding: 8px 16px; font-size: 12px;">📥 Baixar Áudio</button>
+                                    </div>
+
+                                    <div id="voiceStatus" class="panel-status"></div>
+
+                                    <div class="tip">
+                                        <strong>💡 Dica - Tom Emocional:</strong><br>
+                                        • <strong>😄 Alegre:</strong> 1.4x mais rápido, volume alto<br>
+                                        • <strong>😢 Triste:</strong> 0.6x mais lento, volume baixo<br>
+                                        • <strong>😠 Zangado:</strong> 1.5x muito rápido, intenso<br>
+                                        • <strong>😌 Calmo:</strong> 0.8x moderado, suave<br>
+                                        <br>
+                                        <strong>⚠️ Nota sobre Vozes:</strong> Seu sistema tem apenas vozes femininas. O tom emocional é aplicado via velocidade e volume. Textos &gt;500 caracteres são divididos automaticamente.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Cards de recursos -->
+                    <section class="cards">
+                        <button class="feature-card" style="--tone:#00ff41" onclick="toggleImageGenerator()">
+                            <svg class="i arrow"><use href="#i-arrow"/></svg>
+                            <div class="tile"><svg class="i"><use href="#i-image"/></svg></div>
+                            <h3>Crie<br>imagens</h3>
+                            <p>Descreva e eu dou forma às suas visões.</p>
+                        </button>
+                        <button class="feature-card" style="--tone:#ff6f00" onclick="toggleVideoGenerator()">
+                            <svg class="i arrow"><use href="#i-arrow"/></svg>
+                            <div class="tile"><svg class="i"><use href="#i-video"/></svg></div>
+                            <h3>Gere<br>vídeos</h3>
+                            <p>Câmera, frames ou evolução quadro a quadro.</p>
+                        </button>
+                        <button class="feature-card" style="--tone:#c06bff" onclick="toggleVoiceGenerator()">
+                            <svg class="i arrow"><use href="#i-arrow"/></svg>
+                            <div class="tile"><svg class="i"><use href="#i-voice"/></svg></div>
+                            <h3>Dê voz<br>ao texto</h3>
+                            <p>Vários idiomas, tons e velocidades.</p>
+                        </button>
+                        <button class="feature-card" style="--tone:#ff1744" onclick="window.location.href='interface-plugins.html'">
+                            <svg class="i arrow"><use href="#i-arrow"/></svg>
+                            <div class="tile"><svg class="i"><use href="#i-plug"/></svg></div>
+                            <h3>Expanda<br>com plugins</h3>
+                            <p>Busca, banco de dados, agenda e muito mais.</p>
+                        </button>
+                    </section>
+
+                    <!-- Painéis inferiores -->
+                    <section class="bottom-grid">
+                        <div class="panel-card">
+                            <div class="card-head">
+                                <h3><svg class="i"><use href="#i-layers"/></svg>Seus modelos</h3>
+                                <span class="card-link" id="modelCount"></span>
+                            </div>
+                            <div id="modelList"></div>
+                        </div>
+
+                        <div class="panel-card">
+                            <div class="card-head">
+                                <h3><svg class="i"><use href="#i-server"/></svg>Sistema</h3>
+                                <button class="card-link" onclick="toggleProcessPanel(); document.querySelector('.main-scroll').scrollTo({top: 0, behavior: 'smooth'})">Ver processos <svg class="i"><use href="#i-arrow"/></svg></button>
+                            </div>
+                            <div class="sys-row"><span class="k">CPU</span><span class="v">Intel Core i7-8565U (4 núcleos, 1.8 GHz)</span><span class="ring ok"></span></div>
+                            <div class="sys-row"><span class="k">RAM</span><span class="v">32GB</span><span class="ring ok"></span></div>
+                            <div class="sys-row"><span class="k">GPU</span><span class="v">NVIDIA GeForce MX150 2GB + Intel UHD 620</span><span class="ring ok"></span></div>
+                            <div class="sys-row"><span class="k">Ollama</span><span class="v" id="sysOllama">Verificando...</span><span class="ring" id="sysOllamaRing"></span></div>
+                        </div>
+
+                        <div class="panel-card quote-card">
+                            <div class="quote-art">
+                                <p>“O fim é só o começo.”</p>
+                                <svg class="mtn"><use href="#peak"/></svg>
+                            </div>
+                            <div class="quote-foot">
+                                <svg class="i"><use href="#i-bars"/></svg>
+                                <div>
+                                    <strong>ARMAGEDON v1.0</strong>
+                                    <small>Assistente de IA pessoal. Todo o poder, a seu comando.</small>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
                 </div>
-                <div id="procList" style="font-size: 12px; color: #cbd5e1;">Carregando...</div>
             </div>
-
-            <div id="imageGenerator" style="display: none; padding: 20px; border-top: 2px solid var(--accent); background: rgba(0, 255, 65, 0.05);">
-                <div style="display: flex; gap: 10px; margin-bottom: 8px;">
-                    <input id="imagePrompt" type="text" placeholder="Descreva a imagem que quer gerar..." style="flex: 1; padding: 10px; border: 1px solid var(--accent); border-radius: 8px; background: #1a1a1a; color: var(--text);">
-                    <button id="gerarBtn" onclick="generateImage()" style="padding: 10px 20px; background: linear-gradient(135deg, #00ff41 0%, #00d4ff 100%); color: #000; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">Gerar</button>
-                </div>
-                <label style="font-size: 12px; color: #00d4ff; cursor: pointer; user-select: none;">
-                    <input id="imageTurbo" type="checkbox" style="vertical-align: middle;"> ⚡ Turbo (SD-Turbo, ~4x mais rápido — 4 steps)
-                </label>
-
-                <div id="imageProgressContainer" style="display: none; margin-top: 15px;">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 12px;">
-                        <span id="progressLabel">Gerando imagem...</span>
-                        <span id="progressPercent">0%</span>
-                    </div>
-                    <div style="width: 100%; height: 8px; background: #222; border-radius: 4px; overflow: hidden; border: 1px solid var(--accent);">
-                        <div id="progressBar" style="height: 100%; width: 0%; background: linear-gradient(90deg, #00ff41 0%, #00d4ff 100%); transition: width 0.3s;"></div>
-                    </div>
-                    <div style="margin-top: 8px; font-size: 11px; color: #888; display: flex; justify-content: space-between; align-items: center;">
-                        <span id="progressTime">Tempo estimado: 7-10 minutos</span>
-                        <button id="pararImagemBtn" onclick="cancelCurrentImage()" style="display:none;padding:4px 12px;background:#ff1744;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:11px;">Parar</button>
-                    </div>
-                </div>
-
-                <div id="imageStatus" style="font-size: 12px; color: var(--accent); margin-top: 10px;"></div>
-            </div>
-
-            <div id="videoGenerator" style="display: none; padding: 20px; border-top: 2px solid #ff6f00; background: rgba(255, 111, 0, 0.05);">
-                <div style="display: flex; gap: 10px; margin-bottom: 8px; align-items: flex-end; flex-wrap: wrap;">
-                    <label style="flex: 1; min-width: 200px; font-size: 11px; color: #ff9e40;">Descrição
-                        <input id="videoPrompt" type="text" placeholder="Descreva o vídeo que quer gerar..." style="width: 100%; margin-top: 3px; padding: 10px; border: 1px solid #ff6f00; border-radius: 8px; background: #1a1a1a; color: var(--text);">
-                    </label>
-                    <label style="font-size: 11px; color: #ff9e40;">Duração (s)
-                        <input id="videoDuration" type="number" min="1" max="10" value="1" oninput="updateVideoEstimate()" style="display: block; width: 70px; margin-top: 3px; padding: 10px; border: 1px solid #ff6f00; border-radius: 8px; background: #1a1a1a; color: var(--text);">
-                    </label>
-                    <label style="font-size: 11px; color: #ff9e40;">FPS
-                        <input id="videoFps" type="number" min="1" max="24" value="4" oninput="updateVideoEstimate()" style="display: block; width: 64px; margin-top: 3px; padding: 10px; border: 1px solid #ff6f00; border-radius: 8px; background: #1a1a1a; color: var(--text);">
-                    </label>
-                    <button id="gerarVideoBtn" onclick="generateVideo()" style="padding: 10px 20px; background: linear-gradient(135deg, #ff6f00 0%, #ff1744 100%); color: #fff; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">Gerar</button>
-                </div>
-                <div style="display: flex; gap: 10px; margin-bottom: 6px; align-items: flex-end; flex-wrap: wrap;">
-                    <label style="font-size: 11px; color: #ff9e40;">Modo
-                        <select id="videoMode" onchange="updateVideoEstimate()" style="display: block; margin-top: 3px; padding: 9px; border: 1px solid #ff6f00; border-radius: 8px; background: #1a1a1a; color: var(--text);">
-                            <option value="camera">Câmera (rápido)</option>
-                            <option value="frames">Frames independentes</option>
-                            <option value="evolucao">Evolução (img2img)</option>
-                        </select>
-                    </label>
-                    <label style="font-size: 11px; color: #ff9e40;">Resolução
-                        <select id="videoSize" onchange="updateVideoEstimate()" style="display: block; margin-top: 3px; padding: 9px; border: 1px solid #ff6f00; border-radius: 8px; background: #1a1a1a; color: var(--text);">
-                            <option value="512">512 px</option>
-                            <option value="384">384 px (mais rápido)</option>
-                        </select>
-                    </label>
-                    <label style="font-size: 11px; color: #ff9e40;">Steps
-                        <input id="videoSteps" type="number" min="1" max="30" placeholder="auto" oninput="updateVideoEstimate()" style="display: block; width: 70px; margin-top: 3px; padding: 10px; border: 1px solid #ff6f00; border-radius: 8px; background: #1a1a1a; color: var(--text);">
-                    </label>
-                    <label style="font-size: 12px; color: #ff9e40; cursor: pointer; user-select: none; padding-bottom: 9px;">
-                        <input id="videoTurbo" type="checkbox" checked onchange="updateVideoEstimate()" style="vertical-align: middle;"> ⚡ Turbo
-                    </label>
-                </div>
-                <div id="videoEstimate" style="font-size: 11px; color: #888; margin: 4px 0 10px;"></div>
-
-                <div id="videoProgressContainer" style="display: none; margin-top: 15px;">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 12px;">
-                        <span id="videoProgressLabel">Gerando vídeo...</span>
-                        <span id="videoProgressPercent">0%</span>
-                    </div>
-                    <div style="width: 100%; height: 8px; background: #222; border-radius: 4px; overflow: hidden; border: 1px solid #ff6f00;">
-                        <div id="videoProgressBar" style="height: 100%; width: 0%; background: linear-gradient(90deg, #ff6f00 0%, #ff1744 100%); transition: width 0.3s;"></div>
-                    </div>
-                    <div style="margin-top: 8px; font-size: 11px; color: #888; display: flex; justify-content: space-between; align-items: center;">
-                        <span id="videoProgressTime">Tempo estimado: 20-40 minutos</span>
-                        <button id="pararVideoBtn" onclick="cancelCurrentVideo()" style="display:none;padding:4px 12px;background:#ff1744;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:11px;">Parar</button>
-                    </div>
-                </div>
-
-                <div id="videoStatus" style="font-size: 12px; color: #ff6f00; margin-top: 10px;"></div>
-            </div>
-
-            <div id="voiceGenerator" style="display: none; padding: 20px; border-top: 2px solid #a855f7; background: rgba(168, 85, 247, 0.05);">
-                <div style="display: flex; gap: 10px; margin-bottom: 8px;">
-                    <textarea id="voiceText" placeholder="Escreva o texto que quer converter em áudio..." style="flex: 1; padding: 10px; border: 1px solid #a855f7; border-radius: 8px; background: #1a1a1a; color: var(--text); min-height: 80px; resize: vertical;"></textarea>
-                    <div style="display: flex; flex-direction: column; gap: 8px;">
-                        <label style="font-size: 11px; color: #a855f7;">Voz & Idioma
-                            <select id="voiceSelect" style="display: block; width: 140px; margin-top: 3px; padding: 8px; border: 1px solid #a855f7; border-radius: 6px; background: #1a1a1a; color: var(--text); font-size: 10px;">
-                                <optgroup label="🇧🇷 Português">
-                                    <option value="pt">PT-BR (Padrão)</option>
-                                    <option value="pt-pt">PT-PT (Portugal)</option>
-                                </optgroup>
-                                <optgroup label="🇺🇸 Inglês">
-                                    <option value="en">EN-US (Americano)</option>
-                                    <option value="en-gb">EN-GB (Britânico)</option>
-                                    <option value="en-au">EN-AU (Australiano)</option>
-                                </optgroup>
-                                <optgroup label="🇪🇸 Espanhol">
-                                    <option value="es">ES (Espanha)</option>
-                                    <option value="es-mx">ES-MX (México)</option>
-                                </optgroup>
-                                <optgroup label="🇫🇷 Francês">
-                                    <option value="fr">FR (França)</option>
-                                    <option value="fr-ca">FR-CA (Canadá)</option>
-                                </optgroup>
-                                <optgroup label="🇮🇹 Italiano">
-                                    <option value="it">IT (Italiano)</option>
-                                </optgroup>
-                                <optgroup label="🇩🇪 Alemão">
-                                    <option value="de">DE (Alemão)</option>
-                                </optgroup>
-                                <optgroup label="🇯🇵 Outros">
-                                    <option value="ja">JA (Japonês)</option>
-                                    <option value="ko">KO (Coreano)</option>
-                                    <option value="zh-CN">ZH (Chinês)</option>
-                                    <option value="ru">RU (Russo)</option>
-                                    <option value="hi">HI (Hindi)</option>
-                                </optgroup>
-                            </select>
-                        </label>
-                        <button id="gerarVozBtn" onclick="generateVoice()" style="padding: 8px 16px; background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%); color: #fff; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 12px;">Gerar</button>
-                    </div>
-                </div>
-                <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
-                    <label style="font-size: 11px; color: #a855f7;">Gênero
-                        <select id="voiceGender" style="display: block; width: 100px; margin-top: 3px; padding: 6px; border: 1px solid #a855f7; border-radius: 6px; background: #1a1a1a; color: var(--text); font-size: 10px;">
-                            <option value="neutral">👤 Neutro</option>
-                            <option value="male">👨 Masculino</option>
-                            <option value="female">👩 Feminino</option>
-                        </select>
-                    </label>
-                    <label style="font-size: 11px; color: #a855f7;">Velocidade
-                        <input id="voiceSpeed" type="range" min="0.5" max="2.0" step="0.1" value="1.0" oninput="updateVoiceSpeed()" style="width: 100px; vertical-align: middle; cursor: pointer;">
-                        <span id="voiceSpeedValue">1.0x</span>
-                    </label>
-                </div>
-                <div id="voiceEstimate" style="font-size: 11px; color: #888; margin-top: 8px;"></div>
-
-                <div id="voiceProgressContainer" style="display: none; margin-top: 15px;">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 12px;">
-                        <span id="voiceProgressLabel">Gerando áudio...</span>
-                        <span id="voiceProgressPercent">0%</span>
-                    </div>
-                    <div style="width: 100%; height: 8px; background: #222; border-radius: 4px; overflow: hidden; border: 1px solid #a855f7;">
-                        <div id="voiceProgressBar" style="height: 100%; width: 0%; background: linear-gradient(90deg, #a855f7 0%, #ec4899 100%); transition: width 0.3s;"></div>
-                    </div>
-                </div>
-
-                <div id="voicePlayer" style="display: none; margin-top: 15px; padding: 12px; background: rgba(168, 85, 247, 0.1); border-radius: 8px; border: 1px solid #a855f7;">
-                    <audio id="audioElement" controls style="width: 100%; margin-bottom: 10px;"></audio>
-                    <button id="downloadAudioBtn" style="padding: 8px 16px; background: #a855f7; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: bold;">📥 Baixar Áudio</button>
-                </div>
-
-                <div id="voiceStatus" style="font-size: 12px; color: #a855f7; margin-top: 10px;"></div>
-            </div>
-        </div>
+        </main>
     </div>
+
+    <div class="lightbox" id="lightbox" onclick="this.classList.remove('open')"><img id="lightboxImg" alt=""></div>
 
     <script>
         const messagesDiv = document.getElementById('messages');
@@ -545,7 +1307,7 @@
 
         messageInput.addEventListener('input', function() {
             this.style.height = 'auto';
-            this.style.height = Math.min(this.scrollHeight, 100) + 'px';
+            this.style.height = Math.min(this.scrollHeight, 160) + 'px';
         });
 
         messageInput.addEventListener('keypress', function(e) {
@@ -555,11 +1317,297 @@
             }
         });
 
+        // ===== Layout: início / conversa =====
+        function setChatMode(on) {
+            document.body.classList.toggle('chatting', on);
+            document.body.classList.remove('nav-open');
+            document.querySelectorAll('.nav-item[data-nav]').forEach(b => {
+                b.classList.toggle('active', b.dataset.nav === (on ? 'chat' : 'home'));
+            });
+            if (on) messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function goHome() {
+            setChatMode(false);
+            document.querySelector('.main-scroll').scrollTo({ top: 0 });
+        }
+
+        // Entra no modo conversa quando uma mensagem do usuário aparece (envio ou histórico carregado)
+        new MutationObserver(muts => {
+            for (const m of muts) {
+                for (const n of m.addedNodes) {
+                    if (n.classList && n.classList.contains('user')) { setChatMode(true); return; }
+                }
+            }
+        }).observe(messagesDiv, { childList: true });
+
+        function useChip(text) {
+            messageInput.value = text;
+            messageInput.focus();
+            messageInput.dispatchEvent(new Event('input'));
+            messageInput.setSelectionRange(text.length, text.length);
+        }
+
+        function togglePlus(e) {
+            e.stopPropagation();
+            document.getElementById('plusMenu').classList.toggle('open');
+        }
+        function closePlus() { document.getElementById('plusMenu').classList.remove('open'); }
+        document.addEventListener('click', e => {
+            if (!e.target.closest('#plusMenu')) closePlus();
+            if (document.body.classList.contains('nav-open') && !e.target.closest('.sidebar, .menu-btn')) {
+                document.body.classList.remove('nav-open');
+            }
+        });
+
+        // ===== Ditado por voz (Web Speech API) =====
+        let recognition = null;
+        function toggleDictation() {
+            if (voice.running) { voiceControl('wake'); return; }  // com o assistente ligado, o microfone chama ele
+            const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+            const micBtn = document.getElementById('micBtn');
+            if (!SR) {
+                statusDiv.textContent = '🎙️ Ditado não suportado neste navegador';
+                return;
+            }
+            if (recognition) { recognition.stop(); return; }
+            recognition = new SR();
+            recognition.lang = 'pt-BR';
+            recognition.interimResults = true;
+            const base = messageInput.value;
+            recognition.onresult = e => {
+                let t = '';
+                for (const r of e.results) t += r[0].transcript;
+                messageInput.value = (base ? base + ' ' : '') + t;
+                messageInput.dispatchEvent(new Event('input'));
+            };
+            recognition.onerror = e => { statusDiv.textContent = '🎙️ Erro no ditado: ' + e.error; };
+            recognition.onend = () => { recognition = null; micBtn.classList.remove('rec'); };
+            recognition.start();
+            micBtn.classList.add('rec');
+            statusDiv.textContent = '🎙️ Ouvindo...';
+        }
+
+        // ===== Modo Foco =====
+        function toggleFocus(force) {
+            const on = typeof force === 'boolean' ? force : !document.body.classList.contains('focus');
+            document.body.classList.toggle('focus', on);
+            document.getElementById('focusSwitch').classList.toggle('on', on);
+            try { localStorage.setItem('armagedon_focus', on ? '1' : '0'); } catch (e) {}
+        }
+
+        // ===== Assistente de voz (armagedon_voice.py via server.js) =====
+        const VOICE_API = (location.protocol.startsWith('http') ? '' : 'http://localhost:3000') + '/api/voice';
+        const VOICE_LABELS = {
+            desligado: 'Desligado',
+            iniciando: 'Iniciando... (~15 s)',
+            ouvindo: 'Diga "Armagedon"',
+            captando: 'Escutando você...',
+            entendendo: 'Entendendo...',
+            aguardando: 'Pode falar!',
+            pensando: 'Pensando...',
+            falando: 'Falando...',
+            mudo: 'Microfone mudo',
+            offline: 'Hub offline — rode o server.js',
+        };
+        const voice = { running: false, starting: false, muted: false, state: 'desligado', last: null, bubble: null, bubbleTurn: null };
+
+        async function voiceFetch(path, body) {
+            const opts = body ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : {};
+            const r = await fetch(VOICE_API + path, opts);
+            return r.json();
+        }
+
+        async function toggleVoice() {
+            try {
+                if (voice.running || voice.starting) {
+                    await voiceFetch('/stop', {});
+                    applyVoiceState({ running: false, state: 'desligado' });
+                } else {
+                    const st = await voiceFetch('/start', {});
+                    applyVoiceState(st.running ? st : { running: false, starting: true, state: 'iniciando' });
+                }
+            } catch (e) {
+                applyVoiceState({ running: false, state: 'offline' });
+            }
+            scheduleVoicePoll(300);
+        }
+
+        async function voiceControl(action, text) {
+            if (!voice.running) return;
+            try { applyVoiceState(await voiceFetch('/control', { action, text })); } catch (e) {}
+            scheduleVoicePoll(200);
+        }
+
+        function orbClick() {
+            if (voice.running) voiceControl('wake');
+            else if (!voice.starting) toggleVoice();
+        }
+
+        function applyVoiceState(st) {
+            voice.running = !!st.running;
+            voice.starting = !!st.starting;
+            voice.muted = !!st.muted;
+            voice.state = st.state || (voice.running ? 'ouvindo' : 'desligado');
+            const label = VOICE_LABELS[voice.state] || voice.state;
+            const timers = (st.timers || []).length;
+
+            document.getElementById('voiceSwitch').classList.toggle('on', voice.running || voice.starting);
+            document.getElementById('voiceState').textContent = label + (timers ? ` · ${timers} timer${timers > 1 ? 's' : ''}` : '');
+            document.getElementById('voiceDot').className = 'dot ' + (voice.starting ? 'wait' : voice.running ? (voice.muted ? 'off' : 'on') : (voice.state === 'offline' ? 'off' : ''));
+            document.getElementById('voiceChipText').textContent = label;
+            ['voiceWakeBtn', 'voiceMuteBtn', 'voiceStopBtn'].forEach(id => document.getElementById(id).disabled = !voice.running);
+            document.getElementById('voiceMuteBtn').classList.toggle('on', voice.muted);
+            document.getElementById('orbSub').textContent = voice.running ? label : (voice.starting ? label : 'Clique em mim para ativar a voz');
+
+            const b = document.body.classList;
+            b.toggle('v-on', voice.running);
+            b.toggle('v-awake', voice.running && (voice.state === 'aguardando' || voice.state === 'captando'));
+            b.toggle('v-speaking', voice.running && voice.state === 'falando');
+            b.toggle('v-thinking', voice.running && (voice.state === 'pensando' || voice.state === 'entendendo'));
+        }
+
+        function showVoiceEvent(ev) {
+            if (ev.type === 'user') {
+                addMessage('user', ev.text);
+                messagesDiv.lastElementChild.classList.add('voice');
+                voice.bubble = null;
+            } else if (ev.type === 'assistant') {
+                if (voice.bubble && voice.bubbleTurn === ev.turn && voice.bubble.isConnected) {
+                    voice.bubble.textContent += ' ' + ev.text;
+                    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                } else {
+                    addMessage('assistant', ev.text);
+                    const msg = messagesDiv.lastElementChild;
+                    msg.classList.add('voice');
+                    voice.bubble = msg.querySelector('.message-content');
+                    voice.bubbleTurn = ev.turn;
+                }
+            }
+        }
+
+        let voicePollTimer = null;
+        function scheduleVoicePoll(ms) {
+            clearTimeout(voicePollTimer);
+            voicePollTimer = setTimeout(voicePoll, ms);
+        }
+
+        async function voicePoll() {
+            try {
+                const st = await voiceFetch('/status');
+                applyVoiceState(st);
+                if (st.running) {
+                    if (voice.last === null || st.last_event < voice.last) {
+                        voice.last = (await voiceFetch('/events')).last;  // conectou agora: ignora o passado
+                    } else if (st.last_event > voice.last) {
+                        const e = await voiceFetch('/events?since=' + voice.last);
+                        (e.events || []).forEach(showVoiceEvent);
+                        if (e.last != null) voice.last = e.last;
+                    }
+                } else {
+                    voice.last = null;
+                }
+            } catch (e) {
+                applyVoiceState({ running: false, state: 'offline' });
+            }
+            scheduleVoicePoll(voice.running ? 500 : (voice.starting ? 1000 : 4000));
+        }
+
+        // ===== Brasas =====
+        (function spawnEmbers() {
+            const box = document.getElementById('embers');
+            for (let i = 0; i < 22; i++) {
+                const s = document.createElement('span');
+                s.className = 'ember';
+                s.style.left = (10 + Math.random() * 90) + '%';
+                s.style.animationDuration = (6 + Math.random() * 8) + 's';
+                s.style.animationDelay = (-Math.random() * 12) + 's';
+                const size = 1.5 + Math.random() * 2.5;
+                s.style.width = s.style.height = size + 'px';
+                box.appendChild(s);
+            }
+        })();
+
+        // ===== Modelos =====
+        function renderModels(installed) {
+            const list = document.getElementById('modelList');
+            list.innerHTML = '';
+            Array.from(modelSelect.options).forEach(opt => {
+                const label = opt.text.replace(' — não instalado', '');
+                const m = label.match(/^(.*?)\s*\((.*)\)\s*$/);
+                const name = m ? m[1] : label;
+                const tag = m ? m[2].toLowerCase() : 'padrão';
+                const ok = !installed || installed.some(n => n === opt.value || n.startsWith(opt.value + ':'));
+                const btn = document.createElement('button');
+                btn.className = 'model-item' + (opt.value === modelSelect.value ? ' active' : '');
+                btn.innerHTML = `<span class="m-ico"><svg class="i"><use href="#i-layers"/></svg></span>
+                    <span class="m-name"></span><span class="m-tag"></span>
+                    <span class="dot ${installed ? (ok ? 'on' : 'off') : ''}" title="${installed ? (ok ? 'Instalado' : 'Não encontrado no Ollama') : ''}"></span>`;
+                btn.querySelector('.m-name').textContent = name;
+                btn.querySelector('.m-tag').textContent = tag;
+                btn.onclick = () => {
+                    if (opt.disabled) { statusDiv.textContent = `⚠️ ${name} não está instalado — rode: ollama pull ${opt.value}`; return; }
+                    modelSelect.value = opt.value; onModelChange();
+                };
+                list.appendChild(btn);
+            });
+            document.getElementById('modelCount').textContent = modelSelect.options.length + ' disponíveis';
+        }
+        let installedModels = null;
+        function onModelChange() {
+            renderModels(installedModels);
+            document.getElementById('chatModelTag').textContent = modelSelect.options[modelSelect.selectedIndex].text.replace(/\s*\(.*\)/, '');
+        }
+        modelSelect.addEventListener('change', onModelChange);
+
+        // Desativa modelos não instalados, adiciona os instalados que faltam na lista
+        // e troca a seleção se o modelo atual não existir no Ollama
+        function syncModelOptions(names) {
+            const isInstalled = v => names.some(n => n === v || n === v + ':latest');
+            Array.from(modelSelect.options).forEach(opt => {
+                const ok = isInstalled(opt.value);
+                opt.disabled = !ok;
+                if (!ok && !opt.text.endsWith('— não instalado')) opt.text += ' — não instalado';
+            });
+            names.forEach(n => {
+                const base = n.replace(/:latest$/, '');
+                const known = Array.from(modelSelect.options).some(o => o.value === n || o.value === base);
+                if (!known) modelSelect.add(new Option(base, base));
+            });
+            if (modelSelect.selectedOptions[0]?.disabled) {
+                const first = Array.from(modelSelect.options).find(o => !o.disabled);
+                if (first) modelSelect.value = first.value;
+            }
+        }
+
+        async function checkOllama() {
+            const v = document.getElementById('sysOllama');
+            const ring = document.getElementById('sysOllamaRing');
+            const dot = document.getElementById('statusDot');
+            try {
+                const r = await fetch('http://localhost:11434/api/tags');
+                const d = await r.json();
+                installedModels = (d.models || []).map(m => m.name);
+                syncModelOptions(installedModels);
+                v.textContent = `Conectado · ${installedModels.length} modelos`;
+                ring.className = 'ring ok';
+                dot.className = 'dot on';
+            } catch (e) {
+                installedModels = null;
+                v.textContent = 'Offline';
+                ring.className = 'ring bad';
+                dot.className = 'dot off';
+                statusDiv.textContent = '❌ Ollama offline em localhost:11434';
+            }
+            onModelChange();
+        }
+
         function stopResponse() {
             if (abortController) {
                 abortController.abort();
                 stopBtn.style.display = 'none';
-                sendBtn.style.display = 'block';
+                sendBtn.style.display = '';
+                document.body.classList.remove('thinking');
                 statusDiv.textContent = '⏹️ Resposta interrompida pelo usuário';
             }
         }
@@ -594,6 +1642,7 @@
 
             const voice = document.getElementById('voiceSelect').value;
             const gender = document.getElementById('voiceGender').value;
+            const emotion = document.getElementById('voiceEmotion').value;
             const speed = parseFloat(document.getElementById('voiceSpeed').value);
 
             document.getElementById('voiceProgressContainer').style.display = 'block';
@@ -604,7 +1653,7 @@
                 const resp = await fetch('/api/generate-voice', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ text, voice, gender, speed })
+                    body: JSON.stringify({ text, voice, gender, emotion, speed })
                 });
 
                 const data = await resp.json();
@@ -718,13 +1767,13 @@
                     const tempo = `${min}m${String(sec).padStart(2, '0')}s`;
                     const cor = j.active ? '#ff9e40' : (j.status === 'concluído' ? '#00ff41' : '#888');
                     const btn = j.active
-                        ? `<button onclick="cancelJob('${j.server}','${j.id}')" style="padding:4px 10px;background:#ff1744;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:11px;">Parar</button>`
+                        ? `<button class="btn-mini" onclick="cancelJob('${j.server}','${j.id}')">Parar</button>`
                         : '';
-                    return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #2a3441;">
+                    return `<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,0.06);">
                         <span style="flex:1;">
                             <strong style="color:${cor};">${j.type}</strong>
                             ${j.model === 'turbo' ? '<span style="color:#00d4ff;font-size:10px;"> ⚡turbo</span>' : ''}
-                            <span style="color:#94a3b8;"> "${(j.prompt || '').slice(0, 40)}"</span><br>
+                            <span style="color:#b09a94;"> "${(j.prompt || '').slice(0, 40)}"</span><br>
                             <span style="font-size:11px;color:#888;">${j.status} · ${j.percent}% · ${j.message || ''} · ${tempo}</span>
                         </span>
                         ${btn}
@@ -806,7 +1855,6 @@
 
                 // 2. Polling de progresso
                 const startTime = Date.now();
-                let lastPercent = 0;
 
                 const pollInterval = setInterval(async () => {
                     try {
@@ -875,28 +1923,216 @@
             }
         }
 
-        let progressInterval = null;
-
-        function updateProgress(current) {
-            const progressBar = document.getElementById('progressBar');
-            const progressPercent = document.getElementById('progressPercent');
-            const progressLabel = document.getElementById('progressLabel');
-            const progressTime = document.getElementById('progressTime');
-
-            progressBar.style.width = current + '%';
-            progressPercent.textContent = current + '%';
-
-            // Estimativa de tempo
-            if (current < 100) {
-                const estimatedTotal = 8 * 60; // 8 minutos em segundos
-                const elapsed = (current / 100) * estimatedTotal;
-                const remaining = estimatedTotal - elapsed;
-                const minutes = Math.ceil(remaining / 60);
-                progressTime.textContent = `⏱️  Tempo restante: ~${minutes}min`;
-            } else {
-                progressLabel.textContent = '✅ Concluído!';
-                progressTime.textContent = 'Processando resposta...';
+        function updateProgress(current, startedAt) {
+            document.getElementById('progressBar').style.width = current + '%';
+            document.getElementById('progressPercent').textContent = current + '%';
+            if (startedAt) {
+                const s = Math.round((Date.now() - startedAt) / 1000);
+                document.getElementById('progressTime').textContent = `⏱️ ${Math.floor(s / 60)}m${String(s % 60).padStart(2, '0')}s`;
             }
+        }
+
+        // ===== Imagem base para modificar =====
+        const edit = { dataUrl: null, source: null, tool: 'whole', drawing: false, painted: false, last: null };
+        const maskCanvas = document.getElementById('maskCanvas');
+        const EDIT_HINTS = {
+            whole: 'Descreva acima como a imagem deve ficar. Ex.: "transforme em anime", "deixe à noite com luzes neon", "estilo pintura a óleo". Pouca mudança mantém a imagem; muita mudança cria algo novo a partir dela.',
+            mask: 'Pinte por cima do que quer mudar e descreva acima o que deve aparecer ali. Ex.: "um chapéu vermelho", "fundo de praia com coqueiros". O resto da imagem fica intacto.',
+        };
+
+        function loadBaseFile(file) {
+            if (!file || !file.type.startsWith('image/')) {
+                document.getElementById('imageStatus').textContent = '❌ Escolha um arquivo de imagem (JPG, PNG, WEBP...).';
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = () => setBaseImage(reader.result, null);
+            reader.readAsDataURL(file);
+        }
+
+        // sourceFile: nome de uma imagem criada pelo gerador (enviada pelo nome, sem upload)
+        function setBaseImage(src, sourceFile) {
+            const img = new Image();
+            img.onload = () => {
+                const scale = Math.min(1, 1024 / Math.max(img.naturalWidth, img.naturalHeight));
+                const w = Math.round(img.naturalWidth * scale), h = Math.round(img.naturalHeight * scale);
+                edit.source = sourceFile;
+                edit.dataUrl = null;
+                if (!sourceFile) {
+                    const c = document.createElement('canvas');
+                    c.width = w; c.height = h;
+                    const ctx = c.getContext('2d');
+                    ctx.fillStyle = '#fff';
+                    ctx.fillRect(0, 0, w, h);   // PNG transparente vira fundo branco
+                    ctx.drawImage(img, 0, 0, w, h);
+                    edit.dataUrl = c.toDataURL('image/jpeg', 0.92);
+                }
+                maskCanvas.width = w;
+                maskCanvas.height = h;
+                clearMask();
+                document.getElementById('baseImg').src = src;
+                document.getElementById('baseEmpty').style.display = 'none';
+                document.getElementById('baseEditor').style.display = 'flex';
+                const panel = document.getElementById('imageGenerator');
+                if (panel.style.display === 'none') toggleImageGenerator();
+                setEditTool(edit.tool);
+                updateEditUi();
+                document.getElementById('imagePrompt').focus();
+            };
+            img.onerror = () => { document.getElementById('imageStatus').textContent = '❌ Não consegui abrir essa imagem.'; };
+            img.src = src;
+        }
+
+        function clearBase() {
+            edit.dataUrl = edit.source = null;
+            clearMask();
+            document.getElementById('baseEditor').style.display = 'none';
+            document.getElementById('baseEmpty').style.display = 'flex';
+            updateEditUi();
+        }
+
+        function hasBase() { return !!(edit.dataUrl || edit.source); }
+
+        function updateEditUi() {
+            const on = hasBase();
+            document.getElementById('gerarBtn').textContent = on ? 'Modificar' : 'Gerar';
+            document.getElementById('imageSize').disabled = on;   // a edição usa o tamanho da própria imagem
+            document.getElementById('imagePrompt').placeholder = on
+                ? (edit.tool === 'mask' ? 'O que deve aparecer na área pintada? Ex.: um chapéu vermelho' : 'Como a imagem deve ficar? Ex.: transforme em anime, deixe à noite...')
+                : 'Descreva a imagem em português, com todos os detalhes que quiser...';
+        }
+
+        function setEditTool(tool) {
+            edit.tool = tool;
+            document.getElementById('toolWhole').classList.toggle('on', tool === 'whole');
+            document.getElementById('toolMask').classList.toggle('on', tool === 'mask');
+            document.getElementById('maskTools').style.display = tool === 'mask' ? 'flex' : 'none';
+            document.getElementById('canvasWrap').classList.toggle('painting', tool === 'mask');
+            maskCanvas.style.display = tool === 'mask' ? 'block' : 'none';
+            document.getElementById('editHint').textContent = EDIT_HINTS[tool];
+            const s = document.getElementById('editStrength');
+            s.value = tool === 'mask' ? 85 : 60;
+            document.getElementById('strengthVal').textContent = s.value + '%';
+            updateEditUi();
+        }
+
+        function clearMask() {
+            maskCanvas.getContext('2d').clearRect(0, 0, maskCanvas.width, maskCanvas.height);
+            edit.painted = false;
+        }
+
+        function maskPoint(e) {
+            const r = maskCanvas.getBoundingClientRect();
+            return { x: (e.clientX - r.left) * maskCanvas.width / r.width, y: (e.clientY - r.top) * maskCanvas.height / r.height };
+        }
+
+        function paintTo(p) {
+            const ctx = maskCanvas.getContext('2d');
+            const scale = maskCanvas.width / maskCanvas.getBoundingClientRect().width;
+            ctx.strokeStyle = ctx.fillStyle = '#ff2244';
+            ctx.lineWidth = document.getElementById('brushSize').value * scale;
+            ctx.lineCap = ctx.lineJoin = 'round';
+            ctx.beginPath();
+            ctx.moveTo(edit.last.x, edit.last.y);
+            ctx.lineTo(p.x, p.y);
+            ctx.stroke();
+            edit.last = p;
+            edit.painted = true;
+        }
+
+        maskCanvas.addEventListener('pointerdown', e => {
+            if (edit.tool !== 'mask') return;
+            maskCanvas.setPointerCapture(e.pointerId);
+            edit.drawing = true;
+            edit.last = maskPoint(e);
+            paintTo(edit.last);
+        });
+        maskCanvas.addEventListener('pointermove', e => { if (edit.drawing) paintTo(maskPoint(e)); });
+        ['pointerup', 'pointercancel'].forEach(ev => maskCanvas.addEventListener(ev, () => { edit.drawing = false; }));
+
+        // máscara para o gerador: branco = refazer, preto = manter
+        function exportMask() {
+            if (edit.tool !== 'mask' || !edit.painted) return null;
+            const c = document.createElement('canvas');
+            c.width = maskCanvas.width; c.height = maskCanvas.height;
+            const ctx = c.getContext('2d');
+            const src = maskCanvas.getContext('2d').getImageData(0, 0, c.width, c.height);
+            const out = ctx.createImageData(c.width, c.height);
+            for (let i = 0; i < src.data.length; i += 4) {
+                const v = src.data[i + 3] > 0 ? 255 : 0;
+                out.data[i] = out.data[i + 1] = out.data[i + 2] = v;
+                out.data[i + 3] = 255;
+            }
+            ctx.putImageData(out, 0, 0);
+            return c.toDataURL('image/png');
+        }
+
+        // arrastar e soltar no painel de imagem
+        (function setupDrop() {
+            const panel = document.getElementById('imageGenerator');
+            panel.addEventListener('dragover', e => { e.preventDefault(); panel.classList.add('dragover'); });
+            panel.addEventListener('dragleave', e => { if (!panel.contains(e.relatedTarget)) panel.classList.remove('dragover'); });
+            panel.addEventListener('drop', e => {
+                e.preventDefault();
+                panel.classList.remove('dragover');
+                if (e.dataTransfer.files[0]) loadBaseFile(e.dataTransfer.files[0]);
+            });
+        })();
+
+        // colar uma imagem (Ctrl+V) em qualquer lugar da página
+        document.addEventListener('paste', e => {
+            const item = Array.from(e.clipboardData?.items || []).find(i => i.type.startsWith('image/'));
+            if (!item) return;  // texto: deixa colar normalmente
+            e.preventDefault();
+            loadBaseFile(item.getAsFile());
+        });
+
+        function openLightbox(src) {
+            document.getElementById('lightboxImg').src = src;
+            document.getElementById('lightbox').classList.add('open');
+        }
+
+        function addImageMessage(prompt, r) {
+            addMessage('image', `🎨 ${prompt}\n${r.model_name} · semente ${r.seed} · ${r.seconds}s`);
+            const content = messagesDiv.lastElementChild.querySelector('.message-content');
+            const img = document.createElement('img');
+            img.className = 'gen-image';
+            img.src = r.url;
+            img.alt = prompt;
+            img.onclick = () => openLightbox(r.url);
+            img.onload = () => { messagesDiv.scrollTop = messagesDiv.scrollHeight; };
+            content.appendChild(img);
+        }
+
+        function showImageResult(prompt, r) {
+            const box = document.getElementById('imageResult');
+            box.innerHTML = `
+                <img src="${r.url}" alt="" onclick="openLightbox(this.src)">
+                <div class="meta">
+                    <div><strong style="color:var(--text)">${r.model_name}</strong>${r.mode === 'img2img' ? ` · transformação ${Math.round(r.strength * 100)}%` : r.mode === 'inpaint' ? ' · edição da área' : ''} · ${r.width}×${r.height} · ${r.steps} passos${r.fast ? ' (rápido)' : ''} · semente ${r.seed} · ${r.seconds}s</div>
+                    Prompt usado:<code></code>
+                    <div class="actions">
+                        <a class="btn-tone" href="${r.url}" download="${r.filename}" style="text-decoration:none;padding:7px 14px;font-size:12px;">📥 Baixar</a>
+                        <button class="ghost-btn" id="imgEdit">✏️ Editar esta imagem</button>
+                        <button class="ghost-btn" id="imgVariation">🎲 Variação</button>
+                        <button class="ghost-btn" id="imgReuseSeed">📌 Usar esta semente</button>
+                    </div>
+                </div>`;
+            box.querySelector('code').textContent = r.prompt_used;
+            box.querySelector('#imgEdit').onclick = () => {
+                setBaseImage(r.url, r.filename);
+                document.getElementById('imagePrompt').value = '';
+            };
+            box.querySelector('#imgVariation').onclick = () => {
+                document.getElementById('imagePrompt').value = prompt;
+                document.getElementById('imageSeed').value = '';
+                generateImage();
+            };
+            box.querySelector('#imgReuseSeed').onclick = () => {
+                document.getElementById('imageSeed').value = r.seed;
+                document.querySelector('#imageGenerator .advanced').open = true;
+            };
+            box.style.display = 'flex';
         }
 
         let currentImageJob = null;
@@ -926,7 +2162,9 @@
             statusDiv.textContent = '';
             gerarBtn.disabled = true;
             gerarBtn.style.opacity = '0.5';
-            updateProgress(0);
+            const startedAt = Date.now();
+            updateProgress(0, startedAt);
+            document.getElementById('progressLabel').textContent = 'Enviando...';
 
             const finish = () => {
                 progressContainer.style.display = 'none';
@@ -937,11 +2175,30 @@
             };
 
             try {
-                const turbo = document.getElementById('imageTurbo') && document.getElementById('imageTurbo').checked;
+                const val = id => document.getElementById(id).value.trim();
+                const body = {
+                    prompt,
+                    turbo: document.getElementById('imageTurbo').checked,
+                    enhance: document.getElementById('imageEnhance').checked,
+                    model: val('imageModel'),
+                    style: val('imageStyle'),
+                    size: val('imageSize'),
+                    steps: parseInt(val('imageSteps')) || undefined,
+                    seed: val('imageSeed') || undefined,
+                    negative: val('imageNegative'),
+                };
+                if (hasBase()) {
+                    if (edit.source) body.source_file = edit.source;
+                    else body.init_image = edit.dataUrl;
+                    const mask = exportMask();
+                    if (edit.tool === 'mask' && !mask) throw new Error('Pinte a área que quer modificar (ou escolha "Transformar tudo").');
+                    if (mask) body.mask_image = mask;
+                    body.strength = parseInt(val('editStrength')) / 100;
+                }
                 const startResp = await fetch('/api/generate-image', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ prompt, turbo })
+                    body: JSON.stringify(body)
                 });
                 const startData = await startResp.json();
                 if (!startData.job_id) throw new Error(startData.error || 'Erro ao iniciar geração');
@@ -952,16 +2209,16 @@
                 const poll = setInterval(async () => {
                     try {
                         const st = await (await fetch(`/api/image-status/${currentImageJob}`)).json();
-                        updateProgress(st.percent || 0);
+                        updateProgress(st.percent || 0, startedAt);
                         document.getElementById('progressLabel').textContent = st.message || 'Gerando imagem...';
 
                         if (st.status === 'concluído') {
                             clearInterval(poll);
-                            updateProgress(100);
-                            statusDiv.textContent = `✅ Imagem gerada: ${st.result.filename}`;
-                            addMessage('image', `🎨 ${prompt}\n📁 ${st.result.filename}`);
-                            promptInput.value = '';
-                            setTimeout(finish, 800);
+                            updateProgress(100, startedAt);
+                            statusDiv.textContent = `✅ ${st.message}`;
+                            showImageResult(prompt, st.result);
+                            addImageMessage(prompt, st.result);
+                            setTimeout(finish, 500);
                         } else if (st.status === 'cancelado') {
                             clearInterval(poll);
                             statusDiv.textContent = '⏹️ Geração cancelada';
@@ -996,10 +2253,15 @@
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
 
             sendBtn.style.display = 'none';
-            stopBtn.style.display = 'block';
+            stopBtn.style.display = '';
+            document.body.classList.add('thinking');
 
             try {
                 abortController = new AbortController();
+
+                const systemPrompt = `Você é um assistente preciso e direto. Responda EXATAMENTE o que foi perguntado, sem desviar do tema. Seja conciso, claro e objetivo. Não agregue informações desnecessárias.`;
+
+                const fullPrompt = `[SYSTEM]\n${systemPrompt}\n\n[USER]\n${message}`;
 
                 const response = await fetch('http://localhost:11434/api/generate', {
                     method: 'POST',
@@ -1007,12 +2269,19 @@
                     signal: abortController.signal,
                     body: JSON.stringify({
                         model: modelSelect.value,
-                        prompt: message,
-                        stream: true
+                        prompt: fullPrompt,
+                        stream: true,
+                        temperature: 0.5
                     })
                 });
 
-                if (!response.ok) throw new Error('Ollama não está respondendo');
+                if (!response.ok) {
+                    let detail = `HTTP ${response.status}`;
+                    try { detail = (await response.json()).error || detail; } catch (e) {}
+                    const err = new Error(detail);
+                    err.ollamaReplied = true;
+                    throw err;
+                }
 
                 loadingDiv.remove();
 
@@ -1045,7 +2314,7 @@
                 }
 
                 stopBtn.style.display = 'none';
-                sendBtn.style.display = 'block';
+                sendBtn.style.display = '';
                 statusDiv.textContent = '✅ Resposta recebida • Pronto para continuar';
 
             } catch (error) {
@@ -1053,12 +2322,19 @@
                     statusDiv.textContent = '⏹️ Resposta interrompida';
                 } else {
                     loadingDiv.remove();
-                    addMessage('error', `Erro: ${error.message}. Verifique se Ollama está rodando em localhost:11434`);
-                    statusDiv.textContent = '❌ Erro ao conectar com Ollama';
+                    if (error.ollamaReplied) {
+                        addMessage('error', `Ollama respondeu com erro: ${error.message}`);
+                        statusDiv.textContent = `❌ ${error.message}`;
+                    } else {
+                        addMessage('error', `Erro: ${error.message}. Verifique se Ollama está rodando em localhost:11434`);
+                        statusDiv.textContent = '❌ Erro ao conectar com Ollama';
+                        document.getElementById('statusDot').className = 'dot off';
+                    }
                 }
                 stopBtn.style.display = 'none';
-                sendBtn.style.display = 'block';
+                sendBtn.style.display = '';
             }
+            document.body.classList.remove('thinking');
         }
 
         function addMessage(type, text) {
@@ -1076,6 +2352,8 @@
             messagesDiv.innerHTML = '';
             messageInput.value = '';
             addMessage('assistant', 'Olá! Sou o ARMAGEDON, seu assistente de IA pessoal. Como posso ajudá-lo hoje?');
+            goHome();
+            messageInput.focus();
         }
 
         function clearChat() {
@@ -1085,7 +2363,13 @@
 
         window.addEventListener('load', function() {
             newChat();
+            let focus = false;
+            try { focus = localStorage.getItem('armagedon_focus') === '1'; } catch (e) {}
+            toggleFocus(focus);
+            checkOllama();
+            voicePoll();
         });
     </script>
+    <script src="chat-history.js"></script>
 </body>
 </html>

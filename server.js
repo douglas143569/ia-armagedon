@@ -5,10 +5,47 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const url = require('url');
+const { spawn } = require('child_process');
 
 const PORT = 3000;
 const OLLAMA_URL = 'http://localhost:11434';
 const GEN_PORTS = { imagem: 5000, 'vídeo': 5001, 'áudio': 5002 };
+const VOICE_PORT = 5003; // armagedon_voice.py
+const PYTHON = process.platform === 'win32' ? 'python' : 'python3';
+
+let voiceProc = null; // processo do assistente de voz iniciado pela página
+
+// Encaminha uma requisição para a API do assistente de voz
+function voiceRequest(method, apiPath, body) {
+    return new Promise((resolve) => {
+        const data = body ? JSON.stringify(body) : null;
+        const r = http.request({
+            host: '127.0.0.1', port: VOICE_PORT, path: apiPath, method, timeout: 5000,
+            headers: data ? { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data) } : {},
+        }, (resp) => {
+            let d = '';
+            resp.on('data', c => d += c);
+            resp.on('end', () => { try { resolve({ code: resp.statusCode, json: JSON.parse(d) }); } catch { resolve(null); } });
+        });
+        r.on('error', () => resolve(null));
+        r.on('timeout', () => { r.destroy(); resolve(null); });
+        if (data) r.write(data);
+        r.end();
+    });
+}
+
+function readBody(req) {
+    return new Promise((resolve) => {
+        let b = '';
+        req.on('data', c => b += c);
+        req.on('end', () => { try { resolve(b ? JSON.parse(b) : {}); } catch { resolve({}); } });
+    });
+}
+
+function sendJson(res, code, obj) {
+    res.writeHead(code, { 'Content-Type': 'application/json; charset=utf-8' });
+    res.end(JSON.stringify(obj));
+}
 
 // GET JSON de um gerador local; resolve com null se estiver offline
 function getJson(port, path) {
@@ -84,6 +121,24 @@ const server = http.createServer(async (req, res) => {
             cReq.on('timeout', () => { cReq.destroy(); res.writeHead(504); res.end(JSON.stringify({ error: 'timeout' })); });
             cReq.end();
         });
+        return;
+    }
+
+    // Arquivo de imagem gerada e lista de modelos do gerador
+    if ((req.url.startsWith('/api/image-file/') || req.url === '/api/image-models') && req.method === 'GET') {
+        const target = req.url === '/api/image-models'
+            ? '/models'
+            : '/image/' + encodeURIComponent(decodeURIComponent(req.url.slice('/api/image-file/'.length)));
+        const fReq = http.request({ host: '127.0.0.1', port: 5000, path: target, method: 'GET', timeout: 30000 }, (fRes) => {
+            res.writeHead(fRes.statusCode, {
+                'Content-Type': fRes.headers['content-type'] || 'application/octet-stream',
+                'Cache-Control': 'no-cache',
+            });
+            fRes.pipe(res);
+        });
+        fReq.on('error', () => sendJson(res, 503, { error: 'Gerador de imagens offline' }));
+        fReq.on('timeout', () => { fReq.destroy(); sendJson(res, 504, { error: 'timeout' }); });
+        fReq.end();
         return;
     }
 
@@ -343,7 +398,79 @@ const server = http.createServer(async (req, res) => {
         return;
     }
 
-    // Servir interface.html
+    // ===== Assistente de voz (armagedon_voice.py) =====
+    if (req.url.startsWith('/api/voice/')) {
+        const route = req.url.slice('/api/voice'.length);
+
+        // Liga o assistente (se ainda não estiver rodando)
+        if (route === '/start' && req.method === 'POST') {
+            const st = await voiceRequest('GET', '/status');
+            if (st) return sendJson(res, 200, { running: true, ...st.json });
+            if (voiceProc && voiceProc.exitCode === null) return sendJson(res, 200, { running: false, starting: true });
+
+            voiceProc = spawn(PYTHON, ['-u', path.join(__dirname, 'armagedon_voice.py')], {
+                cwd: __dirname,
+                env: { ...process.env, PYTHONIOENCODING: 'utf-8' },
+                windowsHide: true,
+            });
+            voiceProc.stdout.on('data', d => process.stdout.write('[voz] ' + d));
+            voiceProc.stderr.on('data', d => process.stderr.write('[voz] ' + d));
+            voiceProc.on('exit', code => { console.log(`[voz] assistente encerrado (código ${code})`); voiceProc = null; });
+            voiceProc.on('error', err => { console.error('[voz] falha ao iniciar:', err.message); voiceProc = null; });
+            return sendJson(res, 200, { running: false, starting: true });
+        }
+
+        // Desliga o assistente
+        if (route === '/stop' && req.method === 'POST') {
+            const r = await voiceRequest('POST', '/control', { action: 'shutdown' });
+            if (!r && voiceProc) voiceProc.kill();
+            return sendJson(res, 200, { running: false });
+        }
+
+        // Status / eventos / controle → repassa para a API do Python
+        if ((route === '/status' || route.startsWith('/events')) && req.method === 'GET') {
+            const r = await voiceRequest('GET', route);
+            if (!r) {
+                const starting = !!(voiceProc && voiceProc.exitCode === null);
+                return sendJson(res, 200, { running: false, starting, state: starting ? 'iniciando' : 'desligado', events: [] });
+            }
+            return sendJson(res, r.code, { running: true, ...r.json });
+        }
+        if (route === '/control' && req.method === 'POST') {
+            const r = await voiceRequest('POST', '/control', await readBody(req));
+            if (!r) return sendJson(res, 503, { running: false, error: 'Assistente de voz desligado' });
+            return sendJson(res, r.code, { running: true, ...r.json });
+        }
+
+        return sendJson(res, 404, { error: 'rota de voz desconhecida' });
+    }
+
+    // Scripts da interface
+    if (req.url === '/chat-history.js') {
+        fs.readFile(path.join(__dirname, 'chat-history.js'), (err, data) => {
+            if (err) { res.writeHead(404); res.end(); return; }
+            res.writeHead(200, { 'Content-Type': 'application/javascript; charset=utf-8' });
+            res.end(data);
+        });
+        return;
+    }
+
+    // Servir interface-plugins.html
+    if (req.url === '/plugins' || req.url === '/interface-plugins.html') {
+        const filePath = path.join(__dirname, 'interface-plugins.html');
+        fs.readFile(filePath, (err, data) => {
+            if (err) {
+                res.writeHead(404);
+                res.end('Página não encontrada');
+                return;
+            }
+            res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+            res.end(data);
+        });
+        return;
+    }
+
+    // Servir interface.html (raiz)
     if (req.url === '/' || req.url === '') {
         const filePath = path.join(__dirname, 'interface.html');
         fs.readFile(filePath, (err, data) => {
@@ -354,6 +481,112 @@ const server = http.createServer(async (req, res) => {
             }
             res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
             res.end(data);
+        });
+        return;
+    }
+
+    // Plugin endpoints
+    if (req.url === '/api/plugins' && req.method === 'GET') {
+        // Listar plugins disponíveis
+        try {
+            const pluginDir = path.join(__dirname, 'plugins');
+            if (!fs.existsSync(pluginDir)) {
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ plugins: [] }));
+                return;
+            }
+
+            const plugins = [];
+            const dirs = fs.readdirSync(pluginDir);
+
+            for (const dir of dirs) {
+                const pluginJsonPath = path.join(pluginDir, dir, 'plugin.json');
+                if (fs.existsSync(pluginJsonPath)) {
+                    const config = JSON.parse(fs.readFileSync(pluginJsonPath, 'utf-8'));
+                    plugins.push({
+                        id: dir,
+                        name: config.name,
+                        version: config.version,
+                        description: config.description,
+                        enabled: config.enabled || false
+                    });
+                }
+            }
+
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ plugins }));
+        } catch (err) {
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: err.message }));
+        }
+        return;
+    }
+
+    // Executar plugin
+    if (req.url.startsWith('/api/plugins/') && req.method === 'POST') {
+        const parts = req.url.split('/').filter(p => p);
+        const pluginId = decodeURIComponent(parts[2] || '');
+        const method = decodeURIComponent(parts[3] || 'execute');
+
+        let body = '';
+        req.on('data', chunk => body += chunk);
+        req.on('end', () => {
+            try {
+                const params = body ? JSON.parse(body) : {};
+
+                // Executar via plugin_manager.py
+                const python = spawn('python3', [
+                    path.join(__dirname, 'plugin_executor.py'),
+                    pluginId,
+                    method,
+                    JSON.stringify(params)
+                ], { cwd: __dirname });
+
+                let output = '';
+                let errorOutput = '';
+
+                python.stdout.on('data', (data) => {
+                    output += data.toString();
+                });
+
+                python.stderr.on('data', (data) => {
+                    errorOutput += data.toString();
+                });
+
+                python.on('close', (code) => {
+                    try {
+                        if (code !== 0) {
+                            res.writeHead(400, { 'Content-Type': 'application/json' });
+                            res.end(JSON.stringify({
+                                success: false,
+                                error: errorOutput || 'Erro na execução do plugin'
+                            }));
+                            return;
+                        }
+                        const result = JSON.parse(output);
+                        res.writeHead(200, { 'Content-Type': 'application/json' });
+                        res.end(JSON.stringify(result));
+                    } catch (e) {
+                        res.writeHead(200, { 'Content-Type': 'application/json' });
+                        res.end(JSON.stringify({
+                            success: true,
+                            message: 'Plugin executado',
+                            output: output.trim()
+                        }));
+                    }
+                });
+
+                python.on('error', (err) => {
+                    res.writeHead(500, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({
+                        success: false,
+                        error: err.message
+                    }));
+                });
+            } catch (err) {
+                res.writeHead(400, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: err.message }));
+            }
         });
         return;
     }
@@ -374,6 +607,13 @@ server.listen(PORT, '127.0.0.1', () => {
 ╚════════════════════════════════════════╝
     `);
 });
+
+// Ao fechar o hub, encerra o assistente de voz que ele iniciou
+function shutdownVoice() {
+    if (voiceProc && voiceProc.exitCode === null) voiceProc.kill();
+}
+process.on('exit', shutdownVoice);
+process.on('SIGINT', () => { shutdownVoice(); process.exit(0); });
 
 server.on('error', (err) => {
     if (err.code === 'EADDRINUSE') {

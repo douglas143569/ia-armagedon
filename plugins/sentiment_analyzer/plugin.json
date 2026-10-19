@@ -1,0 +1,20 @@
+{
+  "name": "Sentiment Analyzer",
+  "version": "1.0.0",
+  "description": "Analisa o tom emocional de textos",
+  "author": "ARMAGEDON",
+  "enabled": true,
+  "hooks": [
+    {
+      "event": "chat_message",
+      "method": "on_message_received"
+    }
+  ],
+  "endpoints": [
+    {
+      "path": "/api/sentiment",
+      "method": "POST",
+      "description": "Analisa sentimento de um texto"
+    }
+  ]
+}

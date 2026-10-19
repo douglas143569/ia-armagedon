@@ -33,3 +33,15 @@ Thumbs.db
 outputs/
 images_generated/
 videos_generated/
+
+# Chaves (nunca versionar)
+test_hf_key.py
+
+# Dados locais e arquivos gerados
+*.db
+armagedon_export_*.json
+scheduled_tasks.json
+audio_generated/
+images_edited/
+backups/
+*.backup.*
