@@ -499,6 +499,41 @@
         .tool-panel.video { --tone: #ff6f00; --tone-2: #ff1744; }
         .tool-panel.voice { --tone: #a855f7; --tone-2: #ec4899; }
         .tool-panel.proc { --tone: #94a3b8; --tone-2: #64748b; }
+        .tool-panel.seq { --tone: #ffb000; --tone-2: #ff6f00; }
+        .tool-panel.seq .btn-tone { color: #1a0d00; }
+        .seq-types { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 12px; }
+        .seq-type {
+            text-align: left; padding: 12px; border-radius: 14px;
+            border: 1px solid var(--line-soft); background: rgba(255, 255, 255, 0.025);
+            transition: border-color 0.2s, background 0.2s;
+        }
+        .seq-type:hover { border-color: rgba(255, 176, 0, 0.45); }
+        .seq-type.on { border-color: #ffb000; background: rgba(255, 176, 0, 0.1); box-shadow: 0 0 18px rgba(255, 176, 0, 0.15); }
+        .seq-type .ico { font-size: 20px; }
+        .seq-type b { display: block; font-size: 13px; margin-top: 6px; }
+        .seq-type small { display: block; font-size: 11px; color: var(--muted); margin-top: 3px; line-height: 1.4; }
+        .narrate-box { margin: 2px 0 12px; padding: 12px 14px; border: 1px dashed rgba(255, 176, 0, 0.35); border-radius: 12px; background: rgba(255, 176, 0, 0.04); }
+        .plan-frame .pf-narration { grid-column: 2 / 4; font-size: 12.5px; }
+        .plan-frame .pf-narration::placeholder { color: #8a7a5a; }
+        .seq-video { width: 480px; max-width: 100%; border-radius: 12px; border: 1px solid var(--line-soft); background: #000; }
+        .message .gen-video { display: block; margin-top: 8px; width: 360px; max-width: 100%; border-radius: 12px; background: #000; }
+        .seq-ref { display: flex; align-items: center; gap: 8px; }
+        .seq-ref img { width: 42px; height: 42px; object-fit: cover; border-radius: 8px; border: 1px solid var(--line-soft); }
+        .seq-plan { margin-top: 14px; padding: 14px; border: 1px solid var(--line-soft); border-radius: 14px; background: rgba(0, 0, 0, 0.18); }
+        .plan-frame { display: grid; grid-template-columns: 34px 1.4fr 1fr 32px; gap: 8px; align-items: start; margin-top: 10px; }
+        .plan-frame .num { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 700; background: rgba(255, 176, 0, 0.16); color: #ffcf66; margin-top: 4px; }
+        .plan-frame textarea, .plan-frame input { width: 100%; }
+        .seq-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-top: 14px; }
+        .seq-frame { border-radius: 12px; border: 1px solid var(--line-soft); overflow: hidden; background: rgba(0, 0, 0, 0.25); }
+        .seq-frame img { width: 100%; display: block; cursor: zoom-in; }
+        .seq-frame .ph { aspect-ratio: 1; display: grid; place-items: center; font-size: 12px; color: var(--dim); }
+        .seq-frame .ph.now { color: #ffcf66; animation: blinkdot 1.2s infinite; }
+        .seq-frame .cap { padding: 7px 9px; font-size: 11px; color: var(--muted); display: flex; gap: 6px; align-items: center; justify-content: space-between; }
+        .seq-frame .cap span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .seq-frame .cap button { flex-shrink: 0; font-size: 11px; color: #ffcf66; }
+        .seq-final { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--line-soft); }
+        .seq-final img { width: 320px; max-width: 100%; border-radius: 12px; border: 1px solid var(--line-soft); cursor: zoom-in; }
+        @media (max-width: 900px) { .seq-types { grid-template-columns: repeat(2, 1fr); } .plan-frame { grid-template-columns: 30px 1fr 30px; } .plan-frame input { grid-column: 2; } }
         .panel-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
         .panel-head strong { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 600; }
         .panel-head strong svg.i { color: var(--tone); }
@@ -817,6 +852,7 @@
         <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></symbol>
         <symbol id="i-bulb" viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></symbol>
         <symbol id="i-code" viewBox="0 0 24 24"><path d="m8 7-5 5 5 5M16 7l5 5-5 5"/></symbol>
+        <symbol id="i-film" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 3v18M17 3v18M3 8h4M3 16h4M17 8h4M17 16h4"/></symbol>
         <symbol id="i-dots" viewBox="0 0 24 24"><path d="M5 12h.01M12 12h.01M19 12h.01" stroke-width="3"/></symbol>
         <symbol id="mtn" viewBox="0 0 600 200" preserveAspectRatio="xMidYMax slice">
             <path style="fill: var(--m1, #22080b)" d="M0 200V130l60-20 50 15 60-45 60 35 60-45 50 30 60-45 55 40 55-20 50 30 40-15v110z"/>
@@ -845,6 +881,7 @@
             <button class="nav-item" onclick="chatHistory.showHistory()"><svg class="i"><use href="#i-doc"/></svg>Histórico</button>
             <button class="nav-item" onclick="newChat()"><svg class="i"><use href="#i-plus"/></svg>Nova conversa</button>
             <button class="nav-item" onclick="toggleImageGenerator()"><svg class="i"><use href="#i-image"/></svg>Imagem</button>
+            <button class="nav-item" onclick="toggleSeqGenerator()"><svg class="i"><use href="#i-film"/></svg>Sequências</button>
             <button class="nav-item" onclick="toggleVideoGenerator()"><svg class="i"><use href="#i-video"/></svg>Vídeo</button>
             <button class="nav-item" onclick="toggleVoiceGenerator()"><svg class="i"><use href="#i-voice"/></svg>Voz</button>
             <button class="nav-item" onclick="toggleProcessPanel()"><svg class="i"><use href="#i-cpu"/></svg>Processos</button>
@@ -940,6 +977,7 @@
                         <div class="composer-block">
                             <div class="plus-menu" id="plusMenu">
                                 <button onclick="toggleImageGenerator(); closePlus()"><svg class="i" style="color:#00ff41"><use href="#i-image"/></svg>Gerar imagem</button>
+                                <button onclick="toggleSeqGenerator(); closePlus()"><svg class="i" style="color:#ffb000"><use href="#i-film"/></svg>Sequência de imagens</button>
                                 <button onclick="toggleVideoGenerator(); closePlus()"><svg class="i" style="color:#ff6f00"><use href="#i-video"/></svg>Gerar vídeo</button>
                                 <button onclick="toggleVoiceGenerator(); closePlus()"><svg class="i" style="color:#a855f7"><use href="#i-voice"/></svg>Texto para voz</button>
                                 <button onclick="toggleProcessPanel(); closePlus()"><svg class="i" style="color:#94a3b8"><use href="#i-cpu"/></svg>Processos</button>
@@ -1075,6 +1113,149 @@
                                     </div>
                                     <div id="imageStatus" class="panel-status"></div>
                                     <div id="imageResult" class="image-result" style="display: none;"></div>
+                                </div>
+
+                                <!-- Sequências -->
+                                <div id="seqGenerator" class="tool-panel seq" style="display: none;">
+                                    <div class="panel-head">
+                                        <strong><svg class="i"><use href="#i-film"/></svg>Sequência de imagens</strong>
+                                        <button class="icon-btn" onclick="toggleSeqGenerator()" aria-label="Fechar"><svg class="i"><use href="#i-x"/></svg></button>
+                                    </div>
+
+                                    <div class="seq-types" id="seqTypes"></div>
+
+                                    <div class="row">
+                                        <textarea id="seqTopic" class="field" rows="2" style="flex: 1; min-width: 240px; resize: vertical;"></textarea>
+                                    </div>
+
+                                    <div class="narrate-box">
+                                        <label class="check" style="font-size:13px;color:#ffcf66;"><input id="seqNarrate" type="checkbox" onchange="updateNarrateUi()"> 🎙️ Criar vídeo narrado (as imagens viram um vídeo com a narração de fundo)</label>
+                                        <div id="narrateOpts" style="display: none;">
+                                            <div class="row" style="margin-top: 10px;">
+                                                <label class="lbl">Voz
+                                                    <select id="seqVoice" class="field">
+                                                        <option value="francisca">Francisca — feminina (online)</option>
+                                                        <option value="antonio">Antônio — masculina (online)</option>
+                                                        <option value="thalita">Thalita — feminina (online)</option>
+                                                        <option value="faber">Faber — masculina (offline)</option>
+                                                    </select>
+                                                </label>
+                                                <label class="lbl">Velocidade da fala
+                                                    <select id="seqRate" class="field">
+                                                        <option value="-10">Mais devagar</option>
+                                                        <option value="0" selected>Normal</option>
+                                                        <option value="10">Um pouco mais rápida</option>
+                                                        <option value="20">Rápida</option>
+                                                    </select>
+                                                </label>
+                                                <button class="ghost-btn" onclick="previewVoice()" style="align-self:flex-end;">▶ Ouvir a voz</button>
+                                                <audio id="voicePreview" style="display:none;"></audio>
+                                            </div>
+                                            <label class="lbl" style="margin-top: 4px;">Seu texto para narrar (opcional)
+                                                <textarea id="seqScript" class="field" rows="4" style="resize: vertical; text-transform: none; letter-spacing: 0;"
+                                                          placeholder="Cole aqui o texto que deve ser narrado. A IA divide entre os quadros, na ordem, sem mudar nenhuma palavra, e cria as imagens para cada parte. Se deixar vazio, a IA escreve a narração."></textarea>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <label class="lbl">Quadros
+                                            <input id="seqFrames" class="field" type="number" min="2" max="12" style="width: 80px;" oninput="updateSeqEstimate()">
+                                        </label>
+                                        <label class="lbl">Modelo
+                                            <select id="seqModel" class="field">
+                                                <option value="auto">Automático</option>
+                                                <option value="realista">Realista</option>
+                                                <option value="arte">Arte</option>
+                                                <option value="anime">Anime</option>
+                                            </select>
+                                        </label>
+                                        <label class="lbl">Estilo
+                                            <select id="seqStyle" class="field">
+                                                <option value="auto">Automático</option>
+                                                <option value="foto">Foto realista</option>
+                                                <option value="arte">Arte digital</option>
+                                                <option value="anime">Anime</option>
+                                                <option value="pintura">Pintura a óleo</option>
+                                                <option value="3d">3D</option>
+                                                <option value="nenhum">Só o plano</option>
+                                            </select>
+                                        </label>
+                                        <label class="lbl">Formato
+                                            <select id="seqSize" class="field">
+                                                <option value="quadrado">Quadrado</option>
+                                                <option value="retrato">Retrato</option>
+                                                <option value="paisagem">Paisagem</option>
+                                            </select>
+                                        </label>
+                                        <span style="display:flex;flex-direction:column;gap:8px;padding-bottom:4px;">
+                                            <label class="check"><input id="seqTurbo" type="checkbox" checked onchange="updateSeqEstimate()"> ⚡ Rápido</label>
+                                            <label class="check" id="seqCaptionsWrap"><input id="seqCaptions" type="checkbox" checked> 🔤 Textos nas imagens</label>
+                                        </span>
+                                    </div>
+                                    <details class="advanced">
+                                        <summary>Consistência e avançado</summary>
+                                        <div class="row" style="margin-top: 10px; align-items: center;">
+                                            <label class="lbl">Força da consistência: <span id="seqConsVal" style="text-transform:none;color:var(--text);">60%</span>
+                                                <input id="seqConsistency" type="range" min="0" max="100" value="60" style="width: 180px; accent-color: #ffb000;"
+                                                       oninput="document.getElementById('seqConsVal').textContent = this.value + '%'">
+                                            </label>
+                                            <label class="lbl">Semente
+                                                <input id="seqSeed" class="field" type="text" placeholder="aleatória" style="width: 120px;">
+                                            </label>
+                                            <span class="seq-ref">
+                                                <input type="file" id="seqRefFile" accept="image/*" hidden onchange="if (this.files[0]) loadSeqRef(this.files[0]); this.value = '';">
+                                                <img id="seqRefImg" alt="" style="display:none;">
+                                                <button class="ghost-btn" onclick="document.getElementById('seqRefFile').click()">🧬 Imagem de referência (personagem/estilo)</button>
+                                                <button class="ghost-btn" id="seqRefClear" onclick="clearSeqRef()" style="display:none;">✕</button>
+                                            </span>
+                                        </div>
+                                        <p class="hint">Mais consistência = personagens e estilo mais parecidos entre os quadros, mas menos variação de pose e cena.
+                                            A referência opcional faz todos os quadros seguirem aquela imagem.</p>
+                                    </details>
+
+                                    <div class="row" style="margin-top: 12px;">
+                                        <button id="seqPlanBtn" class="btn-tone" onclick="planSequence()">1. Planejar com IA</button>
+                                        <button class="ghost-btn" onclick="manualPlan()">ou escrever os quadros eu mesmo</button>
+                                    </div>
+                                    <div id="seqPlanStatus" class="panel-status"></div>
+
+                                    <div id="seqPlan" class="seq-plan" style="display: none;">
+                                        <div class="row">
+                                            <label class="lbl" style="flex: 1; min-width: 200px;">Título
+                                                <input id="planTitle" class="field" type="text">
+                                            </label>
+                                        </div>
+                                        <label class="lbl">Ficha dos personagens — igual em todos os quadros (em inglês)
+                                            <textarea id="planChars" class="field" rows="2" style="resize: vertical;" placeholder="ex.: an orange cat astronaut with a white space suit and round helmet"></textarea>
+                                        </label>
+                                        <div class="row" style="margin-top: 10px;">
+                                            <label class="lbl" style="flex: 1; min-width: 200px;">Estilo visual (em inglês)
+                                                <input id="planStyle" class="field" type="text" placeholder="ex.: colorful cartoon, soft lighting">
+                                            </label>
+                                            <label class="lbl" style="flex: 1; min-width: 200px;">Cenário (em inglês)
+                                                <input id="planSetting" class="field" type="text" placeholder="ex.: outer space, cheese planet">
+                                            </label>
+                                        </div>
+                                        <div id="planFrames"></div>
+                                        <button class="ghost-btn" onclick="addPlanFrame()" style="margin-top: 8px;">+ Quadro</button>
+                                        <div class="row" style="margin-top: 14px; align-items: center;">
+                                            <button id="seqGenBtn" class="btn-tone" onclick="generateSequence(true)" title="Gera só o 1º quadro (~2–3 min). Ele vira a referência de todos os outros, então vale acertar antes.">2. Gerar prévia do 1º quadro</button>
+                                            <button id="seqGenAllBtn" class="ghost-btn" onclick="generateSequence(false)">ou gerar tudo de uma vez</button>
+                                            <span class="hint" id="seqEstimate" style="margin:0;"></span>
+                                        </div>
+                                        <p class="hint">O 1º quadro define o visual de todos os outros. Mudou a ficha ou o estilo depois da prévia? Gere a prévia de novo.</p>
+                                    </div>
+
+                                    <div id="seqProgress" style="display: none; margin-top: 15px;">
+                                        <div class="progress-meta"><span id="seqProgressLabel">Gerando...</span><span id="seqProgressPercent">0%</span></div>
+                                        <div class="progress"><div id="seqProgressBar"></div></div>
+                                        <div class="progress-foot">
+                                            <span id="seqProgressTime"></span>
+                                            <button class="btn-mini" onclick="cancelSequence()">Parar</button>
+                                        </div>
+                                    </div>
+                                    <div id="seqStatus" class="panel-status"></div>
+                                    <div id="seqResult"></div>
                                 </div>
 
                                 <!-- Vídeo -->
@@ -1931,6 +2112,381 @@
                 document.getElementById('progressTime').textContent = `⏱️ ${Math.floor(s / 60)}m${String(s % 60).padStart(2, '0')}s`;
             }
         }
+
+        // ===== Sequências de imagens =====
+        const SEQ_TYPES = {
+            carrossel:  { ico: '📚', name: 'Carrossel',  desc: 'Slides educativos com texto', frames: 5, min: 2, max: 10, captions: true,
+                          ph: 'Sobre o que é o carrossel? Ex.: o ciclo da água explicado para crianças, em 5 slides' },
+            hq:         { ico: '💬', name: 'Quadrinhos', desc: 'História com balões de fala', frames: 4, min: 2, max: 8, captions: true,
+                          ph: 'Conte a história. Ex.: um gato astronauta laranja descobre um planeta feito de queijo' },
+            movimento:  { ico: '🏃', name: 'Movimento',  desc: 'Quadros de uma ação + GIF', frames: 6, min: 3, max: 12, captions: false,
+                          ph: 'Qual movimento? Ex.: um cavalo galopando na praia ao pôr do sol' },
+            evolucao:   { ico: '⏳', name: 'Evolução',   desc: 'A mesma cena com o tempo', frames: 4, min: 3, max: 8, captions: true,
+                          ph: 'O que muda com o tempo? Ex.: uma árvore ao longo das quatro estações do ano' },
+            storyboard: { ico: '🎬', name: 'Storyboard', desc: 'Planos de câmera de uma cena', frames: 6, min: 3, max: 12, captions: true,
+                          ph: 'Descreva a cena. Ex.: comercial de café: o barista prepara a bebida e entrega ao cliente sorrindo' },
+        };
+        const seq = { type: 'carrossel', ref: null, job: null, seqId: null, poll: null, startedAt: 0 };
+
+        function toggleSeqGenerator() {
+            const p = document.getElementById('seqGenerator');
+            p.style.display = p.style.display === 'none' ? 'block' : 'none';
+            if (p.style.display === 'block') p.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function renderSeqTypes() {
+            document.getElementById('seqTypes').innerHTML = Object.entries(SEQ_TYPES).map(([id, t]) =>
+                `<button class="seq-type${id === seq.type ? ' on' : ''}" onclick="selectSeqType('${id}')">
+                    <span class="ico">${t.ico}</span><b>${t.name}</b><small>${t.desc}</small></button>`).join('');
+        }
+
+        function selectSeqType(id) {
+            seq.type = id;
+            const t = SEQ_TYPES[id];
+            renderSeqTypes();
+            document.getElementById('seqTopic').placeholder = t.ph;
+            const f = document.getElementById('seqFrames');
+            f.min = t.min; f.max = t.max; f.value = t.frames;
+            document.getElementById('seqCaptionsWrap').style.display = t.captions ? '' : 'none';
+            updateSeqEstimate();
+        }
+
+        function loadSeqRef(file) {
+            if (!file.type.startsWith('image/')) return;
+            const reader = new FileReader();
+            reader.onload = () => {
+                const img = new Image();
+                img.onload = () => {   // reduz para 512 px antes de enviar
+                    const s = Math.min(1, 512 / Math.max(img.naturalWidth, img.naturalHeight));
+                    const c = document.createElement('canvas');
+                    c.width = Math.round(img.naturalWidth * s); c.height = Math.round(img.naturalHeight * s);
+                    const ctx = c.getContext('2d');
+                    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
+                    ctx.drawImage(img, 0, 0, c.width, c.height);
+                    seq.ref = c.toDataURL('image/jpeg', 0.92);
+                    const thumb = document.getElementById('seqRefImg');
+                    thumb.src = seq.ref; thumb.style.display = 'block';
+                    document.getElementById('seqRefClear').style.display = '';
+                };
+                img.src = reader.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function clearSeqRef() {
+            seq.ref = null;
+            document.getElementById('seqRefImg').style.display = 'none';
+            document.getElementById('seqRefClear').style.display = 'none';
+        }
+
+        function seqFrameCount() {
+            const t = SEQ_TYPES[seq.type];
+            return Math.max(t.min, Math.min(t.max, parseInt(document.getElementById('seqFrames').value) || t.frames));
+        }
+
+        function narrating() { return document.getElementById('seqNarrate').checked; }
+
+        function updateNarrateUi() {
+            const on = narrating();
+            document.getElementById('narrateOpts').style.display = on ? 'block' : 'none';
+            document.querySelectorAll('#planFrames .pf-narration').forEach(el => el.style.display = on ? 'block' : 'none');
+            updateSeqEstimate();
+        }
+
+        async function previewVoice() {
+            const a = document.getElementById('voicePreview');
+            a.src = `/api/sequence/voice-sample?voice=${document.getElementById('seqVoice').value}&rate=${document.getElementById('seqRate').value}&t=${Date.now()}`;
+            try { await a.play(); } catch (e) { document.getElementById('seqPlanStatus').textContent = '❌ Não consegui tocar a amostra de voz.'; }
+        }
+
+        function updateSeqEstimate() {
+            const n = document.querySelectorAll('#planFrames .plan-frame').length || seqFrameCount();
+            const per = document.getElementById('seqTurbo').checked ? 2.7 : 10;
+            const min = Math.round(n * per + 1 + (narrating() ? 1 : 0));
+            document.getElementById('seqEstimate').textContent = `${n} quadros · cerca de ${min >= 60 ? Math.floor(min / 60) + 'h' + String(min % 60).padStart(2, '0') : min + ' min'} neste PC`;
+        }
+
+        function esc(s) { return String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+
+        function planFrameRow(f, i) {
+            const t = SEQ_TYPES[seq.type];
+            return `<div class="plan-frame">
+                <span class="num">${i + 1}</span>
+                <textarea class="field pf-prompt" rows="2" placeholder="O que acontece neste quadro (em inglês): ação, pose, enquadramento...">${esc(f.prompt)}</textarea>
+                <input class="field pf-text" type="text" placeholder="${t.captions ? 'Texto deste quadro (português)' : 'sem texto'}" value="${esc(f.text)}" ${t.captions ? '' : 'disabled'}>
+                <button class="icon-btn" title="Remover quadro" onclick="removePlanFrame(this)"><svg class="i"><use href="#i-x"/></svg></button>
+                <textarea class="field pf-narration" rows="2" placeholder="🎙️ Narração deste quadro (o que a voz fala enquanto ele aparece)" style="display:${narrating() ? 'block' : 'none'}">${esc(f.narration)}</textarea>
+            </div>`;
+        }
+
+        function renderPlan(plan) {
+            document.getElementById('planTitle').value = plan.title || '';
+            document.getElementById('planChars').value = plan.characters || '';
+            document.getElementById('planStyle').value = plan.style || '';
+            document.getElementById('planSetting').value = plan.setting || '';
+            document.getElementById('seqPlan').dataset.category = plan.category || 'art';
+            document.getElementById('planFrames').innerHTML = (plan.frames || []).map(planFrameRow).join('');
+            document.getElementById('seqPlan').style.display = 'block';
+            updateSeqEstimate();
+        }
+
+        function renumberPlan() {
+            document.querySelectorAll('#planFrames .plan-frame .num').forEach((el, i) => el.textContent = i + 1);
+            updateSeqEstimate();
+        }
+        function addPlanFrame() {
+            document.getElementById('planFrames').insertAdjacentHTML('beforeend', planFrameRow({ prompt: '', text: '' }, 0));
+            renumberPlan();
+        }
+        function removePlanFrame(btn) { btn.closest('.plan-frame').remove(); renumberPlan(); }
+
+        function manualPlan() {
+            renderPlan({ title: document.getElementById('seqTopic').value.trim().slice(0, 60), frames: Array.from({ length: seqFrameCount() }, () => ({ prompt: '', text: '' })) });
+        }
+
+        function collectPlan() {
+            return {
+                title: document.getElementById('planTitle').value.trim(),
+                characters: document.getElementById('planChars').value.trim(),
+                style: document.getElementById('planStyle').value.trim(),
+                setting: document.getElementById('planSetting').value.trim(),
+                category: document.getElementById('seqPlan').dataset.category || 'art',
+                frames: Array.from(document.querySelectorAll('#planFrames .plan-frame')).map(r => ({
+                    prompt: r.querySelector('.pf-prompt').value.trim(),
+                    text: r.querySelector('.pf-text').value.trim(),
+                    narration: r.querySelector('.pf-narration').value.trim(),
+                })),
+            };
+        }
+
+        // acompanha um job do gerador; onUpdate recebe o status a cada 2 s
+        function watchJob(jobId, onUpdate) {
+            clearInterval(seq.poll);
+            seq.poll = setInterval(async () => {
+                try {
+                    const st = await (await fetch(`/api/image-status/${jobId}`)).json();
+                    onUpdate(st);
+                    if (['concluído', 'erro', 'cancelado'].includes(st.status)) clearInterval(seq.poll);
+                } catch (e) { /* hub reiniciando: tenta de novo */ }
+            }, 2000);
+        }
+
+        async function planSequence() {
+            const topic = document.getElementById('seqTopic').value.trim();
+            const script = narrating() ? document.getElementById('seqScript').value.trim() : '';
+            const status = document.getElementById('seqPlanStatus');
+            if (!topic && !script) { status.textContent = '✍️ Descreva o tema da sequência (ou cole o texto para narrar).'; return; }
+            const btn = document.getElementById('seqPlanBtn');
+            btn.disabled = true; btn.style.opacity = '0.5';
+            const t0 = Date.now();
+            status.textContent = '🧠 Planejando os quadros com a IA (1–3 min)...';
+            try {
+                const r = await (await fetch('/api/sequence/plan', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type: seq.type, topic, script, frames: seqFrameCount() }),
+                })).json();
+                if (!r.job_id) throw new Error(r.error || 'erro ao planejar');
+                watchJob(r.job_id, st => {
+                    const s = Math.round((Date.now() - t0) / 1000);
+                    if (st.status === 'concluído') {
+                        status.textContent = '✅ Plano pronto. Revise e ajuste o que quiser antes de gerar.';
+                        renderPlan(st.result.plan);
+                    } else if (st.status === 'erro') {
+                        status.textContent = '❌ ' + st.error;
+                    } else {
+                        status.textContent = `🧠 ${st.message} · ${s}s`;
+                    }
+                    if (['concluído', 'erro'].includes(st.status)) { btn.disabled = false; btn.style.opacity = '1'; }
+                });
+            } catch (e) {
+                status.textContent = '❌ ' + e.message;
+                btn.disabled = false; btn.style.opacity = '1';
+            }
+        }
+
+        function renderSeqResult(r, running) {
+            const box = document.getElementById('seqResult');
+            if (!r) { box.innerHTML = ''; return; }
+            const nextIdx = r.frames.findIndex(f => !f.url);
+            const cards = r.frames.map((f, i) => `
+                <div class="seq-frame">
+                    ${f.url ? `<img src="${f.url}" alt="" onclick="openLightbox(this.src)">`
+                            : `<div class="ph${running && i === nextIdx ? ' now' : ''}">${running && i === nextIdx ? 'gerando...' : 'na fila'}</div>`}
+                    <div class="cap"><span title="${esc(f.text || f.prompt)}">${i + 1}. ${esc(f.text || f.prompt)}</span>
+                        ${f.url && !running ? `<button onclick="regenerateFrame(${i})" title="Refazer este quadro com nova semente (usa a descrição do plano)">↻ refazer</button>` : ''}</div>
+                </div>`).join('');
+            let final = '';
+            if (r.partial && !running) {
+                const left = r.frames.filter(f => !f.url).length;
+                final = `<div class="seq-final" style="align-items:center;">
+                    <div style="flex:1;min-width:220px;font-size:12.5px;color:var(--muted);line-height:1.6;">
+                        <strong style="color:var(--text);">Gostou do 1º quadro?</strong> Ele será a referência de personagem e estilo para os outros ${left}.
+                        Se não, clique em “↻ refazer” (pode ajustar a descrição no plano antes).
+                    </div>
+                    <button class="btn-tone" onclick="continueSequence()">▶ Continuar (${left} quadros · ~${Math.round(left * (document.getElementById('seqTurbo').checked ? 2.7 : 10))} min)</button>
+                </div>`;
+            } else if (r.composite && !running) {
+                const media = r.video
+                    ? `<video class="seq-video" src="${r.video}" controls playsinline poster="${r.frames[0] && r.frames[0].url || ''}"></video>`
+                    : `<img src="${r.gif || r.composite}" alt="" onclick="openLightbox('${r.composite}')">`;
+                final = `<div class="seq-final">
+                    ${media}
+                    <div class="meta" style="flex:1;min-width:200px;font-size:12px;color:var(--muted);line-height:1.7;">
+                        <div><strong style="color:var(--text);font-size:14px;">${esc(r.title)}</strong></div>
+                        <div>${r.type_name} · ${r.frames.length} quadros · ${r.model_name} · semente ${r.seed}${r.seconds ? ' · ' + Math.floor(r.seconds / 60) + 'min' + String(r.seconds % 60).padStart(2, '0') + 's' : ''}</div>
+                        <div class="actions" style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+                            <a class="btn-tone" href="${r.zip}" download style="text-decoration:none;padding:7px 14px;font-size:12px;">📥 Baixar tudo (.zip)</a>
+                            <a class="ghost-btn" href="${r.composite}" download style="text-decoration:none;">🖼️ Montagem</a>
+                            ${r.gif ? `<a class="ghost-btn" href="${r.gif}" download style="text-decoration:none;">🎞️ GIF</a>` : ''}
+                            ${r.video ? `<a class="ghost-btn" href="${r.video}" download="${esc(r.title || 'video')}.mp4" style="text-decoration:none;">🎬 Vídeo (.mp4)</a>` : ''}
+                            <button class="ghost-btn" onclick="createVideo()">🎙️ ${r.video ? 'Refazer o vídeo (voz/narração)' : 'Criar vídeo narrado'}</button>
+                        </div>
+                        ${r.video_info ? `<div style="margin-top:6px;">Vídeo: ${r.video_info.seconds}s · voz ${esc(r.video_info.voice)}</div>` : ''}
+                        <p class="hint" style="margin-top:10px;">Não gostou de um quadro? Ajuste a descrição dele no plano acima e clique em “↻ refazer”.</p>
+                    </div>
+                </div>`;
+            }
+            box.innerHTML = `<div class="seq-gallery">${cards}</div>${final}`;
+        }
+
+        function seqRunning(on) {
+            document.getElementById('seqProgress').style.display = on ? 'block' : 'none';
+            ['seqGenBtn', 'seqGenAllBtn', 'seqPlanBtn'].forEach(id => { const b = document.getElementById(id); b.disabled = on; b.style.opacity = on ? '0.5' : '1'; });
+        }
+
+        function followSeqJob(jobId, isRegen) {
+            seq.job = jobId;
+            seq.startedAt = Date.now();
+            seqRunning(true);
+            watchJob(jobId, st => {
+                document.getElementById('seqProgressBar').style.width = (st.percent || 0) + '%';
+                document.getElementById('seqProgressPercent').textContent = (st.percent || 0) + '%';
+                document.getElementById('seqProgressLabel').textContent = st.message || '';
+                const s = Math.round((Date.now() - seq.startedAt) / 1000);
+                document.getElementById('seqProgressTime').textContent = `⏱️ ${Math.floor(s / 60)}m${String(s % 60).padStart(2, '0')}s`;
+                const done = ['concluído', 'erro', 'cancelado'].includes(st.status);
+                if (st.result && !isRegen) renderSeqResult(st.result, !done);
+                if (done) {
+                    seqRunning(false);
+                    seq.job = null;
+                    const status = document.getElementById('seqStatus');
+                    if (st.status === 'concluído') {
+                        seq.seqId = st.result.seq_id;
+                        renderSeqResult(st.result, false);
+                        status.textContent = '✅ ' + st.message;
+                        if (!st.result.partial && (!isRegen || seq.addOnFinish)) addSeqMessage(st.result);
+                        seq.addOnFinish = false;
+                    } else {
+                        status.textContent = st.status === 'cancelado' ? '⏹️ Cancelado' : '❌ ' + (st.error || 'erro');
+                    }
+                }
+            });
+        }
+
+        function addSeqMessage(r) {
+            addMessage('image', `${r.video ? '🎬' : '🎞️'} ${r.title}\n${r.type_name} · ${r.frames.length} quadros · ${r.model_name}${r.video_info ? ' · vídeo de ' + r.video_info.seconds + 's' : ''}`);
+            const content = messagesDiv.lastElementChild.querySelector('.message-content');
+            if (r.video) {
+                const v = document.createElement('video');
+                v.className = 'gen-video';
+                v.src = r.video; v.controls = true; v.playsInline = true;
+                content.appendChild(v);
+                return;
+            }
+            const img = document.createElement('img');
+            img.className = 'gen-image';
+            img.src = r.gif || r.composite;
+            img.onclick = () => openLightbox(r.composite);
+            content.appendChild(img);
+        }
+
+        async function createVideo() {
+            if (!seq.seqId || seq.job) return;
+            const narrations = Array.from(document.querySelectorAll('#planFrames .pf-narration')).map(el => el.value.trim());
+            const body = {
+                seq_id: seq.seqId,
+                voice: document.getElementById('seqVoice').value,
+                rate: parseInt(document.getElementById('seqRate').value) || 0,
+                narrations: narrations.length ? narrations : undefined,
+            };
+            try {
+                const r = await (await fetch('/api/sequence/video', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+                })).json();
+                if (!r.job_id) throw new Error(r.error || 'erro');
+                seq.addOnFinish = true;
+                followSeqJob(r.job_id, true);
+            } catch (e) {
+                document.getElementById('seqStatus').textContent = '❌ ' + e.message;
+            }
+        }
+
+        async function continueSequence() {
+            if (!seq.seqId || seq.job) return;
+            try {
+                const r = await (await fetch('/api/sequence/continue', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ seq_id: seq.seqId }),
+                })).json();
+                if (!r.job_id) throw new Error(r.error || 'erro');
+                followSeqJob(r.job_id, false);
+            } catch (e) {
+                document.getElementById('seqStatus').textContent = '❌ ' + e.message;
+            }
+        }
+
+        async function generateSequence(preview) {
+            const plan = collectPlan();
+            const status = document.getElementById('seqStatus');
+            if (plan.frames.filter(f => f.prompt).length < 2) { status.textContent = '✍️ Descreva pelo menos 2 quadros (campo da esquerda, em inglês).'; return; }
+            status.textContent = '';
+            const val = id => document.getElementById(id).value.trim();
+            const body = {
+                type: seq.type, plan,
+                model: val('seqModel'), style: val('seqStyle'), size: val('seqSize'),
+                turbo: document.getElementById('seqTurbo').checked,
+                captions: document.getElementById('seqCaptions').checked,
+                consistency: parseInt(val('seqConsistency')) / 100,
+                seed: val('seqSeed') || undefined,
+                preview: !!preview,
+                narrate: narrating(),
+                voice: val('seqVoice'),
+                rate: parseInt(val('seqRate')) || 0,
+            };
+            if (seq.ref) body.reference_image = seq.ref;
+            try {
+                const r = await (await fetch('/api/sequence/generate', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+                })).json();
+                if (!r.job_id) throw new Error(r.error || 'erro ao iniciar');
+                renderSeqResult({ frames: plan.frames.map(f => ({ ...f, url: null })) }, true);
+                followSeqJob(r.job_id, false);
+            } catch (e) {
+                status.textContent = '❌ ' + e.message;
+            }
+        }
+
+        async function regenerateFrame(i) {
+            if (!seq.seqId || seq.job) return;
+            const row = document.querySelectorAll('#planFrames .plan-frame')[i];
+            const body = { seq_id: seq.seqId, index: i, new_seed: true };
+            if (row) {
+                body.prompt = row.querySelector('.pf-prompt').value.trim();
+                body.text = row.querySelector('.pf-text').value.trim();
+            }
+            try {
+                const r = await (await fetch('/api/sequence/regenerate', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+                })).json();
+                if (!r.job_id) throw new Error(r.error || 'erro');
+                followSeqJob(r.job_id, true);
+            } catch (e) {
+                document.getElementById('seqStatus').textContent = '❌ ' + e.message;
+            }
+        }
+
+        function cancelSequence() { if (seq.job) cancelJob('imagem', seq.job); }
+
+        selectSeqType('carrossel');
 
         // ===== Imagem base para modificar =====
         const edit = { dataUrl: null, source: null, tool: 'whole', drawing: false, painted: false, last: null };

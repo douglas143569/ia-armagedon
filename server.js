@@ -124,11 +124,35 @@ const server = http.createServer(async (req, res) => {
         return;
     }
 
+    // Sequências (carrossel, HQ, movimento, evolução, storyboard) → gerador de imagens
+    if (req.url.startsWith('/api/sequence/')) {
+        const target = '/sequence/' + req.url.slice('/api/sequence/'.length);
+        const chunks = [];
+        req.on('data', c => chunks.push(c));
+        req.on('end', () => {
+            const body = Buffer.concat(chunks);
+            const sReq = http.request({
+                host: '127.0.0.1', port: 5000, path: target, method: req.method, timeout: 60000,
+                headers: body.length ? { 'Content-Type': 'application/json', 'Content-Length': body.length } : {},
+            }, (sRes) => {
+                res.writeHead(sRes.statusCode, { 'Content-Type': sRes.headers['content-type'] || 'application/json' });
+                sRes.pipe(res);
+            });
+            sReq.on('error', () => sendJson(res, 503, { error: 'Gerador de imagens offline' }));
+            sReq.on('timeout', () => { sReq.destroy(); sendJson(res, 504, { error: 'timeout' }); });
+            if (body.length) sReq.write(body);
+            sReq.end();
+        });
+        return;
+    }
+
     // Arquivo de imagem gerada e lista de modelos do gerador
     if ((req.url.startsWith('/api/image-file/') || req.url === '/api/image-models') && req.method === 'GET') {
+        // aceita subpastas (sequences/<id>/quadro_01.png) e ignora ?v=... (só serve para evitar cache)
+        const filePath = req.url.split('?')[0].slice('/api/image-file/'.length);
         const target = req.url === '/api/image-models'
             ? '/models'
-            : '/image/' + encodeURIComponent(decodeURIComponent(req.url.slice('/api/image-file/'.length)));
+            : '/image/' + filePath.split('/').map(p => encodeURIComponent(decodeURIComponent(p))).join('/');
         const fReq = http.request({ host: '127.0.0.1', port: 5000, path: target, method: 'GET', timeout: 30000 }, (fRes) => {
             res.writeHead(fRes.statusCode, {
                 'Content-Type': fRes.headers['content-type'] || 'application/octet-stream',

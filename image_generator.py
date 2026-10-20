@@ -51,6 +51,9 @@ from flask import Flask, jsonify, request, send_from_directory
 from PIL import Image, ImageFilter, ImageOps
 from PIL.PngImagePlugin import PngInfo
 
+import sequences        # carrosséis, HQs, movimento, evolução e storyboards
+import narrated_video   # sequência + narração → vídeo
+
 # ============================ CONFIGURAÇÃO ============================
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -193,7 +196,9 @@ class Engine:
         self.default_scheduler = None
         self.full_vae = None
         self.tiny_vae = None
-        self.lock = threading.Lock()
+        self.ip_loaded = False
+        self.image_encoder = None   # codificador do IP-Adapter (2,4 GB), reaproveitado entre modelos
+        self.lock = threading.RLock()
         torch.set_num_threads(CPU_THREADS)
 
     def available(self):
@@ -231,8 +236,50 @@ class Engine:
         self.full_vae = pipe.vae
         # sem attention slicing: com 32 GB de RAM sobra memória, e cada passo fica ~20% mais rápido na CPU
         pipe.set_progress_bar_config(disable=True)
-        self.pipe, self.key, self.lcm = pipe, key, False
+        self.pipe, self.key, self.lcm, self.ip_loaded = pipe, key, False, False
         print(f"✅ {m['name']} pronto em {time.time() - t0:.0f}s")
+
+    # ---------- IP-Adapter: uma imagem de referência guia a geração (consistência) ----------
+
+    IP_DIR = SD_DIR / "ip-adapter"
+
+    def ip_available(self):
+        return (self.IP_DIR / "models" / "image_encoder" / "model.safetensors").exists()
+
+    def ip_on(self, scale):
+        if not self.ip_loaded:
+            from transformers import CLIPImageProcessor, CLIPVisionModelWithProjection
+            if self.image_encoder is None:
+                print("📥 Carregando IP-Adapter...")
+                self.image_encoder = CLIPVisionModelWithProjection.from_pretrained(
+                    self.IP_DIR / "models" / "image_encoder", torch_dtype=torch.float32)
+            self.pipe.register_modules(image_encoder=self.image_encoder, feature_extractor=CLIPImageProcessor())
+            # a versão "plus" não é suportada pelo diffusers 0.24; usa a padrão
+            self.pipe.load_ip_adapter(str(self.IP_DIR), subfolder="models", weight_name="ip-adapter_sd15.safetensors")
+            self.ip_loaded = True
+        # pipe.set_ip_adapter_scale() quebra no diffusers 0.24 quando o LCM-LoRA está ativo
+        # (procura uma classe "LoRAIPAdapterAttnProcessor2_0" que não existe); ajusta direto nos módulos
+        for proc in self._attention_processors():
+            if hasattr(proc, "scale"):
+                proc.scale = scale
+
+    def _attention_processors(self):
+        from diffusers.models.attention_processor import Attention
+        return [m.processor for m in self.pipe.unet.modules() if isinstance(m, Attention)]
+
+    def ip_off(self):
+        """Tira o IP-Adapter da UNet (sem isso, gerações normais quebrariam)."""
+        if not self.ip_loaded:
+            return
+        from diffusers.models.attention_processor import Attention, AttnProcessor2_0
+        unet = self.pipe.unet
+        # mesmo bug do 0.24: unet.set_default_attn_processor() também quebra com LoRA; troca módulo a módulo
+        for m in unet.modules():
+            if isinstance(m, Attention):
+                m.set_processor(AttnProcessor2_0())   # mantém as camadas da LoRA
+        unet.encoder_hid_proj = None
+        unet.register_to_config(encoder_hid_dim_type=None)
+        self.ip_loaded = False
 
     def pipeline_for(self, mode):
         """Mesmo modelo carregado, montado como texto→imagem, img2img ou inpainting (sem recarregar nada)."""
@@ -266,6 +313,7 @@ class Engine:
 
 
 engine = Engine()
+sequences.setup(sys.modules[__name__])
 
 # ============================ PROMPT ============================
 
@@ -492,6 +540,7 @@ def run_job(job):
         if engine.key != model:
             update(job, status="carregando", percent=5, message=f"Carregando {MODELS[model]['name']}...")
         engine.load(model)
+        engine.ip_off()          # antes do set_fast: trocar a LoRA com o IP-Adapter ativo quebra no 0.24
         engine.set_fast(fast)
         if job["cancel"]:
             raise Cancelled()
@@ -557,7 +606,17 @@ def worker():
                 update(job, status="cancelado", message="Cancelado", finished=time.time())
             continue
         try:
-            run_job(job)
+            kind = job["params"].get("_kind")
+            if kind == "sequence":
+                sequences.run_sequence(job)
+            elif kind == "regenerate":
+                sequences.run_regenerate(job)
+            elif kind == "continue":
+                sequences.run_continue(job)
+            elif kind == "video":
+                sequences.run_video(job)
+            else:
+                run_job(job)
         except Cancelled:
             update(job, status="cancelado", message="Cancelado", finished=time.time())
             print("⏹️  Geração cancelada")
@@ -632,7 +691,10 @@ def list_jobs():
         if not active and now - (j["finished"] or now) > 600:
             continue
         out.append({
-            "id": j["id"], "type": "Edição" if j["params"].get("has_image") else "Imagem",
+            "id": j["id"],
+            "type": {"sequence": "Sequência", "regenerate": "Sequência", "continue": "Sequência", "video": "Vídeo narrado",
+                     "plan": "Planejamento"}.get(
+                j["params"].get("_kind"), "Edição" if j["params"].get("has_image") else "Imagem"),
             "prompt": j["params"]["prompt"], "status": j["status"],
             "percent": j["percent"], "message": j["message"], "active": active,
             "elapsed": int((j["finished"] or now) - (j["started"] or j["created"])),
@@ -644,6 +706,112 @@ def list_jobs():
 @app.route("/image/<path:filename>")
 def image(filename):
     return send_from_directory(OUTPUT_DIR, filename)
+
+# ---------------------------- sequências ----------------------------
+
+
+@app.route("/sequence/types")
+def sequence_types():
+    return jsonify({"types": [{"id": k, "name": t["name"], "default": t["default"], "min": t["min"], "max": t["max"],
+                               "captions": t["captions"] is not None} for k, t in sequences.TYPES.items()],
+                    "ip_adapter": engine.ip_available(),
+                    "voices": [{"id": k, "name": v["name"]} for k, v in narrated_video.VOICES.items()]})
+
+
+@app.route("/sequence/plan", methods=["POST"])
+def sequence_plan():
+    """Planejamento roda fora da fila de imagens (só usa o Ollama)."""
+    data = request.get_json(silent=True) or {}
+    kind, topic = data.get("type"), str(data.get("topic", "")).strip()
+    script = str(data.get("script", "")).strip()
+    if kind not in sequences.TYPES or not (topic or script):
+        return jsonify({"error": "Escolha o tipo e descreva o tema (ou cole o texto para narrar)."}), 400
+    if violates_minor_rule(topic, script):
+        return jsonify({"error": "Pedido recusado: conteúdo sexual envolvendo menores não é permitido."}), 400
+    n = sequences.frames_count(kind, data.get("frames"))
+    job_id = new_job({"_kind": "plan", "prompt": topic, "type": kind})
+    job = jobs[job_id]
+
+    def run():
+        update(job, status="planejando", started=time.time(), percent=10,
+               message=f"Planejando {n} quadros com a IA (pode levar 1–3 min)...")
+        try:
+            plan = sequences.plan_sequence(kind, topic, n, script or None)
+            update(job, status="concluído", percent=100, finished=time.time(), message="Plano pronto", result={"plan": plan})
+        except Exception as e:
+            update(job, status="erro", error=str(e), message="Erro", finished=time.time())
+
+    threading.Thread(target=run, daemon=True).start()
+    return jsonify({"job_id": job_id})
+
+
+@app.route("/sequence/generate", methods=["POST"])
+def sequence_generate():
+    data = request.get_json(silent=True) or {}
+    if data.get("type") not in sequences.TYPES:
+        return jsonify({"error": "Tipo de sequência inválido."}), 400
+    reference = None
+    if data.get("reference_image"):
+        try:
+            reference = decode_image(data.pop("reference_image")).convert("RGB")
+        except Exception as e:
+            return jsonify({"error": f"Não consegui abrir a imagem de referência: {e}"}), 400
+    title = (data.get("plan") or {}).get("title") or sequences.TYPES[data["type"]]["name"]
+    job_id = new_job({**data, "_kind": "sequence", "prompt": title, "has_image": reference is not None})
+    jobs[job_id]["params"]["_reference"] = reference
+    try:
+        sequences.check_plan(data.get("plan") or {})
+    except ValueError as e:
+        jobs.pop(job_id, None)
+        return jsonify({"error": str(e)}), 400
+    work_q.put(job_id)
+    return jsonify({"job_id": job_id, "queued": work_q.qsize()})
+
+
+@app.route("/sequence/regenerate", methods=["POST"])
+def sequence_regenerate():
+    data = request.get_json(silent=True) or {}
+    if not data.get("seq_id") or data.get("index") is None:
+        return jsonify({"error": "seq_id e index são obrigatórios."}), 400
+    job_id = new_job({**data, "_kind": "regenerate", "prompt": f"Refazer quadro {int(data['index']) + 1}"})
+    work_q.put(job_id)
+    return jsonify({"job_id": job_id})
+
+
+@app.route("/sequence/voice-sample")
+def voice_sample():
+    """Amostra curta da voz escolhida (botão "Ouvir a voz")."""
+    voice = request.args.get("voice", "francisca")
+    try:
+        rate = int(request.args.get("rate", 0))
+    except ValueError:
+        rate = 0
+    audio, _ = narrated_video.tts("Olá! Esta é a voz que vai narrar o seu vídeo.", voice, rate)
+    buf = io.BytesIO()
+    narrated_video.save_wav(buf, audio)
+    return app.response_class(buf.getvalue(), mimetype="audio/wav")
+
+
+@app.route("/sequence/video", methods=["POST"])
+def sequence_video():
+    data = request.get_json(silent=True) or {}
+    if not data.get("seq_id"):
+        return jsonify({"error": "seq_id é obrigatório."}), 400
+    if data.get("voice") and data["voice"] not in narrated_video.VOICES:
+        return jsonify({"error": "Voz desconhecida."}), 400
+    job_id = new_job({**data, "_kind": "video", "prompt": "Vídeo narrado"})
+    work_q.put(job_id)
+    return jsonify({"job_id": job_id})
+
+
+@app.route("/sequence/continue", methods=["POST"])
+def sequence_continue():
+    data = request.get_json(silent=True) or {}
+    if not data.get("seq_id"):
+        return jsonify({"error": "seq_id é obrigatório."}), 400
+    job_id = new_job({"seq_id": data["seq_id"], "_kind": "continue", "prompt": "Continuar sequência"})
+    work_q.put(job_id)
+    return jsonify({"job_id": job_id})
 
 
 if __name__ == "__main__":
