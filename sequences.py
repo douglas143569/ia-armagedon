@@ -130,7 +130,12 @@ def frames_count(kind, n):
 
 
 def split_script(script, n):
-    """Divide o texto do usuário em até n partes consecutivas e equilibradas, sem alterar nenhuma palavra."""
+    """Divide o texto do usuário em até n partes consecutivas e equilibradas, sem alterar nenhuma palavra.
+    Em diálogos ("Nome: fala"), a unidade é a fala inteira: nunca corta uma fala ao meio nem separa o nome da fala."""
+    import voice_director as vd
+    if len(vd.find_speaker_tags(script)) >= 2:
+        parts = [l for l in vd.split_inline_speakers(script).split("\n") if l.strip()]
+        return _balance(parts, n, "\n")
     script = re.sub(r"\s+", " ", script).strip()
     parts = [x for x in re.split(r"(?<=[.!?…])\s+", script) if x]
     while len(parts) < n:   # poucas frases: quebra as maiores nas vírgulas
@@ -139,6 +144,11 @@ def split_script(script, n):
         if len(pieces) < 2:
             break
         parts[i:i + 1] = pieces
+    return _balance(parts, n, " ")
+
+
+def _balance(parts, n, sep):
+    """Agrupa partes consecutivas em até n grupos de tamanho parecido (nenhuma parte é cortada)."""
     n = min(n, len(parts))
     total = sum(len(x) for x in parts)
     groups, current, acc = [], [], 0
@@ -147,10 +157,10 @@ def split_script(script, n):
         acc += len(part)
         remaining_parts, remaining_groups = len(parts) - i - 1, n - len(groups) - 1
         if remaining_groups > 0 and (acc >= total * (len(groups) + 1) / n or remaining_parts == remaining_groups):
-            groups.append(" ".join(current))
+            groups.append(sep.join(current))
             current = []
     if current:
-        groups.append(" ".join(current))
+        groups.append(sep.join(current))
     return groups
 
 
@@ -611,7 +621,7 @@ def make_video(job, ctx, seq_dir, base=0.0, span=1.0):
         g.update(job, status="gerando", percent=int(100 * (base + span * frac)), message=msg)
     name, voice_name, seconds = narrated_video.build_video(
         seq_dir, ctx, ctx.get("voice", "francisca"), ctx.get("rate", 0), progress, lambda: job["cancel"])
-    ctx["video_info"] = {"voice": voice_name, "seconds": seconds}
+    ctx["video_info"] = {"voice": voice_name, "seconds": seconds, "direction": ctx.get("voice_direction", "regras")}
     save_context(seq_dir, ctx)
     with zipfile.ZipFile(seq_dir / "sequencia.zip", "a", zipfile.ZIP_DEFLATED) as z:
         if name not in z.namelist():
@@ -669,6 +679,7 @@ def prepare_context(p):
         "ip": bool(p.get("use_ip", True)) and g.engine.ip_available() and consistency > 0,
         "reference": reference, "seed_offsets": {},
         "narrate": bool(p.get("narrate")), "voice": p.get("voice") or "francisca", "rate": int(p.get("rate") or 0),
+        "voice_deep": bool(p.get("voice_deep")),   # direção de voz com análise profunda da IA
     }
 
 
@@ -843,6 +854,8 @@ def run_video(job):
     ctx["voice"] = p.get("voice") or ctx.get("voice", "francisca")
     ctx["rate"] = int(p.get("rate") or 0)
     ctx["narrate"] = True
+    if p.get("voice_deep") is not None:
+        ctx["voice_deep"] = bool(p["voice_deep"])
     g.update(job, status="gerando", started=t0, percent=1, message="Preparando o vídeo...")
     try:
         make_video(job, ctx, seq_dir)

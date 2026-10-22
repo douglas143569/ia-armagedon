@@ -512,6 +512,144 @@
         .seq-type .ico { font-size: 20px; }
         .seq-type b { display: block; font-size: 13px; margin-top: 6px; }
         .seq-type small { display: block; font-size: 11px; color: var(--muted); margin-top: 3px; line-height: 1.4; }
+        .tool-panel.mont { --tone: #00d4ff; --tone-2: #a855f7; }
+        .tool-panel.mont .btn-tone { color: #fff; }
+        .mont-grid { display: grid; grid-template-columns: 1fr 1.25fr; gap: 14px; }
+        .mont-col { border: 1px solid var(--line-soft); border-radius: 14px; padding: 12px; background: rgba(0, 0, 0, 0.18); min-width: 0; }
+        .mont-col-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; font-size: 13px; flex-wrap: wrap; }
+        .mont-col-head > b { margin-right: auto; }
+        .mont-col-head button, .mont-col-head .seg button { white-space: nowrap; }
+        .mont-col-head .seg button { padding: 5px 10px; font-size: 11.5px; }
+        .mont-col-head .seg button.on { background: rgba(0, 212, 255, 0.15); }
+        .mont-lib { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; max-height: 380px; overflow-y: auto; padding-right: 4px; }
+        .lib-card { border: 1px solid var(--line-soft); border-radius: 10px; overflow: hidden; background: rgba(255, 255, 255, 0.02); text-align: left; position: relative; }
+        .lib-card:hover { border-color: rgba(0, 212, 255, 0.5); }
+        .lib-card .thumb { aspect-ratio: 1; background: #000 center/cover no-repeat; position: relative; }
+        .lib-card .dur { position: absolute; right: 6px; bottom: 6px; font-size: 10.5px; padding: 2px 6px; border-radius: 6px; background: rgba(0, 0, 0, 0.75); }
+        .lib-card .add { position: absolute; left: 6px; top: 6px; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: rgba(0, 212, 255, 0.9); color: #001018; font-weight: 800; }
+        .lib-card .meta { padding: 6px 8px; font-size: 11px; line-height: 1.35; }
+        .lib-card .meta b { display: block; font-size: 11.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .lib-card .meta span { color: var(--dim); }
+        .lib-card.in { outline: 2px solid rgba(0, 212, 255, 0.6); }
+        .lib-card .del {
+            position: absolute; right: 6px; top: 6px; width: 26px; height: 26px; border-radius: 50%;
+            display: grid; place-items: center; font-size: 13px;
+            background: rgba(10, 5, 8, 0.8); border: 1px solid rgba(255, 255, 255, 0.15);
+            opacity: 0; transition: opacity 0.15s, background 0.15s;
+        }
+        .lib-card:hover .del, .lib-card:focus-within .del { opacity: 1; }
+        .lib-card .del:hover { background: var(--primary); }
+        .lib-card .tick { position: absolute; left: 6px; top: 6px; width: 24px; height: 24px; border-radius: 7px; border: 2px solid #fff; background: rgba(0, 0, 0, 0.5); display: none; place-items: center; font-weight: 800; font-size: 14px; }
+        .mont-lib.selecting .lib-card .tick { display: grid; }
+        .mont-lib.selecting .lib-card .add, .mont-lib.selecting .lib-card .del { display: none; }
+        .lib-card.picked { outline: 2px solid var(--primary); }
+        .lib-card.picked .tick { background: var(--primary); border-color: var(--primary); }
+        .select-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 0 0 10px; padding: 8px 10px; border-radius: 10px; background: rgba(255, 23, 68, 0.08); border: 1px solid rgba(255, 23, 68, 0.3); font-size: 12px; }
+        .select-bar span { flex: 1; }
+        .mont-history .hist { position: relative; }
+        .mont-history .hist .del { position: absolute; right: 6px; top: 6px; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; background: rgba(10, 5, 8, 0.8); border: 1px solid rgba(255, 255, 255, 0.15); opacity: 0; }
+        .mont-history .hist:hover .del { opacity: 1; }
+        .mont-history .hist .del:hover { background: var(--primary); }
+        .trash-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 10px 0; }
+        .trash-list { display: flex; flex-direction: column; gap: 6px; }
+        .trash-item { display: grid; grid-template-columns: 52px 1fr auto auto; gap: 10px; align-items: center; padding: 6px 8px; border-radius: 10px; border: 1px solid var(--line-soft); background: rgba(255, 255, 255, 0.02); font-size: 12px; }
+        .trash-item .thumb { width: 52px; height: 40px; border-radius: 6px; background: #000 center/cover no-repeat; opacity: 0.7; }
+        .trash-item small { display: block; color: var(--dim); }
+        .toast {
+            position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%) translateY(20px); z-index: 9999;
+            display: flex; align-items: center; gap: 14px; padding: 12px 16px; border-radius: 14px;
+            background: var(--panel-strong); border: 1px solid var(--line); box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+            font-size: 13px; opacity: 0; pointer-events: none; transition: opacity 0.2s, transform 0.2s;
+        }
+        .toast.show { opacity: 1; transform: translateX(-50%); pointer-events: auto; }
+        .toast button { color: #ffcf66; font-weight: 700; font-size: 13px; }
+        .mont-timeline { display: flex; flex-direction: column; gap: 8px; min-height: 120px; max-height: 430px; overflow-y: auto; padding-right: 4px; }
+        .mont-empty { border: 1px dashed rgba(255, 255, 255, 0.14); border-radius: 12px; padding: 22px; text-align: center; color: var(--dim); font-size: 12.5px; line-height: 1.6; }
+        .tl-item { display: grid; grid-template-columns: 18px 22px 64px 1fr auto; gap: 8px; align-items: center; padding: 8px; border-radius: 12px; border: 1px solid var(--line-soft); background: rgba(255, 255, 255, 0.025); }
+        .tl-item.drag-over { border-color: #00d4ff; background: rgba(0, 212, 255, 0.08); }
+        .tl-item.dragging { opacity: 0.4; }
+        .tl-item .grip { cursor: grab; color: var(--dim); font-size: 14px; user-select: none; text-align: center; }
+        .tl-item .idx { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; font-weight: 700; background: rgba(0, 212, 255, 0.15); color: #7fe9ff; }
+        .tl-item .thumb { width: 64px; height: 48px; border-radius: 8px; background: #000 center/cover no-repeat; }
+        .tl-item .info { min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+        .tl-item .info input.name { width: 100%; padding: 6px 8px; font-size: 12.5px; }
+        .tl-item .trim { display: flex; gap: 6px; align-items: center; font-size: 11px; color: var(--muted); flex-wrap: wrap; }
+        .tl-item .trim input { width: 62px; padding: 4px 6px; font-size: 11.5px; }
+        .tl-item .acts { display: flex; flex-direction: column; gap: 2px; }
+        .tl-item .acts .icon-btn { width: 26px; height: 26px; }
+        .tl-item .acts .icon-btn svg.i { width: 14px; height: 14px; }
+        .mont-options { margin-top: 14px; }
+        .mont-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .mont-card { display: flex; flex-direction: column; gap: 8px; padding: 12px; border: 1px solid var(--line-soft); border-radius: 12px; background: rgba(0, 0, 0, 0.18); }
+        .mont-card .field { font-size: 12.5px; }
+        .mont-result { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--line-soft); }
+        .mont-result video { width: 360px; max-width: 100%; max-height: 560px; border-radius: 12px; background: #000; border: 1px solid var(--line-soft); }
+        .mont-result pre { margin: 6px 0 10px; padding: 10px 12px; border-radius: 10px; background: rgba(0, 0, 0, 0.35); font-size: 12px; color: #d9c9c4; white-space: pre-wrap; font-family: inherit; }
+        .mont-history { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; margin-top: 10px; }
+        .mont-history button { text-align: left; border: 1px solid var(--line-soft); border-radius: 10px; overflow: hidden; background: rgba(255, 255, 255, 0.02); }
+        .mont-history button:hover { border-color: rgba(0, 212, 255, 0.5); }
+        .mont-history img { width: 100%; height: 100px; object-fit: cover; display: block; background: #000; }
+        .mont-history span { display: block; padding: 6px 8px; font-size: 11.5px; color: var(--muted); }
+        @media (max-width: 1100px) { .mont-grid { grid-template-columns: 1fr; } .mont-cards { grid-template-columns: 1fr; } }
+
+        .tool-panel.mem { --tone: #ff9e40; --tone-2: #ff1744; }
+        .mem-top { display: grid; grid-template-columns: repeat(3, 110px) 1fr; gap: 10px; align-items: stretch; }
+        .mem-stat { border: 1px solid var(--line-soft); border-radius: 12px; padding: 10px 12px; background: rgba(0, 0, 0, 0.18); }
+        .mem-stat b { display: block; font-size: 20px; color: #ffd0a0; }
+        .mem-stat span { font-size: 11px; color: var(--muted); }
+        .mem-toggles { display: flex; flex-direction: column; justify-content: center; gap: 6px; padding-left: 6px; }
+        .mem-toggles .switch { display: inline-block; vertical-align: middle; margin-right: 6px; cursor: pointer; }
+        .mem-filter { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+        .mem-filter .seg button { padding: 6px 10px; font-size: 11.5px; }
+        .mem-filter .seg button.on { background: rgba(255, 158, 64, 0.16); }
+        .mem-list { display: flex; flex-direction: column; gap: 6px; max-height: 360px; overflow-y: auto; padding-right: 4px; }
+        .mem-item { display: grid; grid-template-columns: 96px 1fr auto; gap: 10px; align-items: center; padding: 8px 10px; border-radius: 11px; border: 1px solid var(--line-soft); background: rgba(255, 255, 255, 0.02); }
+        .mem-item.pinned { border-color: rgba(255, 158, 64, 0.45); }
+        .mem-item .kind { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; padding: 4px 8px; border-radius: 999px; text-align: center; background: rgba(255, 158, 64, 0.12); color: #ffcf99; }
+        .mem-item .kind.instrucao { background: rgba(0, 212, 255, 0.12); color: #8ee9ff; }
+        .mem-item .kind.perfil { background: rgba(168, 85, 247, 0.14); color: #d6b4ff; }
+        .mem-item .kind.estilo { background: rgba(0, 255, 65, 0.1); color: #9dffb5; }
+        .mem-item .txt { font-size: 13px; line-height: 1.45; outline: none; border-radius: 6px; padding: 2px 4px; }
+        .mem-item .txt:focus { background: rgba(0, 0, 0, 0.35); box-shadow: 0 0 0 1px rgba(255, 158, 64, 0.5); }
+        .mem-item .src { display: block; font-size: 10.5px; color: var(--dim); margin-top: 2px; padding-left: 4px; }
+        .mem-item .acts { display: flex; gap: 2px; }
+        .mem-item .acts .icon-btn { width: 30px; height: 30px; font-size: 13px; }
+        .mem-item .acts .icon-btn.on { color: #ffcf66; }
+        .mem-learn { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 14px; padding: 12px 14px; border-radius: 12px; border: 1px dashed rgba(0, 212, 255, 0.35); background: rgba(0, 212, 255, 0.04); font-size: 13px; }
+        .msg-tools { display: flex; align-items: center; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+        .msg-tools button { font-size: 12.5px; padding: 3px 8px; border-radius: 8px; border: 1px solid var(--line-soft); color: var(--muted); }
+        .msg-tools button:hover { color: #fff; border-color: rgba(255, 158, 64, 0.5); }
+        .msg-tools button.chosen { color: #fff; background: rgba(255, 158, 64, 0.18); border-color: rgba(255, 158, 64, 0.5); }
+        .msg-tools .mem-chip { font-size: 11px; color: #ffcf99; cursor: help; border-style: dashed; }
+        .emo-chip { display: inline-flex; align-items: center; gap: 4px; margin-top: 8px; font-size: 11px; padding: 3px 9px; border-radius: 999px; background: rgba(0, 0, 0, 0.25); color: #fff; border: 1px solid rgba(255, 255, 255, 0.25); cursor: pointer; }
+        .emo-chip.risk-medio { border-color: #ffcf66; }
+        .emo-chip.risk-alto { border-color: #fff; background: rgba(0, 0, 0, 0.45); box-shadow: 0 0 0 2px rgba(255, 207, 102, 0.6); }
+        .emo-detail { margin: 8px 0 0; padding: 10px 12px; border-radius: 10px; background: rgba(0, 0, 0, 0.35); font-size: 11.5px; white-space: pre-wrap; text-align: left; color: #fff; max-width: 520px; }
+        .message.assistant.support .message-content { background: rgba(255, 207, 102, 0.08); border: 1px solid rgba(255, 207, 102, 0.5); line-height: 1.6; white-space: normal; }
+        .message.support { --tone: #ffcf66; --tone-2: #ff9e40; }
+        .message.support .btn-tone { color: #2a1800; }
+        .message.support .support-actions { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0 6px; }
+        .message.support .support-actions a { text-decoration: none; font-size: 12.5px; padding: 8px 14px; }
+        .message.support small { color: var(--muted); }
+        .msg-fix { display: flex; gap: 6px; margin-top: 8px; width: 100%; }
+        .msg-fix textarea { flex: 1; min-height: 54px; font-size: 12.5px; }
+        @media (max-width: 760px) { .mem-top { grid-template-columns: repeat(3, 1fr); } .mem-toggles { grid-column: 1 / -1; } .mem-item { grid-template-columns: 1fr auto; } .mem-item .kind { display: none; } }
+
+        .dir-box { margin-bottom: 14px; padding: 14px; border-radius: 14px; border: 1px solid rgba(168, 85, 247, 0.35); background: rgba(168, 85, 247, 0.05); }
+        .dir-head { display: flex; flex-direction: column; gap: 3px; margin-bottom: 10px; font-size: 13.5px; }
+        .dir-result { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+        .dir-card { border: 1px solid var(--line-soft); border-radius: 12px; padding: 12px; background: rgba(0, 0, 0, 0.2); font-size: 12.5px; min-width: 0; }
+        .dir-card h4 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); margin-bottom: 8px; }
+        .dir-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+        .dir-tags span { padding: 3px 9px; border-radius: 999px; background: rgba(168, 85, 247, 0.14); color: #e3ccff; font-size: 11.5px; }
+        .cast-row { display: grid; grid-template-columns: 1fr auto auto auto; gap: 8px; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--line-soft); }
+        .cast-row:last-child { border-bottom: none; }
+        .cast-row small { color: var(--dim); }
+        .dir-script { white-space: pre-wrap; font-size: 12px; line-height: 1.6; color: #e6d6d1; max-height: 220px; overflow-y: auto; }
+        .dir-audio { grid-column: 1 / -1; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .dir-audio audio { flex: 1; min-width: 260px; }
+        @media (max-width: 900px) { .dir-result { grid-template-columns: 1fr; } }
+
         .narrate-box { margin: 2px 0 12px; padding: 12px 14px; border: 1px dashed rgba(255, 176, 0, 0.35); border-radius: 12px; background: rgba(255, 176, 0, 0.04); }
         .plan-frame .pf-narration { grid-column: 2 / 4; font-size: 12.5px; }
         .plan-frame .pf-narration::placeholder { color: #8a7a5a; }
@@ -852,6 +990,7 @@
         <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></symbol>
         <symbol id="i-bulb" viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></symbol>
         <symbol id="i-code" viewBox="0 0 24 24"><path d="m8 7-5 5 5 5M16 7l5 5-5 5"/></symbol>
+        <symbol id="i-brain" viewBox="0 0 24 24"><path d="M9 4a3 3 0 0 0-3 3 3 3 0 0 0-2 5 3 3 0 0 0 2 5 3 3 0 0 0 3 3 3 3 0 0 0 3-3V7a3 3 0 0 0-3-3z"/><path d="M15 4a3 3 0 0 1 3 3 3 3 0 0 1 2 5 3 3 0 0 1-2 5 3 3 0 0 1-3 3 3 3 0 0 1-3-3"/><path d="M9 9h1M14 9h1M9 14h1M14 14h1"/></symbol>
         <symbol id="i-film" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 3v18M17 3v18M3 8h4M3 16h4M17 8h4M17 16h4"/></symbol>
         <symbol id="i-dots" viewBox="0 0 24 24"><path d="M5 12h.01M12 12h.01M19 12h.01" stroke-width="3"/></symbol>
         <symbol id="mtn" viewBox="0 0 600 200" preserveAspectRatio="xMidYMax slice">
@@ -882,6 +1021,8 @@
             <button class="nav-item" onclick="newChat()"><svg class="i"><use href="#i-plus"/></svg>Nova conversa</button>
             <button class="nav-item" onclick="toggleImageGenerator()"><svg class="i"><use href="#i-image"/></svg>Imagem</button>
             <button class="nav-item" onclick="toggleSeqGenerator()"><svg class="i"><use href="#i-film"/></svg>Sequências</button>
+            <button class="nav-item" onclick="toggleMontGenerator()"><svg class="i"><use href="#i-layers"/></svg>Montagem</button>
+            <button class="nav-item" onclick="toggleMemPanel()"><svg class="i"><use href="#i-brain"/></svg>Memória</button>
             <button class="nav-item" onclick="toggleVideoGenerator()"><svg class="i"><use href="#i-video"/></svg>Vídeo</button>
             <button class="nav-item" onclick="toggleVoiceGenerator()"><svg class="i"><use href="#i-voice"/></svg>Voz</button>
             <button class="nav-item" onclick="toggleProcessPanel()"><svg class="i"><use href="#i-cpu"/></svg>Processos</button>
@@ -978,6 +1119,7 @@
                             <div class="plus-menu" id="plusMenu">
                                 <button onclick="toggleImageGenerator(); closePlus()"><svg class="i" style="color:#00ff41"><use href="#i-image"/></svg>Gerar imagem</button>
                                 <button onclick="toggleSeqGenerator(); closePlus()"><svg class="i" style="color:#ffb000"><use href="#i-film"/></svg>Sequência de imagens</button>
+                                <button onclick="toggleMontGenerator(); closePlus()"><svg class="i" style="color:#00d4ff"><use href="#i-layers"/></svg>Montagem de vídeos</button>
                                 <button onclick="toggleVideoGenerator(); closePlus()"><svg class="i" style="color:#ff6f00"><use href="#i-video"/></svg>Gerar vídeo</button>
                                 <button onclick="toggleVoiceGenerator(); closePlus()"><svg class="i" style="color:#a855f7"><use href="#i-voice"/></svg>Texto para voz</button>
                                 <button onclick="toggleProcessPanel(); closePlus()"><svg class="i" style="color:#94a3b8"><use href="#i-cpu"/></svg>Processos</button>
@@ -1149,6 +1291,8 @@
                                                     </select>
                                                 </label>
                                                 <button class="ghost-btn" onclick="previewVoice()" style="align-self:flex-end;">▶ Ouvir a voz</button>
+                                                <label class="check" style="padding-bottom:10px;" title="A mesma análise profunda do painel Voz dirigida, feita uma vez para o roteiro inteiro do vídeo: cada personagem ganha velocidade e tom próprios, coerentes do começo ao fim.">
+                                                    <input id="seqVoiceDeep" type="checkbox" onchange="updateSeqEstimate()"> 🔬 Direção de voz com IA (análise profunda, +2–4 min)</label>
                                                 <audio id="voicePreview" style="display:none;"></audio>
                                             </div>
                                             <label class="lbl" style="margin-top: 4px;">Seu texto para narrar (opcional)
@@ -1258,6 +1402,188 @@
                                     <div id="seqResult"></div>
                                 </div>
 
+                                <!-- Montagem de vídeos -->
+                                <div id="montGenerator" class="tool-panel mont" style="display: none;">
+                                    <div class="panel-head">
+                                        <strong><svg class="i"><use href="#i-film"/></svg>Montagem de vídeos — junte vários vídeos em um só</strong>
+                                        <button class="icon-btn" onclick="toggleMontGenerator()" aria-label="Fechar"><svg class="i"><use href="#i-x"/></svg></button>
+                                    </div>
+
+                                    <div class="mont-grid">
+                                        <!-- Biblioteca -->
+                                        <section class="mont-col">
+                                            <div class="mont-col-head">
+                                                <b>Biblioteca</b>
+                                                <button class="ghost-btn" id="montSelectBtn" onclick="toggleSelectMode()" style="padding:5px 10px;font-size:11.5px;">☑ Selecionar</button>
+                                                <div class="seg" id="montFilter">
+                                                    <button class="on" data-f="all" onclick="setMontFilter('all')">Todos</button>
+                                                    <button data-f="seq" onclick="setMontFilter('seq')">Narrados</button>
+                                                    <button data-f="other" onclick="setMontFilter('other')">Outros</button>
+                                                </div>
+                                            </div>
+                                            <input type="file" id="montUpload" accept="video/*,.gif" hidden onchange="if (this.files[0]) uploadMontVideo(this.files[0]); this.value = '';">
+                                            <button class="ghost-btn" onclick="document.getElementById('montUpload').click()" style="width:100%;justify-content:center;margin-bottom:10px;">⬆ Enviar vídeo do computador</button>
+                                            <div id="montUploadStatus" class="hint" style="margin:0 0 8px;"></div>
+                                            <div class="select-bar" id="montSelectBar" style="display: none;">
+                                                <span id="montSelectCount">0 selecionados</span>
+                                                <button class="ghost-btn" onclick="selectAllVisible()">Todos visíveis</button>
+                                                <button class="btn-mini" onclick="deleteSelected()">🗑 Excluir selecionados</button>
+                                            </div>
+                                            <div class="mont-lib" id="montLib"><div class="hint">Carregando...</div></div>
+                                        </section>
+
+                                        <!-- Linha do tempo -->
+                                        <section class="mont-col">
+                                            <div class="mont-col-head">
+                                                <b>Linha do tempo</b>
+                                                <span class="hint" id="montTotal" style="margin:0;"></span>
+                                            </div>
+                                            <div class="mont-timeline" id="montTimeline"></div>
+                                        </section>
+                                    </div>
+
+                                    <div class="mont-options">
+                                        <div class="row">
+                                            <label class="lbl" style="flex: 1; min-width: 220px;">Título do vídeo
+                                                <input id="montTitle" class="field" type="text" placeholder="Minha montagem" oninput="syncIntroTitle()">
+                                            </label>
+                                            <label class="lbl">Formato
+                                                <select id="montFormat" class="field">
+                                                    <option value="auto">Automático (do 1º vídeo)</option>
+                                                    <option value="vertical">Vertical 9:16 — Reels, TikTok, Shorts</option>
+                                                    <option value="quadrado">Quadrado 1:1 — Instagram, WhatsApp</option>
+                                                    <option value="horizontal">Horizontal 16:9 — YouTube</option>
+                                                </select>
+                                            </label>
+                                            <label class="lbl">Transição
+                                                <select id="montTransition" class="field" onchange="updateMontTotal()">
+                                                    <option value="corte">Corte seco (mais rápido)</option>
+                                                    <option value="fade" selected>Fade (dissolver)</option>
+                                                    <option value="preto">Fade pelo preto</option>
+                                                    <option value="deslizar">Deslizar</option>
+                                                    <option value="zoom">Zoom</option>
+                                                </select>
+                                            </label>
+                                            <label class="lbl">Duração
+                                                <select id="montTransDur" class="field" onchange="updateMontTotal()">
+                                                    <option value="0.4">Rápida</option>
+                                                    <option value="0.7" selected>Normal</option>
+                                                    <option value="1.2">Lenta</option>
+                                                </select>
+                                            </label>
+                                        </div>
+                                        <div class="mont-cards">
+                                            <div class="mont-card">
+                                                <label class="check"><input id="montIntro" type="checkbox" checked onchange="updateMontTotal()"> 🎬 Abertura (4 s)</label>
+                                                <input id="montIntroTitle" class="field" type="text" placeholder="Título da abertura">
+                                                <input id="montIntroSub" class="field" type="text" placeholder="Subtítulo (opcional) — ex.: Episódio 1">
+                                            </div>
+                                            <div class="mont-card">
+                                                <label class="check"><input id="montOutro" type="checkbox" onchange="updateMontTotal()"> 🏁 Encerramento (3,5 s)</label>
+                                                <input id="montOutroTitle" class="field" type="text" value="Obrigado por assistir!">
+                                                <input id="montOutroSub" class="field" type="text" placeholder="Subtítulo (opcional) — ex.: Siga para mais">
+                                            </div>
+                                            <div class="mont-card">
+                                                <span class="check" style="cursor:default;">🎵 Música de fundo <small style="color:var(--dim)">(abaixa sozinha quando há narração)</small></span>
+                                                <input type="file" id="montMusicFile" accept="audio/*" hidden onchange="if (this.files[0]) uploadMontMusic(this.files[0]); this.value = '';">
+                                                <div style="display:flex;gap:8px;align-items:center;">
+                                                    <button class="ghost-btn" onclick="document.getElementById('montMusicFile').click()">⬆ Escolher música</button>
+                                                    <span id="montMusicName" class="hint" style="margin:0;">nenhuma</span>
+                                                    <button class="ghost-btn" id="montMusicClear" onclick="clearMontMusic()" style="display:none;">✕</button>
+                                                </div>
+                                                <label class="lbl">Volume: <span id="montMusicVolVal" style="text-transform:none;color:var(--text);">25%</span>
+                                                    <input id="montMusicVol" type="range" min="5" max="80" value="25" style="accent-color:#00d4ff;"
+                                                           oninput="document.getElementById('montMusicVolVal').textContent = this.value + '%'">
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <label class="check" style="margin-top: 10px;"><input id="montChapters" type="checkbox" checked> 📑 Capítulos no vídeo (um por trecho) + lista de tempos para a descrição do YouTube</label>
+                                    </div>
+
+                                    <div class="row" style="margin-top: 14px; align-items: center;">
+                                        <button id="montBtn" class="btn-tone" onclick="compileMontage()">🎬 Montar vídeo</button>
+                                        <span class="hint" id="montHint" style="margin:0;"></span>
+                                    </div>
+                                    <div id="montProgress" style="display: none; margin-top: 15px;">
+                                        <div class="progress-meta"><span id="montProgressLabel">Montando...</span><span id="montProgressPercent">0%</span></div>
+                                        <div class="progress"><div id="montProgressBar"></div></div>
+                                        <div class="progress-foot"><span id="montProgressTime"></span><button class="btn-mini" onclick="cancelMontage()">Parar</button></div>
+                                    </div>
+                                    <div id="montStatus" class="panel-status"></div>
+                                    <div id="montResult"></div>
+
+                                    <details class="advanced" style="margin-top: 14px;" id="montHistoryBox">
+                                        <summary>Montagens anteriores</summary>
+                                        <div id="montHistory" class="mont-history"></div>
+                                    </details>
+
+                                    <details class="advanced" style="margin-top: 10px;" id="montTrashBox">
+                                        <summary id="montTrashSummary">🗑 Lixeira</summary>
+                                        <div class="trash-head">
+                                            <span class="hint" id="montTrashHint" style="margin:0;"></span>
+                                            <button class="ghost-btn" onclick="emptyTrash()">Esvaziar lixeira</button>
+                                        </div>
+                                        <div id="montTrash" class="trash-list"></div>
+                                    </details>
+                                </div>
+
+                                <!-- Memória de longo prazo -->
+                                <div id="memPanel" class="tool-panel mem" style="display: none;">
+                                    <div class="panel-head">
+                                        <strong><svg class="i"><use href="#i-brain"/></svg>Memória de longo prazo</strong>
+                                        <button class="icon-btn" onclick="toggleMemPanel()" aria-label="Fechar"><svg class="i"><use href="#i-x"/></svg></button>
+                                    </div>
+                                    <p class="hint" style="margin:-6px 0 12px;">O ARMAGEDON lembra de você entre conversas e melhora com as suas avaliações. Tudo fica só neste computador.</p>
+
+                                    <div class="mem-top">
+                                        <div class="mem-stat"><b id="memCount">0</b><span>memórias</span></div>
+                                        <div class="mem-stat"><b id="memRules">0</b><span>regras aprendidas</span></div>
+                                        <div class="mem-stat"><b id="memFeedback">0 · 0</b><span>👍 · 👎</span></div>
+                                        <div class="mem-toggles">
+                                            <label class="check" style="font-size:12.5px;"><span class="switch" id="memAutoSwitch" onclick="toggleAutoLearn()"></span> Aprender sozinho com as conversas</label>
+                                            <label class="check" style="font-size:12.5px;" title="Percebe a emoção de cada mensagem (instantâneo) e ajusta o tom da resposta. Nada é guardado."><span class="switch" id="emoSwitch" onclick="toggleEmotionSetting('emotion_enabled')"></span> Análise emocional das mensagens</label>
+                                            <label class="check" style="font-size:12.5px;" title="A IA refina a análise em segundo plano (mais precisa; usa ~30 s de processamento por mensagem)."><span class="switch" id="emoDeepSwitch" onclick="toggleEmotionSetting('emotion_deep')"></span> Análise profunda com IA</label>
+                                            <span class="hint" id="memEmbedHint" style="margin:0;"></span>
+                                        </div>
+                                    </div>
+
+                                    <div class="row" style="margin-top: 12px;">
+                                        <select id="memNewKind" class="field" style="width: 160px;">
+                                            <option value="preferencia">Preferência</option>
+                                            <option value="perfil">Perfil</option>
+                                            <option value="projeto">Projeto</option>
+                                            <option value="estilo">Estilo visual</option>
+                                            <option value="instrucao">Instrução</option>
+                                        </select>
+                                        <input id="memNewText" class="field" type="text" placeholder="Ensine algo. Ex.: Prefere respostas com exemplos práticos." style="flex:1;min-width:220px;"
+                                               onkeydown="if (event.key === 'Enter') addMemory()">
+                                        <button class="btn-tone" onclick="addMemory()">+ Lembrar</button>
+                                    </div>
+                                    <p class="hint" style="margin:-2px 0 10px;">Dica: no chat ou por voz, diga “lembre que…” ou “esqueça que…”.</p>
+
+                                    <div class="mem-filter">
+                                        <div class="seg" id="memKindFilter"></div>
+                                        <input id="memSearch" class="field" type="search" placeholder="Buscar..." oninput="renderMemories()" style="width: 180px;">
+                                    </div>
+                                    <div id="memList" class="mem-list"></div>
+
+                                    <div class="mem-learn">
+                                        <div>
+                                            <b>🔁 Auto-melhoria</b>
+                                            <p class="hint" style="margin:4px 0 0;" id="memLearnHint"></p>
+                                        </div>
+                                        <button class="btn-tone" id="memReflectBtn" onclick="reflectNow()">Aprender com o feedback agora</button>
+                                    </div>
+
+                                    <div class="row" style="margin-top: 12px; gap: 8px;">
+                                        <a class="ghost-btn" href="/api/memory/export" download style="text-decoration:none;">⬇ Exportar backup</a>
+                                        <input type="file" id="memImportFile" accept=".json,application/json" hidden onchange="if (this.files[0]) importMemories(this.files[0]); this.value = '';">
+                                        <button class="ghost-btn" onclick="document.getElementById('memImportFile').click()">⬆ Importar backup</button>
+                                        <span style="flex:1"></span>
+                                        <button class="ghost-btn" onclick="forgetAll()" style="color:#ff8a8a;">Esquecer tudo</button>
+                                    </div>
+                                </div>
+
                                 <!-- Vídeo -->
                                 <div id="videoGenerator" class="tool-panel video" style="display: none;">
                                     <div class="panel-head">
@@ -1314,6 +1640,42 @@
                                         <strong><svg class="i"><use href="#i-voice"/></svg>Texto para voz</strong>
                                         <button class="icon-btn" onclick="toggleVoiceGenerator()" aria-label="Fechar"><svg class="i"><use href="#i-x"/></svg></button>
                                     </div>
+
+                                    <!-- Voz dirigida: emoção, ritmo, pausas e uma voz por personagem -->
+                                    <div class="dir-box">
+                                        <div class="dir-head">
+                                            <b>🎭 Voz dirigida</b>
+                                            <span class="hint" style="margin:0;">A IA lê como um ator: ajusta emoção, ritmo e pausas e, em diálogos, dá uma voz a cada personagem.</span>
+                                        </div>
+                                        <textarea id="dirText" class="field" rows="6" style="width:100%;resize:vertical;"
+                                                  placeholder="Cole um texto ou um diálogo. Para diálogo, uma fala por linha:&#10;Narrador: Naquela noite, o porto estava em silêncio.&#10;Marina: Pedro, você viu o barco? Ele sumiu!&#10;Pedro: Calma, Marina. Vamos procurar juntos."></textarea>
+                                        <div class="row" style="margin-top:10px;">
+                                            <label class="lbl">Voz do narrador
+                                                <select id="dirVoice" class="field">
+                                                    <option value="francisca">Francisca — feminina</option>
+                                                    <option value="antonio">Antônio — masculina</option>
+                                                    <option value="thalita">Thalita — feminina</option>
+                                                    <option value="faber">Faber — offline</option>
+                                                </select>
+                                            </label>
+                                            <label class="lbl">Velocidade base
+                                                <select id="dirRate" class="field">
+                                                    <option value="-10">Mais devagar</option>
+                                                    <option value="0" selected>Normal</option>
+                                                    <option value="10">Mais rápida</option>
+                                                </select>
+                                            </label>
+                                            <label class="check" style="padding-bottom:10px;" title="A IA analisa com o prompt do Diretor de Voz (mais detalhado, ~1–2 min neste PC)"><input id="dirDeep" type="checkbox"> 🔬 Análise profunda com IA</label>
+                                            <span style="flex:1"></span>
+                                            <button class="ghost-btn" onclick="directVoice(false)">🔍 Analisar</button>
+                                            <button class="btn-tone" id="dirRenderBtn" onclick="directVoice(true)">▶ Gerar áudio dirigido</button>
+                                        </div>
+                                        <div id="dirStatus" class="panel-status"></div>
+                                        <div id="dirResult"></div>
+                                    </div>
+                                    <details class="advanced" style="margin-bottom:12px;">
+                                        <summary>Voz simples do Windows (opções antigas)</summary>
+                                        <div style="margin-top:10px;">
                                     <div class="row" style="align-items: stretch;">
                                         <textarea id="voiceText" class="field" placeholder="Escreva o texto que quer converter em áudio..." style="flex: 1; min-width: 220px; min-height: 90px; resize: vertical;"></textarea>
                                         <div style="display: flex; flex-direction: column; gap: 8px; justify-content: space-between;">
@@ -1401,6 +1763,8 @@
                                         <br>
                                         <strong>⚠️ Nota sobre Vozes:</strong> Seu sistema tem apenas vozes femininas. O tom emocional é aplicado via velocidade e volume. Textos &gt;500 caracteres são divididos automaticamente.
                                     </div>
+                                        </div>
+                                    </details>
                                 </div>
                             </div>
                         </div>
@@ -1475,6 +1839,7 @@
     </div>
 
     <div class="lightbox" id="lightbox" onclick="this.classList.remove('open')"><img id="lightboxImg" alt=""></div>
+    <div class="toast" id="toast" role="status" aria-live="polite"><span id="toastMsg"></span><button id="toastAction"></button></div>
 
     <script>
         const messagesDiv = document.getElementById('messages');
@@ -1761,6 +2126,7 @@
             }
         }
 
+        let ollamaOnline = null;
         async function checkOllama() {
             const v = document.getElementById('sysOllama');
             const ring = document.getElementById('sysOllamaRing');
@@ -1773,14 +2139,20 @@
                 v.textContent = `Conectado · ${installedModels.length} modelos`;
                 ring.className = 'ring ok';
                 dot.className = 'dot on';
+                if (ollamaOnline === false) statusDiv.textContent = '✅ Ollama conectado de novo • Pronto para conversar';
+                ollamaOnline = true;
             } catch (e) {
                 installedModels = null;
-                v.textContent = 'Offline';
+                v.textContent = 'Offline — tentando reconectar...';
                 ring.className = 'ring bad';
                 dot.className = 'dot off';
-                statusDiv.textContent = '❌ Ollama offline em localhost:11434';
+                statusDiv.textContent = '❌ Ollama offline — o ARMAGEDON vai reabri-lo e reconectar sozinho';
+                ollamaOnline = false;
             }
             onModelChange();
+            // offline: tenta de novo em 10 s (o hub reabre o Ollama); online: confere a cada 60 s
+            clearTimeout(checkOllama.timer);
+            checkOllama.timer = setTimeout(checkOllama, ollamaOnline ? 60000 : 10000);
         }
 
         function stopResponse() {
@@ -2202,7 +2574,7 @@
         function updateSeqEstimate() {
             const n = document.querySelectorAll('#planFrames .plan-frame').length || seqFrameCount();
             const per = document.getElementById('seqTurbo').checked ? 2.7 : 10;
-            const min = Math.round(n * per + 1 + (narrating() ? 1 : 0));
+            const min = Math.round(n * per + 1 + (narrating() ? 1 : 0) + (narrating() && document.getElementById('seqVoiceDeep').checked ? 3 : 0));
             document.getElementById('seqEstimate').textContent = `${n} quadros · cerca de ${min >= 60 ? Math.floor(min / 60) + 'h' + String(min % 60).padStart(2, '0') : min + ' min'} neste PC`;
         }
 
@@ -2340,8 +2712,9 @@
                             ${r.gif ? `<a class="ghost-btn" href="${r.gif}" download style="text-decoration:none;">🎞️ GIF</a>` : ''}
                             ${r.video ? `<a class="ghost-btn" href="${r.video}" download="${esc(r.title || 'video')}.mp4" style="text-decoration:none;">🎬 Vídeo (.mp4)</a>` : ''}
                             <button class="ghost-btn" onclick="createVideo()">🎙️ ${r.video ? 'Refazer o vídeo (voz/narração)' : 'Criar vídeo narrado'}</button>
+                            ${r.video ? `<button class="ghost-btn" onclick="addSeqToMontage('${r.seq_id}')">➕ Adicionar à montagem</button>` : ''}
                         </div>
-                        ${r.video_info ? `<div style="margin-top:6px;">Vídeo: ${r.video_info.seconds}s · voz ${esc(r.video_info.voice)}</div>` : ''}
+                        ${r.video_info ? `<div style="margin-top:6px;">Vídeo: ${r.video_info.seconds}s · vozes ${esc(r.video_info.voice)} · direção: ${esc(r.video_info.direction || 'regras')}</div>` : ''}
                         <p class="hint" style="margin-top:10px;">Não gostou de um quadro? Ajuste a descrição dele no plano acima e clique em “↻ refazer”.</p>
                     </div>
                 </div>`;
@@ -2407,6 +2780,7 @@
                 seq_id: seq.seqId,
                 voice: document.getElementById('seqVoice').value,
                 rate: parseInt(document.getElementById('seqRate').value) || 0,
+                voice_deep: document.getElementById('seqVoiceDeep').checked,
                 narrations: narrations.length ? narrations : undefined,
             };
             try {
@@ -2451,6 +2825,7 @@
                 narrate: narrating(),
                 voice: val('seqVoice'),
                 rate: parseInt(val('seqRate')) || 0,
+                voice_deep: document.getElementById('seqVoiceDeep').checked,
             };
             if (seq.ref) body.reference_image = seq.ref;
             try {
@@ -2487,6 +2862,840 @@
         function cancelSequence() { if (seq.job) cancelJob('imagem', seq.job); }
 
         selectSeqType('carrossel');
+
+        // ===== Voz dirigida (voice_director.py via /api/direction) =====
+        const dirState = { segs: null, text: '', overrides: {} };
+        const DIR_VOICES = { francisca: 'Francisca', thalita: 'Thalita', antonio: 'Antônio', faber: 'Faber (offline)' };
+
+        function setCharVoice(name, voice) {   // o usuário escolheu outra voz para um personagem
+            dirState.overrides[name] = voice;
+            dirState.key = null;
+            directVoice(false);
+        }
+
+        async function directVoice(render) {
+            const text = document.getElementById('dirText').value.trim();
+            const status = document.getElementById('dirStatus');
+            if (!text) { status.textContent = '✍️ Escreva um texto ou um diálogo.'; return; }
+            if (dirState.text !== text) { dirState.overrides = {}; dirState.text = text; }   // texto novo: elenco novo
+            const body = { text, voice: document.getElementById('dirVoice').value, rate: parseInt(document.getElementById('dirRate').value) || 0,
+                           deep: document.getElementById('dirDeep').checked, overrides: dirState.overrides };
+            const btn = document.getElementById('dirRenderBtn');
+            btn.disabled = true; btn.style.opacity = '0.5';
+            const t0 = Date.now();
+            const tick = setInterval(() => { status.textContent = `${body.deep ? '🔬 A IA está dirigindo a leitura' : '🎭 Dirigindo'}... ${Math.round((Date.now() - t0) / 1000)}s`; }, 500);
+            try {
+                // reaproveita a análise anterior se o texto e as opções não mudaram
+                const key = JSON.stringify(body);
+                if (dirState.key !== key) {
+                    const r = await fetch('/api/direction/analyze', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: key });
+                    const data = await r.json();
+                    if (!r.ok) throw new Error(data.error || 'erro');
+                    Object.assign(dirState, { key, data });
+                    renderDirection(data);
+                }
+                if (render) {
+                    status.textContent = '🎙️ Gravando as falas...';
+                    const r = await fetch('/api/direction/render', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ segmentos: dirState.data.segmentos }) });
+                    if (!r.ok) throw new Error((await r.json()).error || 'erro');
+                    const url = URL.createObjectURL(await r.blob());
+                    const box = document.getElementById('dirAudio');
+                    box.innerHTML = `<audio controls autoplay src="${url}"></audio>
+                        <a class="ghost-btn" href="${url}" download="voz_dirigida.wav" style="text-decoration:none;">📥 Baixar (.wav)</a>
+                        <small style="color:var(--muted)">${r.headers.get('X-Duracao') || '?'} s · vozes: ${esc(r.headers.get('X-Vozes') || '')}</small>`;
+                    box.style.display = 'flex';
+                }
+                status.textContent = `✅ ${render ? 'Áudio pronto' : 'Direção pronta'} em ${Math.round((Date.now() - t0) / 1000)}s (${dirState.data.metodo})`;
+            } catch (e) {
+                status.textContent = '❌ ' + e.message;
+            } finally {
+                clearInterval(tick);
+                btn.disabled = false; btn.style.opacity = '1';
+            }
+        }
+
+        function renderDirection(data) {
+            const d = data.direcao;
+            const det = Object.entries(data.deteccoes).filter(([, v]) => v).map(([k]) => k);
+            const tags = [d.tipo === 'DIALOGO' ? '💬 Diálogo' : '📖 Texto', `${EMO_ICON[d.emocao_principal] || '💭'} ${d.emocao_principal}`,
+                ...d.emocao_secundaria, `⚡ energia ${d.energia}`, `🎩 formalidade ${d.formalidade}`, `⏩ ${Math.round(d.velocidade * 100)}%`,
+                `🔊 ${d.volume}`, ...det.map(x => '🔎 ' + x)];
+            const cast = d.personagens.length ? d.personagens.map(p => `
+                <div class="cast-row"><span><b>${esc(p.nome)}</b> <small>· ${esc(p.personalidade_vocal || '')}</small></span>
+                    <span>${EMO_ICON[p.emocao] || ''} ${esc(p.emocao || '')}</span><span>${esc(String(p.velocidade))}</span>
+                    ${p.nome === 'Narrador'
+                        ? `<span class="dir-tags"><span>🎙️ ${esc(p.voz || '')} · ${esc(p.tom_de_voz || '')}</span></span>`
+                        : `<select class="field" style="padding:5px 8px;font-size:12px;" title="Trocar a voz deste personagem" onchange="setCharVoice('${esc(p.nome).replace(/'/g, '')}', this.value)">
+                            ${Object.entries(DIR_VOICES).map(([k, v]) => `<option value="${k}" ${v === p.voz ? 'selected' : ''}>🎙️ ${v}</option>`).join('')}</select>`}</div>`).join('')
+                : `<div style="color:var(--muted)">Um narrador só. ${esc(d.estilo)}.</div>`;
+            document.getElementById('dirResult').innerHTML = `
+                <div class="dir-result">
+                    <div class="dir-card"><h4>Análise</h4><div class="dir-tags">${tags.map(t => `<span>${esc(t)}</span>`).join('')}</div>
+                        <p style="margin-top:10px;line-height:1.6;"><b>Estilo:</b> ${esc(d.estilo)}<br><b>Entonação:</b> ${esc(d.entonacao)}<br><b>Pausas:</b> ${esc(d.pausas)}</p></div>
+                    <div class="dir-card"><h4>${d.tipo === 'DIALOGO' ? 'Elenco de vozes' : 'Narração'}</h4>${cast}</div>
+                    <div class="dir-card" style="grid-column:1/-1"><h4>Roteiro otimizado <small style="text-transform:none;letter-spacing:0">(*ênfases* e pausas — o áudio fala o seu texto original)</small></h4>
+                        <div class="dir-script">${esc(d.roteiro_otimizado)}</div>
+                        <details style="margin-top:8px;"><summary style="cursor:pointer;color:var(--muted);font-size:12px;">JSON completo</summary><pre class="emo-detail" style="max-width:none;">${esc(JSON.stringify(d, null, 2))}</pre></details></div>
+                    <div class="dir-audio" id="dirAudio" style="display:none;"></div>
+                </div>`;
+        }
+
+        // ===== Memória de longo prazo e auto-melhoria (memory_service.py via /api/memory) =====
+        const chatTurns = [];   // memória da conversa atual (curto prazo)
+        const MEM_KINDS = { perfil: 'Perfil', preferencia: 'Preferência', projeto: 'Projeto', estilo: 'Estilo visual', instrucao: 'Instrução' };
+        const MEM_SOURCES = { auto: 'aprendida sozinha', manual: 'você ensinou', reflexao: 'aprendida com as suas avaliações', importado: 'importada' };
+        const memState = { list: [], filter: 'all', lastEvent: null, auto: true };
+
+        async function memFetch(path, body, method) {
+            const opts = body !== undefined ? { method: method || 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : { method: method || 'GET' };
+            const r = await fetch('/api/memory/' + path, opts);
+            const data = await r.json();
+            if (!r.ok) throw new Error(data.error || `erro ${r.status}`);
+            return data;
+        }
+
+        // antes de cada pergunta: o que a memória sabe de relevante (não trava o chat se o serviço estiver fora)
+        async function memoryContext(prompt) {
+            const ctrl = new AbortController();
+            const timer = setTimeout(() => ctrl.abort(), 8000);
+            try {
+                const r = await fetch('/api/memory/context', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: ctrl.signal,
+                    body: JSON.stringify({ prompt, channel: 'chat' }),
+                });
+                return await r.json();
+            } catch (e) {
+                return { block: '', used: [] };
+            } finally {
+                clearTimeout(timer);
+            }
+        }
+
+        // depois de cada resposta: a memória decide sozinha se há algo para aprender
+        async function memoryObserve(user, assistant) {
+            try {
+                const r = await memFetch('observe', { user, assistant, channel: 'chat' });
+                if (r.direct) toast('🧠 ' + r.direct.charAt(0).toUpperCase() + r.direct.slice(1));
+                if (r.queued) [30000, 75000].forEach(ms => setTimeout(pollMemoryEvents, ms));
+            } catch (e) { /* memória fora do ar: o chat segue normal */ }
+        }
+
+        function attachMemoryUi(div, prompt, response, used) {
+            const content = div.querySelector('.message-content');
+            const tools = document.createElement('div');
+            tools.className = 'msg-tools';
+            const memList = (used || []).map(u => '• ' + u.text).join('\n');
+            tools.innerHTML = `<button data-r="up" title="Boa resposta">👍</button><button data-r="down" title="Resposta ruim — diga como deveria ser">👎</button>
+                ${used && used.length ? `<button class="mem-chip" title="${esc(memList)}">🧠 lembrou de ${used.length}</button>` : ''}`;
+            content.appendChild(tools);
+            const [up, down] = tools.querySelectorAll('button');
+            up.onclick = () => { up.classList.add('chosen'); down.classList.remove('chosen'); tools.querySelector('.msg-fix')?.remove(); sendFeedback(prompt, response, 'up'); };
+            down.onclick = () => {
+                if (tools.querySelector('.msg-fix')) return;
+                down.classList.add('chosen'); up.classList.remove('chosen');
+                const fix = document.createElement('div');
+                fix.className = 'msg-fix';
+                fix.innerHTML = `<textarea class="field" placeholder="Como deveria ser? (opcional — é com isso que o ARMAGEDON aprende)"></textarea>
+                    <div style="display:flex;flex-direction:column;gap:6px;"><button class="btn-tone" style="padding:6px 12px;font-size:12px;">Enviar</button><button class="ghost-btn">Só 👎</button></div>`;
+                tools.appendChild(fix);
+                const [send, only] = fix.querySelectorAll('button');
+                const done = (corr) => { sendFeedback(prompt, response, 'down', corr); fix.remove(); };
+                send.onclick = () => done(fix.querySelector('textarea').value.trim());
+                only.onclick = () => done('');
+                fix.querySelector('textarea').focus();
+            };
+        }
+
+        async function sendFeedback(prompt, response, rating, correction) {
+            try {
+                const r = await memFetch('feedback', { prompt, response, rating, correction: correction || '', channel: 'chat' });
+                if (r.reflecting) {
+                    toast('🔁 Analisando as suas últimas avaliações para melhorar o jeito de responder...');
+                    [60000, 120000, 200000].forEach(ms => setTimeout(pollMemoryEvents, ms));
+                } else {
+                    toast(rating === 'up' ? '👍 Obrigado! Isso ajuda o ARMAGEDON a acertar mais.' : `👎 Anotado. ${correction ? 'Vou lembrar da sua correção.' : ''} (${r.pending}/${r.reflect_every} até a próxima revisão)`);
+                }
+            } catch (e) {
+                toast('❌ Memória fora do ar: ' + e.message);
+            }
+        }
+
+        // avisos "Aprendi: ..." (com Desfazer) quando a memória aprende algo em segundo plano
+        async function pollMemoryEvents() {
+            try {
+                if (memState.lastEvent === null) {
+                    memState.lastEvent = (await memFetch('events')).last;
+                    return;
+                }
+                const r = await memFetch(`events?since=${memState.lastEvent}`);
+                memState.lastEvent = r.last;
+                const learned = r.events.filter(e => (e.action === 'novo' || e.action === 'atualizado') && e.memory_id);
+                if (learned.length) {
+                    const e = learned[learned.length - 1];
+                    const more = learned.length > 1 ? ` (+${learned.length - 1})` : '';
+                    toast(`🧠 ${e.kind === 'instrucao' ? 'Aprendi a responder melhor' : 'Aprendi'}: ${e.text}${more}`, 'Desfazer', () => deleteMemory(e.memory_id, true), 12000);
+                }
+                if (r.events.length && document.getElementById('memPanel').style.display !== 'none') loadMemories();
+            } catch (e) { /* fora do ar */ }
+        }
+        setInterval(pollMemoryEvents, 45000);
+        pollMemoryEvents();
+
+        // ---------- análise emocional ----------
+        const EMO_ICON = { Alegria: '😊', Tristeza: '😢', Raiva: '😠', 'Frustração': '😤', Medo: '😨', Ansiedade: '😰', Vergonha: '😳',
+            Culpa: '😔', Orgulho: '🏆', Surpresa: '😮', 'Confusão': '😕', 'Solidão': '🫂', Entusiasmo: '🤩', 'Gratidão': '🙏',
+            'Esperança': '🌱', 'Decepção': '😞', Neutralidade: '😐' };
+        memState.emotionEnabled = true;
+        memState.emotionDeep = false;
+        memFetch('settings').then(st => { memState.emotionEnabled = st.emotion_enabled; memState.emotionDeep = st.emotion_deep; }).catch(() => {});
+
+        // análise rápida (regras, ~1 ms) para orientar a resposta; não trava o chat se a memória estiver fora
+        async function emotionAnalyze(text) {
+            if (!memState.emotionEnabled) return null;
+            const ctrl = new AbortController();
+            const timer = setTimeout(() => ctrl.abort(), 4000);
+            try {
+                const r = await fetch('/api/memory/emotion', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: ctrl.signal,
+                    body: JSON.stringify({ text, deep: false }),
+                });
+                return r.ok ? await r.json() : null;
+            } catch (e) {
+                return null;
+            } finally {
+                clearTimeout(timer);
+            }
+        }
+
+        function renderEmotionChip(chip, emo) {
+            const a = emo.analise;
+            const sec = a.emocoes_secundarias.length ? ` + ${a.emocoes_secundarias.join(', ')}` : '';
+            chip.className = `emo-chip risk-${a.risco_emocional === 'Alto' ? 'alto' : a.risco_emocional === 'Médio' ? 'medio' : 'baixo'}`;
+            chip.innerHTML = `${EMO_ICON[a.emocao_principal] || '💭'} ${esc(a.emocao_principal)}${esc(sec)} · ${a.intensidade}`;
+            chip.title = `${a.explicacao}\n\nClique para ver a análise completa (${emo.metodo}).`;
+            chip.onclick = () => {
+                const box = chip.nextElementSibling;
+                if (box && box.classList.contains('emo-detail')) { box.remove(); return; }
+                const d = document.createElement('pre');
+                d.className = 'emo-detail';
+                d.textContent = JSON.stringify(a, null, 2);
+                chip.after(d);
+            };
+        }
+
+        function attachEmotionChip(userDiv, emo, text) {
+            if (!emo || !emo.analise) return;
+            const a = emo.analise;
+            if (a.emocao_principal === 'Neutralidade' && a.risco_emocional === 'Baixo') return;   // nada a mostrar
+            const content = userDiv.querySelector('.message-content');
+            const chip = document.createElement('button');
+            renderEmotionChip(chip, emo);
+            content.appendChild(chip);
+            if (memState.emotionDeep) {   // análise profunda (IA) em segundo plano: só refina o chip
+                memFetch('emotion', { text, deep: true }).then(deep => renderEmotionChip(chip, deep)).catch(() => {});
+            }
+        }
+
+        function showSupportCard(afterDiv) {
+            const card = document.createElement('div');
+            card.className = 'message assistant support';
+            card.innerHTML = `<div class="message-content">
+                <b>💛 Você não está sozinho(a).</b> Se estiver pensando em se machucar ou em desistir de viver, converse agora com alguém:
+                <div class="support-actions">
+                    <a class="btn-tone" href="tel:188">📞 CVV — ligue 188</a>
+                    <a class="ghost-btn" href="https://cvv.org.br" target="_blank" rel="noopener">💬 Chat do CVV (cvv.org.br)</a>
+                    <a class="ghost-btn" href="tel:192">🚑 SAMU — 192</a>
+                </div>
+                <small>O CVV é gratuito, sigiloso e funciona 24 horas. Em perigo imediato, ligue 192.</small>
+            </div>`;
+            afterDiv.after(card);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        async function toggleEmotionSetting(key) {
+            const st = await memFetch('settings', { [key]: !(key === 'emotion_enabled' ? memState.emotionEnabled : memState.emotionDeep) });
+            memState.emotionEnabled = st.emotion_enabled;
+            memState.emotionDeep = st.emotion_deep;
+            document.getElementById('emoSwitch').classList.toggle('on', st.emotion_enabled);
+            document.getElementById('emoDeepSwitch').classList.toggle('on', st.emotion_deep);
+            toast(key === 'emotion_enabled'
+                ? (st.emotion_enabled ? '💭 Análise emocional ligada.' : '💭 Análise emocional desligada.')
+                : (st.emotion_deep ? '🔬 Análise profunda ligada: a IA refina cada análise em segundo plano.' : '🔬 Análise profunda desligada.'));
+        }
+
+        // ---------- painel ----------
+        function toggleMemPanel(open) {
+            const p = document.getElementById('memPanel');
+            const show = open === true || p.style.display === 'none';
+            p.style.display = show ? 'block' : 'none';
+            if (show) { loadMemories(); p.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
+        }
+
+        async function loadMemories() {
+            try {
+                const [m, fb, st] = await Promise.all([memFetch('memories'), memFetch('feedback/stats'), memFetch('settings')]);
+                memState.list = m.memories;
+                memState.auto = st.auto_learn;
+                document.getElementById('memCount').textContent = m.memories.filter(x => x.kind !== 'instrucao').length;
+                document.getElementById('memRules').textContent = m.memories.filter(x => x.kind === 'instrucao').length;
+                document.getElementById('memFeedback').textContent = `${fb.up} · ${fb.down}`;
+                document.getElementById('memAutoSwitch').classList.toggle('on', st.auto_learn);
+                memState.emotionEnabled = st.emotion_enabled;
+                memState.emotionDeep = st.emotion_deep;
+                document.getElementById('emoSwitch').classList.toggle('on', st.emotion_enabled);
+                document.getElementById('emoDeepSwitch').classList.toggle('on', st.emotion_deep);
+                document.getElementById('memEmbedHint').textContent = st.embeddings ? 'Busca por sentido ativa (bge-m3)' : '⚠️ Modelo de embeddings indisponível: usando palavras-chave';
+                const last = fb.last_reflect ? new Date(fb.last_reflect * 1000).toLocaleString('pt-BR') : 'nunca';
+                document.getElementById('memLearnHint').textContent =
+                    `Com 👍/👎 nas respostas, o ARMAGEDON escreve regras de como responder (tipo “Instrução”). ${fb.corrections} correções guardadas · ` +
+                    `${fb.pending}/${fb.reflect_every} avaliações até a próxima revisão automática · última revisão: ${last}${fb.busy ? ' · analisando agora...' : ''}`;
+                renderMemFilter();
+                renderMemories();
+            } catch (e) {
+                document.getElementById('memList').innerHTML = `<div class="hint">❌ Serviço de memória fora do ar (${esc(e.message)}). Ele inicia junto com o server.js.</div>`;
+            }
+        }
+
+        function renderMemFilter() {
+            const counts = {};
+            memState.list.forEach(m => counts[m.kind] = (counts[m.kind] || 0) + 1);
+            const opts = [['all', `Todas (${memState.list.length})`], ...Object.entries(MEM_KINDS).map(([k, v]) => [k, `${v} (${counts[k] || 0})`])];
+            document.getElementById('memKindFilter').innerHTML = opts.map(([k, v]) =>
+                `<button class="${memState.filter === k ? 'on' : ''}" onclick="memState.filter='${k}'; renderMemFilter(); renderMemories()">${v}</button>`).join('');
+        }
+
+        function renderMemories() {
+            const q = document.getElementById('memSearch').value.trim().toLowerCase();
+            const items = memState.list.filter(m => (memState.filter === 'all' || m.kind === memState.filter) && (!q || m.text.toLowerCase().includes(q)));
+            const box = document.getElementById('memList');
+            if (!items.length) {
+                box.innerHTML = `<div class="mont-empty">${memState.list.length ? 'Nada com esse filtro.' : 'Ainda não há memórias. Converse normalmente, avalie as respostas com 👍/👎 ou ensine algo acima.'}</div>`;
+                return;
+            }
+            box.innerHTML = items.map(m => `
+                <div class="mem-item${m.pinned ? ' pinned' : ''}">
+                    <span class="kind ${m.kind}">${esc(m.kind_name)}</span>
+                    <div><div class="txt" contenteditable="true" spellcheck="false" data-id="${m.id}" data-orig="${esc(m.text)}"
+                              onblur="saveMemoryText(this)" onkeydown="if (event.key === 'Enter') { event.preventDefault(); this.blur(); }">${esc(m.text)}</div>
+                        <span class="src">${MEM_SOURCES[m.source] || m.source} · usada ${m.uses} ${m.uses === 1 ? 'vez' : 'vezes'}${m.evidence > 1 ? ` · confirmada ${m.evidence}×` : ''}</span></div>
+                    <div class="acts">
+                        <button class="icon-btn${m.pinned ? ' on' : ''}" title="${m.pinned ? 'Desafixar' : 'Fixar: usar sempre, em toda conversa'}" onclick="togglePin(${m.id}, ${!m.pinned})">📌</button>
+                        <button class="icon-btn" title="Esquecer" onclick="deleteMemory(${m.id})">🗑</button>
+                    </div>
+                </div>`).join('');
+        }
+
+        async function addMemory() {
+            const input = document.getElementById('memNewText');
+            const text = input.value.trim();
+            if (!text) return;
+            try {
+                const r = await memFetch('memories', { kind: document.getElementById('memNewKind').value, text });
+                input.value = '';
+                toast(r.status === 'reforçado' ? '🧠 Eu já sabia disso — reforcei a memória.' : '🧠 Memória guardada.');
+                loadMemories();
+            } catch (e) { toast('❌ ' + e.message); }
+        }
+
+        async function saveMemoryText(el) {
+            const text = el.textContent.trim();
+            if (!text || text === el.dataset.orig) { el.textContent = el.dataset.orig; return; }
+            try {
+                await memFetch(`memories/${el.dataset.id}`, { text }, 'PATCH');
+                el.dataset.orig = text;
+                toast('✏️ Memória atualizada.');
+            } catch (e) { toast('❌ ' + e.message); }
+        }
+
+        async function togglePin(id, pinned) {
+            await memFetch(`memories/${id}`, { pinned }, 'PATCH');
+            loadMemories();
+        }
+
+        async function deleteMemory(id, silent) {
+            const m = memState.list.find(x => x.id === id);
+            try {
+                await memFetch(`memories/${id}`, undefined, 'DELETE');
+                if (!silent && m) toast('🗑 Memória esquecida.', 'Desfazer', async () => { await memFetch('memories', { kind: m.kind, text: m.text, pinned: m.pinned }); loadMemories(); });
+                else if (silent) toast('↩ Desfeito: não vou lembrar disso.');
+                if (document.getElementById('memPanel').style.display !== 'none') loadMemories();
+            } catch (e) { toast('❌ ' + e.message); }
+        }
+
+        async function toggleAutoLearn() {
+            const st = await memFetch('settings', { auto_learn: !memState.auto });
+            memState.auto = st.auto_learn;
+            document.getElementById('memAutoSwitch').classList.toggle('on', st.auto_learn);
+            toast(st.auto_learn ? '🧠 Aprendizado automático ligado.' : '⏸ Aprendizado automático desligado (só aprendo o que você ensinar).');
+        }
+
+        async function reflectNow() {
+            await memFetch('reflect', {});
+            toast('🔁 Analisando as suas avaliações... (cerca de 1 min)');
+            [45000, 90000, 150000].forEach(ms => setTimeout(() => { pollMemoryEvents(); loadMemories(); }, ms));
+        }
+
+        async function importMemories(file) {
+            const fd = new FormData();
+            fd.append('file', file);
+            try {
+                const r = await (await fetch('/api/memory/import', { method: 'POST', body: fd })).json();
+                if (r.error) throw new Error(r.error);
+                toast(`⬆ ${r.imported} memórias importadas.`);
+                loadMemories();
+            } catch (e) { toast('❌ ' + e.message); }
+        }
+
+        async function forgetAll() {
+            const typed = prompt('Isso apaga TODAS as memórias e avaliações, sem volta.\nDigite ESQUECER para confirmar:');
+            if (typed !== 'ESQUECER') return;
+            const r = await memFetch('memories/forget-all', { confirm: 'ESQUECER' });
+            toast(`🗑 ${r.deleted} memórias apagadas.`);
+            loadMemories();
+        }
+
+        // ===== Montagem de vídeos (vários vídeos → um) =====
+        const mont = { lib: [], timeline: [], music: null, job: null, poll: null, filter: 'all', dragFrom: null, startedAt: 0 };
+
+        function toggleMontGenerator(open) {
+            const p = document.getElementById('montGenerator');
+            const show = open === true || p.style.display === 'none';
+            p.style.display = show ? 'block' : 'none';
+            if (show) {
+                loadMontLibrary();
+                p.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }
+
+        function fmtDur(s) {
+            s = Math.max(0, Math.round(s));
+            return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+        }
+
+        async function loadMontLibrary() {
+            try {
+                const r = await (await fetch('/api/videos/library')).json();
+                mont.lib = r.items || [];
+                renderMontLibrary();
+                renderMontHistory(r.compilations || []);
+                renderTimeline();
+                loadTrash();
+            } catch (e) {
+                document.getElementById('montLib').innerHTML = '<div class="hint">❌ Não consegui carregar a biblioteca (o gerador está rodando?).</div>';
+            }
+        }
+
+        function setMontFilter(f) {
+            mont.filter = f;
+            document.querySelectorAll('#montFilter button').forEach(b => b.classList.toggle('on', b.dataset.f === f));
+            renderMontLibrary();
+        }
+
+        function renderMontLibrary() {
+            const inTl = new Set(mont.timeline.map(t => t.id));
+            const items = mont.lib.filter(i => mont.filter === 'all' || (mont.filter === 'seq') === i.id.startsWith('seq:'));
+            const box = document.getElementById('montLib');
+            if (!items.length) {
+                box.innerHTML = '<div class="hint">Nenhum vídeo ainda. Crie uma sequência com “🎙️ vídeo narrado” ou envie um vídeo do computador.</div>';
+                return;
+            }
+            box.classList.toggle('selecting', mont.selecting);
+            box.innerHTML = items.map(i => `
+                <button class="lib-card${inTl.has(i.id) ? ' in' : ''}${mont.selected.has(i.id) ? ' picked' : ''}" onclick="libCardClick('${i.id}')"
+                        title="${mont.selecting ? 'Selecionar' : 'Adicionar à linha do tempo'}">
+                    <div class="thumb" style="background-image:url('${i.thumb || ''}')">
+                        <span class="add">+</span><span class="tick">${mont.selected.has(i.id) ? '✓' : ''}</span>
+                        <span class="del" title="Excluir (vai para a lixeira)" onclick="event.stopPropagation(); deleteItems(['${i.id}'])">🗑</span>
+                        <span class="dur">${fmtDur(i.duration)}</span>
+                    </div>
+                    <div class="meta"><b>${esc(i.title)}</b><span>${esc(i.kind)} · ${esc(i.source)}</span></div>
+                </button>`).join('');
+            visibleLibIds = items.map(i => i.id);
+        }
+
+        // ---------- excluir (lixeira com "Desfazer") ----------
+        let visibleLibIds = [];
+        mont.selecting = false;
+        mont.selected = new Set();
+
+        function libCardClick(id) {
+            if (!mont.selecting) return addToTimeline(id);
+            mont.selected.has(id) ? mont.selected.delete(id) : mont.selected.add(id);
+            updateSelectBar();
+            renderMontLibrary();
+        }
+
+        function toggleSelectMode(force) {
+            mont.selecting = typeof force === 'boolean' ? force : !mont.selecting;
+            mont.selected.clear();
+            document.getElementById('montSelectBtn').textContent = mont.selecting ? '✕ Cancelar' : '☑ Selecionar';
+            document.getElementById('montSelectBar').style.display = mont.selecting ? 'flex' : 'none';
+            updateSelectBar();
+            renderMontLibrary();
+        }
+
+        function selectAllVisible() {
+            visibleLibIds.forEach(id => mont.selected.add(id));
+            updateSelectBar();
+            renderMontLibrary();
+        }
+
+        function updateSelectBar() {
+            const n = mont.selected.size;
+            document.getElementById('montSelectCount').textContent = `${n} selecionado${n === 1 ? '' : 's'}`;
+        }
+
+        function deleteSelected() {
+            if (!mont.selected.size) return;
+            deleteItems([...mont.selected]);
+            toggleSelectMode(false);
+        }
+
+        async function deleteItems(ids) {
+            try {
+                const r = await (await fetch('/api/videos/delete', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids }),
+                })).json();
+                if (r.error) throw new Error(r.error);
+                // o que foi excluído sai também da linha do tempo
+                mont.timeline = mont.timeline.filter(t => !ids.includes(t.id));
+                await loadMontLibrary();
+                toast(`${r.count === 1 ? '1 item movido' : r.count + ' itens movidos'} para a lixeira`, 'Desfazer', () => restoreTrash(r.trashed));
+            } catch (e) {
+                toast('❌ ' + e.message);
+            }
+        }
+
+        let toastTimer = null;
+        function toast(msg, actionLabel, action, ms = 8000) {
+            const el = document.getElementById('toast');
+            const btn = document.getElementById('toastAction');
+            document.getElementById('toastMsg').textContent = msg;
+            btn.style.display = actionLabel ? '' : 'none';
+            btn.textContent = actionLabel || '';
+            btn.onclick = () => { el.classList.remove('show'); if (action) action(); };
+            el.classList.add('show');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => el.classList.remove('show'), ms);
+        }
+
+        async function loadTrash() {
+            try {
+                const r = await (await fetch('/api/videos/trash')).json();
+                const items = r.items || [];
+                document.getElementById('montTrashSummary').textContent = `🗑 Lixeira (${items.length})`;
+                document.getElementById('montTrashHint').textContent = items.length
+                    ? `Itens excluídos ficam aqui por ${r.days} dias e depois são apagados de vez.` : 'A lixeira está vazia.';
+                document.getElementById('montTrash').innerHTML = items.map(t => `
+                    <div class="trash-item">
+                        <span class="thumb" style="background-image:url('${t.thumb || ''}')"></span>
+                        <span><b>${esc(t.title)}</b><small>${{ seq: 'Sequência narrada', mont: 'Montagem', gen: 'Gerador de vídeo', edit: 'Vídeo editado', up: 'Enviado do computador' }[t.kind] || ''} · apaga em ${t.days_left} dia${t.days_left === 1 ? '' : 's'}</small></span>
+                        <button class="ghost-btn" onclick="restoreTrash(['${t.id}'])">↩ Restaurar</button>
+                        <button class="ghost-btn" onclick="purgeTrash(['${t.id}'], '${esc(t.title).replace(/'/g, '')}')" title="Apagar de vez">✕</button>
+                    </div>`).join('');
+            } catch (e) { /* gerador fora do ar: a biblioteca já mostra o erro */ }
+        }
+
+        async function restoreTrash(ids) {
+            try {
+                const r = await (await fetch('/api/videos/restore', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids }),
+                })).json();
+                if (r.error) throw new Error(r.error);
+                await loadMontLibrary();
+                toast(`↩ ${r.count === 1 ? '1 item restaurado' : r.count + ' itens restaurados'}`);
+            } catch (e) {
+                toast('❌ ' + e.message);
+            }
+        }
+
+        async function purgeTrash(ids, title) {
+            if (!confirm(`Apagar “${title}” de vez? Isso não pode ser desfeito.`)) return;
+            await fetch('/api/videos/purge', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids }) });
+            loadTrash();
+        }
+
+        async function emptyTrash() {
+            if (!confirm('Esvaziar a lixeira? Tudo o que está nela será apagado de vez.')) return;
+            const r = await (await fetch('/api/videos/purge', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ all: true }) })).json();
+            toast(`Lixeira esvaziada (${r.count} item${r.count === 1 ? '' : 's'})`);
+            loadTrash();
+        }
+
+        function addToTimeline(id) {
+            const item = mont.lib.find(i => i.id === id);
+            if (!item) return;
+            mont.timeline.push({ id, title: item.title, duration: item.duration, thumb: item.thumb, trim_start: '', trim_end: '' });
+            if (!document.getElementById('montTitle').value && mont.timeline.length === 1) {
+                document.getElementById('montTitle').value = item.title;
+                syncIntroTitle();
+            }
+            renderTimeline();
+            renderMontLibrary();
+        }
+
+        function syncIntroTitle() {
+            const t = document.getElementById('montIntroTitle');
+            if (!t.dataset.edited) t.value = document.getElementById('montTitle').value;
+        }
+
+        function itemLength(t) {
+            const start = parseFloat(t.trim_start) || 0;
+            const end = parseFloat(t.trim_end) > 0 ? Math.min(parseFloat(t.trim_end), t.duration) : t.duration;
+            return Math.max(0.3, end - start);
+        }
+
+        function updateMontTotal() {
+            const n = mont.timeline.length;
+            const segs = mont.timeline.map(itemLength);
+            if (document.getElementById('montIntro').checked) segs.unshift(4);
+            if (document.getElementById('montOutro').checked) segs.push(3.5);
+            const x = document.getElementById('montTransition').value === 'corte' ? 0 : parseFloat(document.getElementById('montTransDur').value);
+            const total = segs.reduce((a, b) => a + b, 0) - Math.max(0, segs.length - 1) * x;
+            document.getElementById('montTotal').textContent = n ? `${n} vídeo${n > 1 ? 's' : ''} · duração final ≈ ${fmtDur(total)}` : '';
+            document.getElementById('montHint').textContent = n ? `Renderização estimada: ~${Math.max(1, Math.round(segs.reduce((a, b) => a + b, 0) * 1.3 / 60))} min (vídeos já usados antes saem do cache, mais rápido)` : '';
+        }
+
+        function renderTimeline() {
+            const box = document.getElementById('montTimeline');
+            if (!mont.timeline.length) {
+                box.innerHTML = '<div class="mont-empty">Clique nos vídeos da biblioteca para adicioná-los aqui.<br>Arraste ⋮⋮ para mudar a ordem. Cada vídeo vira um capítulo.</div>';
+                updateMontTotal();
+                return;
+            }
+            box.innerHTML = mont.timeline.map((t, i) => `
+                <div class="tl-item" draggable="true" data-i="${i}">
+                    <span class="grip" title="Arraste para reordenar">⋮⋮</span>
+                    <span class="idx">${i + 1}</span>
+                    <span class="thumb" style="background-image:url('${t.thumb || ''}')"></span>
+                    <div class="info">
+                        <input class="field name" type="text" value="${esc(t.title)}" title="Nome do capítulo" oninput="mont.timeline[${i}].title = this.value">
+                        <div class="trim">✂️ de <input class="field" type="number" min="0" step="0.5" placeholder="0" value="${t.trim_start}" oninput="mont.timeline[${i}].trim_start = this.value; updateMontTotal()">
+                            até <input class="field" type="number" min="0" step="0.5" placeholder="${t.duration}" value="${t.trim_end}" oninput="mont.timeline[${i}].trim_end = this.value; updateMontTotal()"> s
+                            <span>· ${fmtDur(t.duration)}</span></div>
+                    </div>
+                    <div class="acts">
+                        <button class="icon-btn" title="Subir" onclick="moveTl(${i}, -1)" ${i === 0 ? 'disabled' : ''}>▲</button>
+                        <button class="icon-btn" title="Descer" onclick="moveTl(${i}, 1)" ${i === mont.timeline.length - 1 ? 'disabled' : ''}>▼</button>
+                        <button class="icon-btn" title="Remover" onclick="removeTl(${i})"><svg class="i"><use href="#i-x"/></svg></button>
+                    </div>
+                </div>`).join('');
+            box.querySelectorAll('.tl-item').forEach(el => {
+                el.addEventListener('dragstart', e => { mont.dragFrom = +el.dataset.i; el.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; });
+                el.addEventListener('dragend', () => el.classList.remove('dragging'));
+                el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('drag-over'); });
+                el.addEventListener('dragleave', () => el.classList.remove('drag-over'));
+                el.addEventListener('drop', e => {
+                    e.preventDefault();
+                    const to = +el.dataset.i, from = mont.dragFrom;
+                    if (from === null || from === to) return renderTimeline();
+                    const [moved] = mont.timeline.splice(from, 1);
+                    mont.timeline.splice(to, 0, moved);
+                    mont.dragFrom = null;
+                    renderTimeline();
+                });
+            });
+            updateMontTotal();
+        }
+
+        function moveTl(i, d) {
+            const j = i + d;
+            if (j < 0 || j >= mont.timeline.length) return;
+            [mont.timeline[i], mont.timeline[j]] = [mont.timeline[j], mont.timeline[i]];
+            renderTimeline();
+        }
+        function removeTl(i) { mont.timeline.splice(i, 1); renderTimeline(); renderMontLibrary(); }
+
+        // envio com barra de progresso (vídeos podem ser grandes)
+        function uploadFile(url, file, onProgress) {
+            return new Promise((resolve, reject) => {
+                const xhr = new XMLHttpRequest();
+                const fd = new FormData();
+                fd.append('file', file);
+                xhr.open('POST', url);
+                xhr.upload.onprogress = e => { if (e.lengthComputable) onProgress(e.loaded / e.total); };
+                xhr.onload = () => {
+                    let data = {};
+                    try { data = JSON.parse(xhr.responseText); } catch (e) {}
+                    xhr.status === 200 ? resolve(data) : reject(new Error(data.error || `erro ${xhr.status}`));
+                };
+                xhr.onerror = () => reject(new Error('falha de conexão com o hub'));
+                xhr.send(fd);
+            });
+        }
+
+        async function uploadMontVideo(file) {
+            const st = document.getElementById('montUploadStatus');
+            try {
+                const r = await uploadFile('/api/videos/upload', file, f => st.textContent = `⬆ Enviando ${file.name}: ${Math.round(f * 100)}%`);
+                st.textContent = `✅ ${r.title} enviado (${fmtDur(r.duration)})`;
+                await loadMontLibrary();
+                addToTimeline(r.id);
+            } catch (e) {
+                st.textContent = '❌ ' + e.message;
+            }
+        }
+
+        async function uploadMontMusic(file) {
+            const name = document.getElementById('montMusicName');
+            try {
+                const r = await uploadFile('/api/videos/music', file, f => name.textContent = `enviando ${Math.round(f * 100)}%`);
+                mont.music = r.file;
+                name.textContent = `${r.title} (${fmtDur(r.duration)})`;
+                document.getElementById('montMusicClear').style.display = '';
+            } catch (e) {
+                name.textContent = '❌ ' + e.message;
+            }
+        }
+
+        function clearMontMusic() {
+            mont.music = null;
+            document.getElementById('montMusicName').textContent = 'nenhuma';
+            document.getElementById('montMusicClear').style.display = 'none';
+        }
+
+        function montProject() {
+            const v = id => document.getElementById(id).value.trim();
+            const title = v('montTitle') || 'Minha montagem';
+            return {
+                title,
+                items: mont.timeline.map(t => ({ id: t.id, title: t.title, trim_start: parseFloat(t.trim_start) || 0, trim_end: parseFloat(t.trim_end) || null })),
+                format: v('montFormat'), transition: v('montTransition'), transition_duration: parseFloat(v('montTransDur')),
+                intro: { enabled: document.getElementById('montIntro').checked, title: v('montIntroTitle') || title, subtitle: v('montIntroSub') },
+                outro: { enabled: document.getElementById('montOutro').checked, title: v('montOutroTitle'), subtitle: v('montOutroSub') },
+                music: mont.music ? { file: mont.music, volume: parseInt(v('montMusicVol')) / 100 } : null,
+                chapters: document.getElementById('montChapters').checked,
+            };
+        }
+
+        async function compileMontage() {
+            const status = document.getElementById('montStatus');
+            if (!mont.timeline.length) { status.textContent = '✍️ Adicione pelo menos um vídeo à linha do tempo.'; return; }
+            status.textContent = '';
+            try {
+                const r = await (await fetch('/api/videos/compile', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(montProject()),
+                })).json();
+                if (!r.job_id) throw new Error(r.error || 'erro ao iniciar');
+                followMontJob(r.job_id);
+            } catch (e) {
+                status.textContent = '❌ ' + e.message;
+            }
+        }
+
+        function followMontJob(jobId) {
+            mont.job = jobId;
+            mont.startedAt = Date.now();
+            document.getElementById('montProgress').style.display = 'block';
+            const btn = document.getElementById('montBtn');
+            btn.disabled = true; btn.style.opacity = '0.5';
+            clearInterval(mont.poll);
+            mont.poll = setInterval(async () => {
+                let st;
+                try { st = await (await fetch(`/api/image-status/${jobId}`)).json(); } catch (e) { return; }
+                document.getElementById('montProgressBar').style.width = (st.percent || 0) + '%';
+                document.getElementById('montProgressPercent').textContent = (st.percent || 0) + '%';
+                document.getElementById('montProgressLabel').textContent = st.message || '';
+                const s = Math.round((Date.now() - mont.startedAt) / 1000);
+                document.getElementById('montProgressTime').textContent = `⏱️ ${Math.floor(s / 60)}m${String(s % 60).padStart(2, '0')}s`;
+                if (!['concluído', 'erro', 'cancelado'].includes(st.status)) return;
+                clearInterval(mont.poll);
+                mont.job = null;
+                document.getElementById('montProgress').style.display = 'none';
+                btn.disabled = false; btn.style.opacity = '1';
+                const status = document.getElementById('montStatus');
+                if (st.status === 'concluído') {
+                    status.textContent = '✅ ' + st.message;
+                    renderMontResult(st.result);
+                    addMontMessage(st.result);
+                    loadMontLibrary();
+                } else {
+                    status.textContent = st.status === 'cancelado' ? '⏹️ Cancelado' : '❌ ' + (st.error || 'erro');
+                }
+            }, 1500);
+        }
+
+        function cancelMontage() { if (mont.job) cancelJob('imagem', mont.job); }
+
+        function renderMontResult(r) {
+            const mb = (r.bytes / 1048576).toFixed(1);
+            document.getElementById('montResult').innerHTML = `
+                <div class="mont-result">
+                    <video src="${r.video}" controls playsinline poster="${r.cover}"></video>
+                    <div style="flex:1;min-width:240px;font-size:12.5px;color:var(--muted);line-height:1.7;">
+                        <div><strong style="color:var(--text);font-size:15px;">${esc(r.title)}</strong></div>
+                        <div>${esc(r.format_name)} · ${r.size} · ${r.duration_text} · ${r.segments} trechos · ${mb} MB</div>
+                        <div class="actions" style="margin:10px 0;display:flex;gap:8px;flex-wrap:wrap;">
+                            <a class="btn-tone" href="${r.video}" download="${esc(r.title)}.mp4" style="text-decoration:none;padding:8px 16px;font-size:12.5px;">📥 Baixar vídeo (.mp4)</a>
+                            <a class="ghost-btn" href="${r.cover}" download="${esc(r.title)} - capa.jpg" style="text-decoration:none;">🖼️ Capa</a>
+                        </div>
+                        <div>Capítulos (cole na descrição do YouTube):</div>
+                        <pre id="montChaptersText">${esc(r.chapters_text)}</pre>
+                        <button class="ghost-btn" onclick="navigator.clipboard.writeText(document.getElementById('montChaptersText').textContent); this.textContent = '✅ Copiado'">📋 Copiar capítulos</button>
+                    </div>
+                </div>`;
+        }
+
+        function addMontMessage(r) {
+            addMessage('image', `🎬 ${r.title}\nMontagem · ${r.duration_text} · ${r.format_name}`);
+            const content = messagesDiv.lastElementChild.querySelector('.message-content');
+            const v = document.createElement('video');
+            v.className = 'gen-video';
+            v.src = r.video; v.controls = true; v.playsInline = true; v.poster = r.cover;
+            content.appendChild(v);
+        }
+
+        function renderMontHistory(list) {
+            const box = document.getElementById('montHistory');
+            document.getElementById('montHistoryBox').style.display = list.length ? '' : 'none';
+            mont.history = list;
+            box.innerHTML = list.map((c, i) => `
+                <div class="hist">
+                    <button onclick="openMontage(${i})" title="Abrir e reaproveitar a configuração" style="width:100%;">
+                        <img src="${c.cover}" alt="">
+                        <span><b style="color:var(--text)">${esc(c.title)}</b><br>${c.duration_text} · ${esc(c.format_name.split(' (')[0])}</span>
+                    </button>
+                    <button class="del" title="Excluir montagem (vai para a lixeira)" onclick="deleteItems(['mont:${c.id}'])">🗑</button>
+                </div>`).join('');
+        }
+
+        // reabre uma montagem: mostra o vídeo e recarrega o projeto na tela para ajustar e montar de novo
+        function openMontage(i) {
+            const c = mont.history[i], p = c.project || {};
+            renderMontResult(c);
+            mont.timeline = (p.items || []).map(it => {
+                const lib = mont.lib.find(l => l.id === it.id) || {};
+                return { id: it.id, title: it.title, duration: lib.duration || 0, thumb: lib.thumb, trim_start: it.trim_start || '', trim_end: it.trim_end || '' };
+            }).filter(t => t.duration);
+            const set = (id, val) => { document.getElementById(id).value = val ?? ''; };
+            set('montTitle', p.title); set('montFormat', p.format || 'auto'); set('montTransition', p.transition || 'fade');
+            set('montTransDur', String(p.transition_duration || 0.7));
+            document.getElementById('montIntro').checked = !!(p.intro && p.intro.enabled);
+            set('montIntroTitle', p.intro && p.intro.title); set('montIntroSub', p.intro && p.intro.subtitle);
+            document.getElementById('montOutro').checked = !!(p.outro && p.outro.enabled);
+            set('montOutroTitle', p.outro && p.outro.title); set('montOutroSub', p.outro && p.outro.subtitle);
+            if (p.music && p.music.file) {
+                mont.music = p.music.file;
+                document.getElementById('montMusicName').textContent = p.music.file;
+                document.getElementById('montMusicClear').style.display = '';
+                set('montMusicVol', Math.round((p.music.volume || 0.25) * 100));
+                document.getElementById('montMusicVolVal').textContent = Math.round((p.music.volume || 0.25) * 100) + '%';
+            } else {
+                clearMontMusic();
+            }
+            renderTimeline();
+            renderMontLibrary();
+        }
+
+        // atalho vindo das sequências: abre a montagem já com o vídeo na linha do tempo
+        async function addSeqToMontage(seqId) {
+            toggleMontGenerator(true);
+            await loadMontLibrary();
+            addToTimeline(`seq:${seqId}`);
+        }
+
+        document.getElementById('montIntroTitle').addEventListener('input', e => { e.target.dataset.edited = '1'; });
 
         // ===== Imagem base para modificar =====
         const edit = { dataUrl: null, source: null, tool: 'whole', drawing: false, painted: false, last: null };
@@ -2799,6 +4008,7 @@
             if (!message) return;
 
             addMessage('user', message);
+            const userDiv = messagesDiv.lastElementChild;
             messageInput.value = '';
             messageInput.style.height = 'auto';
 
@@ -2815,19 +4025,26 @@
             try {
                 abortController = new AbortController();
 
-                const systemPrompt = `Você é um assistente preciso e direto. Responda EXATAMENTE o que foi perguntado, sem desviar do tema. Seja conciso, claro e objetivo. Não agregue informações desnecessárias.`;
+                let systemPrompt = `Você é o ARMAGEDON, um assistente preciso e direto. Responda EXATAMENTE o que foi perguntado, sem desviar do tema. Seja claro e objetivo. Não agregue informações desnecessárias.`;
 
-                const fullPrompt = `[SYSTEM]\n${systemPrompt}\n\n[USER]\n${message}`;
+                // memória de longo prazo (só o que é relevante) + análise emocional da mensagem, em paralelo
+                const [memory, emotion] = await Promise.all([memoryContext(message), emotionAnalyze(message)]);
+                if (memory.block) systemPrompt += '\n\n' + memory.block;
+                if (emotion) {
+                    if (emotion.orientacao) systemPrompt += '\n\n' + emotion.orientacao;
+                    attachEmotionChip(userDiv, emotion, message);
+                    if (emotion.analise.risco_emocional === 'Alto') showSupportCard(userDiv);
+                }
 
-                const response = await fetch('http://localhost:11434/api/generate', {
+                const response = await fetch('http://localhost:11434/api/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     signal: abortController.signal,
                     body: JSON.stringify({
                         model: modelSelect.value,
-                        prompt: fullPrompt,
+                        messages: [{ role: 'system', content: systemPrompt }, ...chatTurns.slice(-12), { role: 'user', content: message }],
                         stream: true,
-                        temperature: 0.5
+                        options: { temperature: 0.5 },
                     })
                 });
 
@@ -2850,21 +4067,22 @@
                 assistantDiv.appendChild(contentDiv);
                 messagesDiv.appendChild(assistantDiv);
 
+                // cada linha é um JSON; um pedaço da rede pode terminar no meio de uma linha, então guarda o resto
+                const decoder = new TextDecoder();
+                let pending = '';
                 while (true) {
                     const {done, value} = await reader.read();
                     if (done) break;
-
-                    const text = new TextDecoder().decode(value);
-                    const lines = text.split('\n');
-
+                    pending += decoder.decode(value, { stream: true });
+                    const lines = pending.split('\n');
+                    pending = lines.pop();
                     for (const line of lines) {
-                        if (line) {
-                            const json = JSON.parse(line);
-                            if (json.response) {
-                                fullResponse += json.response;
-                                contentDiv.textContent = fullResponse;
-                                messagesDiv.scrollTop = messagesDiv.scrollHeight;
-                            }
+                        if (!line.trim()) continue;
+                        const piece = JSON.parse(line).message?.content;
+                        if (piece) {
+                            fullResponse += piece;
+                            contentDiv.textContent = fullResponse;
+                            messagesDiv.scrollTop = messagesDiv.scrollHeight;
                         }
                     }
                 }
@@ -2872,6 +4090,10 @@
                 stopBtn.style.display = 'none';
                 sendBtn.style.display = '';
                 statusDiv.textContent = '✅ Resposta recebida • Pronto para continuar';
+
+                chatTurns.push({ role: 'user', content: message }, { role: 'assistant', content: fullResponse });
+                attachMemoryUi(assistantDiv, message, fullResponse, memory.used);
+                memoryObserve(message, fullResponse);
 
             } catch (error) {
                 if (error.name === 'AbortError') {
@@ -2907,6 +4129,7 @@
         function newChat() {
             messagesDiv.innerHTML = '';
             messageInput.value = '';
+            chatTurns.length = 0;
             addMessage('assistant', 'Olá! Sou o ARMAGEDON, seu assistente de IA pessoal. Como posso ajudá-lo hoje?');
             goHome();
             messageInput.focus();
@@ -2915,6 +4138,7 @@
         function clearChat() {
             messagesDiv.innerHTML = '';
             messageInput.value = '';
+            chatTurns.length = 0;
         }
 
         window.addEventListener('load', function() {

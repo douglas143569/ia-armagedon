@@ -26,6 +26,8 @@ import sys
 import threading
 import time
 import unicodedata
+
+import voice_director   # adapta o jeito de falar à emoção de quem ouve
 import urllib.parse
 import webbrowser
 from collections import deque
@@ -253,6 +255,36 @@ def log(icon: str, msg: str):
     print(f"[{datetime.now():%H:%M:%S}] {icon} {msg}", flush=True)
 
 
+MEMORY_URL = "http://127.0.0.1:5004"   # memory_service.py (iniciado pelo server.js)
+
+
+def memory_context(question):
+    """O que a memória de longo prazo sabe de relevante para esta pergunta ('' se o serviço estiver fora)."""
+    try:
+        return requests.post(f"{MEMORY_URL}/context", json={"prompt": question, "channel": "voz"}, timeout=6).json().get("block", "")
+    except Exception:
+        return ""
+
+
+def memory_emotion(question):
+    """Análise emocional rápida da fala ({} se o serviço estiver fora)."""
+    try:
+        return requests.post(f"{MEMORY_URL}/emotion", json={"text": question, "deep": False}, timeout=4).json()
+    except Exception:
+        return {}
+
+
+def memory_observe(question, answer):
+    """Manda a troca para a memória aprender (em segundo plano no serviço)."""
+    try:
+        r = requests.post(f"{MEMORY_URL}/observe", json={"user": question, "assistant": answer, "channel": "voz"}, timeout=10)
+        direct = r.json().get("direct")
+        if direct:
+            log("🧠", direct)
+    except Exception:
+        pass
+
+
 def press_media_key(vk: int, times: int = 1):
     user32 = ctypes.windll.user32
     for _ in range(times):
@@ -278,6 +310,7 @@ class Armagedon:
         self.listen_until = 0.0          # janela em que não precisa dizer "Armagedon"
         self.history = deque(maxlen=HISTORY_TURNS * 2)
         self.timers = []
+        self.listener_style = None   # jeito de falar adaptado à emoção de quem ouve (vale durante a resposta)
         self.running = True
 
         # Estado exposto para a página
@@ -309,12 +342,22 @@ class Armagedon:
 
     # ---------------------------- fala ----------------------------
 
-    def _synth(self, text):
+    def _synth(self, text, style=None):
+        """style (voice_director.adapt_for_listener): fala mais lenta/suave, calma ou animada conforme quem ouve."""
         kwargs = {"syn_config": self.syn_config} if self.syn_config else {}
+        if style and self.syn_config is not None:
+            from piper import SynthesisConfig
+            kwargs["syn_config"] = SynthesisConfig(length_scale=VOICE_LENGTH_SCALE / (1 + style["rate"] / 100))
         chunks = list(self.voice.synthesize(text, **kwargs))
         if not chunks:
             return None, 22050
-        return np.concatenate([c.audio_float_array for c in chunks]), chunks[0].sample_rate
+        sr = chunks[0].sample_rate
+        audio = np.concatenate([c.audio_float_array for c in chunks])
+        if style:
+            audio = np.clip(audio * 10 ** (style["volume"] / 40), -1, 1)
+            extra = max(0, style["pause"] - 320)   # pausas maiores (ex.: com quem está ansioso)
+            audio = np.concatenate([audio, np.zeros(int(sr * extra / 1000), dtype=audio.dtype)])
+        return audio, sr
 
     @staticmethod
     def _tone(freqs, dur=0.09, sr=22050):
@@ -334,13 +377,13 @@ class Armagedon:
     def new_turn(self):
         self.turn += 1
 
-    def say(self, text):
+    def say(self, text, style=None):
         text = clean_for_speech(text)
         if text:
             log("🗣️ ", text)
             self.thinking = False
             self.emit("assistant", text)
-            self.tts_q.put(("text", text, self.gen))
+            self.tts_q.put(("text", (text, style or self.listener_style), self.gen))
 
     def beep(self, kind="wake"):
         freqs = {"wake": [880, 1320], "ok": [1320], "alarm": [1000, 0, 1000, 0, 1000]}[kind]
@@ -361,8 +404,9 @@ class Armagedon:
                 continue
             try:
                 if kind == "text":
-                    audio, sr = self._synth(value)
-                    self.current_spoken = value
+                    text, style = value
+                    audio, sr = self._synth(text, style)
+                    self.current_spoken = text
                 else:
                     audio, sr = self._tone(value), 22050
                 if audio is None or gen != self.gen:
@@ -738,6 +782,18 @@ class Armagedon:
     def ask_llm(self, question):
         gen = self.gen
         system = SYSTEM_PROMPT.format(agora=datetime.now().strftime("%A, %d/%m/%Y %H:%M"))
+        memory = memory_context(question)
+        if memory:
+            system += "\n\n" + memory
+        emotion = memory_emotion(question)
+        if emotion.get("orientacao"):
+            system += "\n\n" + emotion["orientacao"]
+        high_risk = emotion.get("analise", {}).get("risco_emocional") == "Alto"
+        # jeito de falar conforme a emoção de quem ouve (triste → suave e lento; ansioso → calmo, pausas maiores...)
+        style = voice_director.adapt_for_listener(emotion.get("analise"))
+        self.listener_style = style if style["tom"] != "natural" else None
+        if self.listener_style:
+            log("🎭", f"Falando com {style['tom']}")
         messages = [{"role": "system", "content": system}, *self.history, {"role": "user", "content": question}]
         log("🧠", "Pensando...")
         self.thinking = True
@@ -774,6 +830,11 @@ class Armagedon:
         self.thinking = False
         self.history.append({"role": "user", "content": question})
         self.history.append({"role": "assistant", "content": full})
+        self.listener_style = None   # as frases desta resposta já levaram o estilo; o próximo turno começa neutro
+        threading.Thread(target=memory_observe, args=(question, full), daemon=True).start()
+        if high_risk and "188" not in full:   # garantia: o contato de apoio é sempre falado, mesmo se a IA esquecer
+            self.say("Se você estiver pensando em se machucar, ligue agora para o CVV, no um oito oito. "
+                     "É de graça, sigiloso e funciona vinte e quatro horas. Em perigo imediato, ligue um nove dois.")
         self.end_turn()
 
     # ---------------------------- API para a página ----------------------------

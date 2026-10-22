@@ -7,6 +7,7 @@ fica parado por cima, e os quadros se ligam com transição suave. Resultado: vi
 """
 
 import asyncio
+import json
 import re
 import shutil
 import subprocess
@@ -66,11 +67,13 @@ def _decode_to_array(path):
     return np.frombuffer(r.stdout, dtype=np.float32).copy()
 
 
-def _edge(text, voice, rate):
+def _edge(text, voice, rate, pitch=0, volume=0):
+    """Voz online com prosódia: velocidade (%), altura (Hz) e volume (%)."""
     import edge_tts
     with tempfile.TemporaryDirectory() as tmp:
         out = Path(tmp) / "voz.mp3"
-        asyncio.run(edge_tts.Communicate(text, voice, rate=f"{rate:+d}%").save(str(out)))
+        asyncio.run(edge_tts.Communicate(text, voice, rate=f"{int(rate):+d}%", pitch=f"{int(pitch):+d}Hz",
+                                         volume=f"{int(volume):+d}%").save(str(out)))
         return _decode_to_array(out)
 
 
@@ -103,6 +106,56 @@ def tts(text, voice="francisca", rate=0):
         except Exception as e:
             print(f"⚠️  Voz online indisponível ({e}); usando a voz offline.")
     return _piper_tts(text, rate), "faber"
+
+
+DEEP_NOTE = ("\n\nObservação: este roteiro é de um vídeo inteiro. No campo roteiro_otimizado escreva só um resumo curto "
+             "(as falas originais já estão guardadas); capriche nos personagens, na velocidade e no tom de cada um.")
+
+
+def deep_llm():
+    """Função que chama a IA para a direção profunda (o mesmo modelo do planejamento), ou None sem Ollama."""
+    installed = sequences.ollama_models()
+    model = next((m for m in sequences.PLAN_MODELS if m in installed), None)
+    if not model:
+        return None
+    return lambda system, user: sequences.ask_json(model, system, user + DEEP_NOTE, 1200)
+
+
+def _plain(text):
+    """Para comparar falas: sem rubricas, aspas, pontuação e acentos."""
+    import voice_director as vd
+    text = re.sub(r"\([^)]*\)|\[[^\]]*\]", " ", text or "")
+    return re.sub(r"[^a-z0-9 ]", "", re.sub(r"\s+", " ", vd._norm(text))).strip()
+
+
+def frame_script(kind, frame, narration_script=None):
+    """Roteiro falado de um quadro, no formato do diretor de voz ("Nome: fala" / "Narrador: texto").
+    narration_script: a narração do quadro já com o personagem de cada pedaço (ver voice_director.distribute_dialogue)."""
+    import voice_director as vd
+    raw = (frame.get("narration") or "").strip()
+    narration = "\n".join(re.sub(r"[ \t]+", " ", l).strip() for l in raw.splitlines() if l.strip())   # mantém as linhas
+    text = re.sub(r"\s+", " ", (frame.get("text") or "")).strip()
+    if kind == "movimento":
+        return narration_script or (f"Narrador: {narration}" if narration else "")
+    if narration_script is not None:
+        lines = [narration_script] if narration_script else []
+    elif narration and vd.find_speaker_tags(narration):
+        lines = [narration]                       # a narração já é um diálogo ("Nome: fala")
+    else:
+        lines = [f"Narrador: {narration}"] if narration else []
+    is_line = bool(text and vd.find_speaker_tags(text) and vd.find_speaker_tags(text)[0][0] == 0)   # "Nome: fala"
+    if narration_script is not None and kind == "hq":
+        return "\n".join(lines)   # o roteiro inteiro já está na narração: o balão é só a parte visual (não repete)
+    if text and (kind == "hq" or is_line):
+        # fala ("Dom Pedro II: …") é dita pelo próprio personagem, em qualquer tipo de sequência;
+        # se a narração já disse essa mesma fala, não repete
+        speech = re.sub(r"^\s*[^:]{1,40}:\s*", "", text) if is_line else text
+        already_said = _plain(speech) and _plain(speech) in _plain("\n".join(lines))
+        if not already_said:
+            lines.append(text if is_line else f"Narrador: {text}")
+    elif not lines and text:
+        lines.append(f"Narrador: {text}")
+    return "\n".join(lines)
 
 
 def speech_text(kind, frame):
@@ -166,16 +219,48 @@ def build_video(seq_dir, ctx, voice="francisca", rate=0, progress=lambda f, m: N
     if any(r is None for r in raws):
         raise RuntimeError("A sequência ainda não tem todos os quadros.")
 
-    # 1) narração de cada quadro
-    voices_used, speech = set(), []
-    for i, f in enumerate(frames):
+    # 1) narração dirigida de cada quadro: emoção, ritmo e pausas por trecho; nas HQs, uma voz por personagem
+    import voice_director as vd
+    # roteiro de diálogo repartido entre os quadros (às vezes no meio de uma fala): remonta quem fala cada pedaço
+    distributed = vd.distribute_dialogue([f.get("narration") or "" for f in frames])
+    scripts = [frame_script(kind, f, distributed[i] if distributed else None) for i, f in enumerate(frames)]
+    all_segs = [seg for s in scripts for seg in vd.segment(s)]
+    names = [who for who, _ in all_segs if who != vd.NARRATOR]
+    # o mesmo elenco na sequência inteira; a ficha dos personagens e as falas ajudam a acertar o gênero da voz
+    cast = vd.cast_voices(list(dict.fromkeys(names)), voice, vd.lines_by_speaker(all_segs),
+                          ctx["plan"].get("characters", ""), ctx.get("voice_overrides"))
+    ctx["cast"] = {k: VOICES.get(c["voice"], {}).get("name", c["voice"]) for k, c in cast.items()}
+
+    # análise profunda (opcional): UMA direção da IA para o roteiro inteiro, repartida entre os quadros —
+    # mais rápido que quadro a quadro e mantém cada personagem coerente do começo ao fim
+    frame_segs = [None] * n
+    ctx["voice_direction"] = "regras"
+    if ctx.get("voice_deep") and any(scripts):
+        progress(0.02, "🔬 Dirigindo as vozes com IA (análise profunda, ~2–4 min)...")
+        llm = deep_llm()
+        if llm:
+            direction, segs_all, _, method = vd.direct_deep("\n".join(s for s in scripts if s), llm, voice, rate, cast=cast)
+            k = 0
+            for i, s in enumerate(scripts):
+                count = len(vd.segment(s)) if s else 0
+                frame_segs[i] = segs_all[k:k + count] or None
+                k += count
+            ctx["voice_direction"] = method
+            (seq_dir / "direcao_voz.json").write_text(json.dumps(direction, ensure_ascii=False, indent=2), encoding="utf-8")
+        else:
+            ctx["voice_direction"] = "regras (Ollama indisponível para a análise profunda)"
         if cancelled():
             raise InterruptedError()
-        text = speech_text(kind, f)
-        progress(0.02 + 0.28 * i / n, f"Gravando a narração {i + 1}/{n}...")
-        if text:
-            audio, used = tts(text, voice, rate)
-            voices_used.add(used)
+
+    voices_used, speech = set(), []
+    for i, script in enumerate(scripts):
+        if cancelled():
+            raise InterruptedError()
+        progress(0.1 + 0.2 * i / n, f"Gravando a narração {i + 1}/{n}...")
+        if script:
+            segs = frame_segs[i] or vd.direct(script, voice, rate, cast)[1]
+            audio, used = vd.render(segs)
+            voices_used |= used
             speech.append(audio)
         else:
             speech.append(None)
@@ -247,4 +332,6 @@ def build_video(seq_dir, ctx, voice="francisca", rate=0, progress=lambda f, m: N
         run_ffmpeg([*args, "-filter_complex", chain, "-map", "[v]", "-map", f"{n}:a",
                     "-c:v", "libx264", "-preset", "veryfast", "-crf", "20", "-pix_fmt", "yuv420p",
                     "-c:a", "aac", "-b:a", "160k", "-t", f"{total:.3f}", "-movflags", "+faststart", str(out)], "vídeo final")
-    return out.name, ", ".join(sorted(VOICES[v]["name"] for v in voices_used)) or "sem narração", round(total, 1)
+    import voice_director as vd
+    names = sorted(vd.VOICES.get(v, {}).get("name", v) for v in voices_used)
+    return out.name, ", ".join(names) or "sem narração", round(total, 1)

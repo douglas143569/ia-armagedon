@@ -42,7 +42,86 @@ function readBody(req) {
     });
 }
 
+// Repasse em fluxo para um serviço local (corpo e resposta não passam inteiros pela memória; Range incluído)
+function streamProxy(req, res, port, targetPath, offlineMsg) {
+    const headers = {};
+    for (const h of ['content-type', 'content-length', 'range']) {
+        if (req.headers[h]) headers[h] = req.headers[h];
+    }
+    const pReq = http.request({ host: '127.0.0.1', port, path: targetPath, method: req.method, headers, timeout: 10 * 60 * 1000 }, (pRes) => {
+        const out = { 'Cache-Control': 'no-cache' };
+        for (const h of ['content-type', 'content-length', 'content-range', 'accept-ranges', 'content-disposition', 'x-vozes', 'x-duracao']) {
+            if (pRes.headers[h]) out[h] = pRes.headers[h];
+        }
+        res.writeHead(pRes.statusCode, out);
+        pRes.pipe(res);
+    });
+    pReq.on('error', () => sendJson(res, 503, { error: offlineMsg }));
+    pReq.on('timeout', () => { pReq.destroy(); sendJson(res, 504, { error: 'timeout' }); });
+    res.on('close', () => { if (!res.writableEnded) pReq.destroy(); });
+    req.pipe(pReq);
+}
+
+// ===== Serviço de memória: o hub inicia e mantém no ar (a página e o assistente de voz dependem dele) =====
+const MEMORY_PORT = 5004;
+let memoryProc = null;
+let shuttingDown = false;
+
+function startMemoryService() {
+    if (shuttingDown) return;
+    const probe = http.get({ host: '127.0.0.1', port: MEMORY_PORT, path: '/health', timeout: 3000 }, (r) => {
+        r.resume();
+        console.log('[memória] já estava rodando');   // outra instância (ex.: aberta à mão)
+    });
+    probe.on('timeout', () => probe.destroy());
+    probe.on('error', () => {
+        memoryProc = spawn(PYTHON, ['-u', path.join(__dirname, 'memory_service.py')], {
+            cwd: __dirname, env: { ...process.env, PYTHONIOENCODING: 'utf-8' }, windowsHide: true,
+        });
+        memoryProc.stdout.on('data', d => process.stdout.write('[memória] ' + d));
+        memoryProc.stderr.on('data', d => {
+            const text = d.toString();
+            if (!/WARNING: This is a development server|Press CTRL\+C|Running on/.test(text)) process.stderr.write('[memória] ' + text);
+        });
+        memoryProc.on('exit', (code) => {
+            memoryProc = null;
+            if (!shuttingDown) {
+                console.log(`[memória] encerrou (código ${code}); reiniciando em 5 s...`);
+                setTimeout(startMemoryService, 5000);
+            }
+        });
+    });
+}
+
+// ===== Ollama: se fechar (ex.: depois de se atualizar sozinho), o hub abre de novo =====
+const OLLAMA_APP = path.join(process.env.LOCALAPPDATA || '', 'Programs', 'Ollama', 'ollama app.exe');
+let ollamaLastStart = 0;
+
+function watchOllama() {
+    const probe = http.get({ host: '127.0.0.1', port: 11434, path: '/api/version', timeout: 4000 }, (r) => r.resume());
+    probe.on('timeout', () => probe.destroy());
+    probe.on('error', () => {
+        if (Date.now() - ollamaLastStart < 120000) return;   // já mandou abrir: espera subir
+        ollamaLastStart = Date.now();
+        const app = fs.existsSync(OLLAMA_APP);
+        console.log(`[ollama] fechado — ${app ? 'abrindo o aplicativo do Ollama' : 'iniciando "ollama serve"'} de novo`);
+        try {
+            const child = app
+                ? spawn(OLLAMA_APP, [], { detached: true, stdio: 'ignore' })
+                : spawn('ollama', ['serve'], { detached: true, stdio: 'ignore', windowsHide: true });
+            child.on('error', (e) => console.error('[ollama] não consegui abrir:', e.message));
+            child.unref();
+        } catch (e) {
+            console.error('[ollama] não consegui abrir:', e.message);
+        }
+    });
+}
+
 function sendJson(res, code, obj) {
+    if (res.headersSent) {   // a resposta já tinha começado (ex.: navegador cancelou um vídeo): só encerra
+        res.destroy();
+        return;
+    }
     res.writeHead(code, { 'Content-Type': 'application/json; charset=utf-8' });
     res.end(JSON.stringify(obj));
 }
@@ -124,6 +203,25 @@ const server = http.createServer(async (req, res) => {
         return;
     }
 
+    // Montagem de vídeos → gerador (porta 5000). Repasse em fluxo: uploads grandes não passam pela memória
+    // e o player de vídeo pode pedir trechos (Range)
+    if (req.url.startsWith('/api/videos/')) {
+        streamProxy(req, res, 5000, '/videos/' + req.url.slice('/api/videos/'.length), 'Gerador de imagens/vídeos offline');
+        return;
+    }
+
+    // Direção de voz (texto/diálogo → áudio com emoção e uma voz por personagem) → gerador (porta 5000)
+    if (req.url.startsWith('/api/direction/')) {
+        streamProxy(req, res, 5000, '/direction/' + req.url.slice('/api/direction/'.length), 'Gerador offline');
+        return;
+    }
+
+    // Memória de longo prazo → memory_service.py (porta 5004)
+    if (req.url.startsWith('/api/memory/')) {
+        streamProxy(req, res, MEMORY_PORT, '/' + req.url.slice('/api/memory/'.length), 'Serviço de memória offline');
+        return;
+    }
+
     // Sequências (carrossel, HQ, movimento, evolução, storyboard) → gerador de imagens
     if (req.url.startsWith('/api/sequence/')) {
         const target = '/sequence/' + req.url.slice('/api/sequence/'.length);
@@ -153,13 +251,20 @@ const server = http.createServer(async (req, res) => {
         const target = req.url === '/api/image-models'
             ? '/models'
             : '/image/' + filePath.split('/').map(p => encodeURIComponent(decodeURIComponent(p))).join('/');
-        const fReq = http.request({ host: '127.0.0.1', port: 5000, path: target, method: 'GET', timeout: 30000 }, (fRes) => {
-            res.writeHead(fRes.statusCode, {
+        // repassa pedidos parciais (Range): o player de vídeo precisa disso para avançar/voltar
+        const headers = req.headers.range ? { Range: req.headers.range } : {};
+        const fReq = http.request({ host: '127.0.0.1', port: 5000, path: target, method: 'GET', timeout: 30000, headers }, (fRes) => {
+            const out = {
                 'Content-Type': fRes.headers['content-type'] || 'application/octet-stream',
                 'Cache-Control': 'no-cache',
-            });
+            };
+            for (const h of ['content-length', 'content-range', 'accept-ranges']) {
+                if (fRes.headers[h]) out[h] = fRes.headers[h];
+            }
+            res.writeHead(fRes.statusCode, out);
             fRes.pipe(res);
         });
+        req.on('close', () => fReq.destroy());   // navegador desistiu: cancela o repasse também
         fReq.on('error', () => sendJson(res, 503, { error: 'Gerador de imagens offline' }));
         fReq.on('timeout', () => { fReq.destroy(); sendJson(res, 504, { error: 'timeout' }); });
         fReq.end();
@@ -621,6 +726,9 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(PORT, '127.0.0.1', () => {
+    startMemoryService();
+    watchOllama();
+    setInterval(watchOllama, 30000);
     console.log(`
 ╔════════════════════════════════════════╗
 ║  ARMAGEDON HUB - Servidor Web          ║
@@ -634,9 +742,15 @@ server.listen(PORT, '127.0.0.1', () => {
 
 // Ao fechar o hub, encerra o assistente de voz que ele iniciou
 function shutdownVoice() {
+    shuttingDown = true;
     if (voiceProc && voiceProc.exitCode === null) voiceProc.kill();
+    if (memoryProc && memoryProc.exitCode === null) memoryProc.kill();
 }
 process.on('exit', shutdownVoice);
+
+// Um erro num repasse não pode derrubar o hub inteiro (a página toda depende dele)
+process.on('uncaughtException', (err) => console.error('⚠️  Erro inesperado (hub continua no ar):', err));
+process.on('unhandledRejection', (err) => console.error('⚠️  Promessa rejeitada (hub continua no ar):', err));
 process.on('SIGINT', () => { shutdownVoice(); process.exit(0); });
 
 server.on('error', (err) => {

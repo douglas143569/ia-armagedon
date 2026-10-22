@@ -53,6 +53,7 @@ from PIL.PngImagePlugin import PngInfo
 
 import sequences        # carrosséis, HQs, movimento, evolução e storyboards
 import narrated_video   # sequência + narração → vídeo
+import video_compiler   # vários vídeos → um vídeo final (montagem)
 
 # ============================ CONFIGURAÇÃO ============================
 
@@ -357,6 +358,15 @@ def describe_image(img):
         return None
 
 
+def visual_preferences(text):
+    """Preferências visuais guardadas na memória de longo prazo ('' se não houver ou o serviço estiver fora)."""
+    try:
+        return requests.post("http://127.0.0.1:5004/context", json={"prompt": text, "channel": "imagem"},
+                             timeout=6).json().get("block", "")
+    except Exception:
+        return ""
+
+
 def enhance_prompt(text, edit_mode=None, desc=None):
     """Português → prompt detalhado em inglês + categoria. Retorna (prompt, categoria) ou (None, None).
     edit_mode: None (imagem nova), "img2img" ou "inpaint". desc: o que a imagem atual mostra."""
@@ -368,11 +378,13 @@ def enhance_prompt(text, edit_mode=None, desc=None):
     else:
         system = (EDIT_SYSTEM_AREA if edit_mode == "inpaint" else EDIT_SYSTEM_WHOLE).replace(
             "{desc}", desc or "unknown (keep the subjects as they are)")
+    prefs = visual_preferences(text)
     try:
         r = requests.post(f"{OLLAMA_URL}/api/chat", timeout=180, json={
             "model": model, "stream": False, "format": "json", "keep_alive": "10m",
             "options": {"temperature": 0.4, "num_predict": 110},
-            "messages": [{"role": "system", "content": system}, {"role": "user", "content": text}],
+            "messages": [{"role": "system", "content": system},
+                         {"role": "user", "content": text + (f"\n\n{prefs}" if prefs else "")}],
         })
         content = r.json()["message"]["content"]
         try:
@@ -615,6 +627,8 @@ def worker():
                 sequences.run_continue(job)
             elif kind == "video":
                 sequences.run_video(job)
+            elif kind == "compile":
+                run_compile(job)
             else:
                 run_job(job)
         except Cancelled:
@@ -628,6 +642,7 @@ def worker():
 
 
 app = Flask(__name__)
+app.json.sort_keys = False   # mantém a ordem dos campos (ex.: o formato combinado da direção de voz)
 
 
 @app.route("/health")
@@ -693,6 +708,7 @@ def list_jobs():
         out.append({
             "id": j["id"],
             "type": {"sequence": "Sequência", "regenerate": "Sequência", "continue": "Sequência", "video": "Vídeo narrado",
+                     "compile": "Montagem",
                      "plan": "Planejamento"}.get(
                 j["params"].get("_kind"), "Edição" if j["params"].get("has_image") else "Imagem"),
             "prompt": j["params"]["prompt"], "status": j["status"],
@@ -776,6 +792,189 @@ def sequence_regenerate():
     job_id = new_job({**data, "_kind": "regenerate", "prompt": f"Refazer quadro {int(data['index']) + 1}"})
     work_q.put(job_id)
     return jsonify({"job_id": job_id})
+
+
+# ---------------------------- montagem de vídeos ----------------------------
+
+
+def media_url(rel):
+    """Caminho relativo da biblioteca → URL servida pelo hub."""
+    if not rel:
+        return None
+    return ("/api/videos/" if rel.startswith("file/") else "/api/image-file/") + rel
+
+
+def public_compilation(res):
+    return {**res, "video": media_url(res["video"]), "cover": media_url(res["cover"])}
+
+
+def run_compile(job):
+    t0 = time.time()
+    update(job, status="gerando", started=t0, percent=1, message="Preparando a montagem...")
+
+    def progress(frac, msg):
+        update(job, percent=max(1, int(100 * frac)), message=msg)
+
+    try:
+        res = video_compiler.compile_project(job["params"]["project"], progress, lambda: job["cancel"])
+    except video_compiler.Cancelled:
+        raise Cancelled()
+    update(job, status="concluído", percent=100, finished=time.time(), result=public_compilation(res),
+           message=f"Montagem pronta: {res['duration_text']} de vídeo, renderizada em {res['render_seconds']}s")
+
+
+@app.route("/videos/library")
+def videos_library():
+    items = [{**i, "video": media_url(i["video"]), "thumb": media_url(i["thumb"])} for i in video_compiler.library()]
+    return jsonify({
+        "items": items,
+        "formats": [{"id": k, "name": v["name"]} for k, v in video_compiler.FORMATS.items()],
+        "transitions": [{"id": k, "name": v["name"]} for k, v in video_compiler.TRANSITIONS.items()],
+        "compilations": [public_compilation(c) for c in video_compiler.compilations()[:20]],
+    })
+
+
+@app.route("/videos/file/<kind>/<path:name>")
+def videos_file(kind, name):
+    path = video_compiler.file_path(kind, name)
+    if not path:
+        return jsonify({"error": "Arquivo não encontrado"}), 404
+    return send_from_directory(path.parent, path.name, conditional=True)
+
+
+@app.route("/videos/upload", methods=["POST"])
+def videos_upload():
+    if "file" not in request.files:
+        return jsonify({"error": "Nenhum arquivo enviado."}), 400
+    try:
+        path = video_compiler.save_upload(request.files["file"], video_compiler.UPLOAD_DIR, video_compiler.VIDEO_EXT)
+        info = video_compiler.probe(path)
+        if info["duration"] <= 0:
+            path.unlink(missing_ok=True)
+            raise ValueError("Não consegui ler esse vídeo.")
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+    return jsonify({"id": f"up:{path.name}", "title": path.stem, "duration": round(info["duration"], 1)})
+
+
+@app.route("/videos/music", methods=["POST"])
+def videos_music():
+    if "file" not in request.files:
+        return jsonify({"error": "Nenhum arquivo enviado."}), 400
+    try:
+        path = video_compiler.save_upload(request.files["file"], video_compiler.MUSIC_DIR, video_compiler.AUDIO_EXT)
+        duration = video_compiler.probe(path)["duration"]
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+    return jsonify({"file": path.name, "title": path.stem, "duration": round(duration, 1)})
+
+
+@app.route("/videos/delete", methods=["POST"])
+def videos_delete():
+    """Manda itens da biblioteca/montagens para a lixeira (pode desfazer)."""
+    ids = (request.get_json(silent=True) or {}).get("ids") or []
+    if not ids:
+        return jsonify({"error": "Nada selecionado."}), 400
+    try:
+        moved = video_compiler.trash(ids)
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+    return jsonify({"trashed": moved, "count": len(moved)})
+
+
+@app.route("/videos/trash")
+def videos_trash():
+    items = [{**t, "thumb": media_url(t.pop("thumb_rel"))} for t in video_compiler.list_trash()]
+    for t in items:
+        t.pop("original", None)   # o caminho no disco não interessa à página
+    return jsonify({"items": items, "days": video_compiler.TRASH_DAYS})
+
+
+@app.route("/videos/restore", methods=["POST"])
+def videos_restore():
+    ids = (request.get_json(silent=True) or {}).get("ids") or []
+    try:
+        count = video_compiler.restore(ids)
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+    return jsonify({"count": count})
+
+
+@app.route("/videos/purge", methods=["POST"])
+def videos_purge():
+    data = request.get_json(silent=True) or {}
+    count = video_compiler.purge(None if data.get("all") else (data.get("ids") or []))
+    return jsonify({"count": count})
+
+
+@app.route("/videos/compile", methods=["POST"])
+def videos_compile():
+    data = request.get_json(silent=True) or {}
+    try:
+        project = video_compiler.validate_project(data)
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+    job_id = new_job({"_kind": "compile", "prompt": project["title"], "project": project})
+    work_q.put(job_id)
+    return jsonify({"job_id": job_id, "queued": work_q.qsize()})
+
+
+# ---------------------------- direção de voz ----------------------------
+
+
+def _direction(data):
+    import voice_director
+    text = str(data.get("text") or "").strip()
+    if not text:
+        raise ValueError("Escreva o texto ou o diálogo.")
+    if len(text) > 6000:
+        raise ValueError("Texto longo demais (máx. 6000 caracteres).")
+    voice = data.get("voice") if data.get("voice") in voice_director.VOICES else "francisca"
+    rate = int(data.get("rate") or 0)
+    overrides = {str(k): v for k, v in (data.get("overrides") or {}).items() if v in voice_director.VOICES}
+    if data.get("deep"):
+        installed = sequences.ollama_models()
+        model = next((m for m in sequences.PLAN_MODELS if m in installed), None)
+        if not model:
+            raise ValueError("Ollama indisponível para a análise profunda.")
+        d, segs, det, method = voice_director.direct_deep(
+            text, lambda s, u: sequences.ask_json(model, s, u, 900), voice, rate, overrides=overrides)
+    else:
+        d, segs, det = voice_director.direct(text, voice, rate, overrides=overrides)
+        method = "regras"
+    return d, segs, det, method
+
+
+@app.route("/direction/analyze", methods=["POST"])
+def direction_analyze():
+    t0 = time.time()
+    try:
+        d, segs, det, method = _direction(request.get_json(silent=True) or {})
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+    return jsonify({"direcao": d, "segmentos": segs, "deteccoes": det, "metodo": method, "ms": round((time.time() - t0) * 1000)})
+
+
+@app.route("/direction/render", methods=["POST"])
+def direction_render():
+    """Texto → áudio dirigido (wav). Aceita segmentos já analisados para não analisar duas vezes."""
+    import voice_director
+    data = request.get_json(silent=True) or {}
+    try:
+        segs = data.get("segmentos") or _direction(data)[1]
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+    allowed = {"personagem", "texto", "voz", "rate", "pitch", "volume", "pausa_ms", "emocao"}
+    segs = [{k: v for k, v in s.items() if k in allowed} for s in segs if str(s.get("texto", "")).strip()][:80]
+    audio, used = voice_director.render(segs)
+    out_dir = OUTPUT_DIR / "vozes"
+    out_dir.mkdir(exist_ok=True)
+    name = f"voz_dirigida_{datetime.now():%Y%m%d_%H%M%S}.wav"
+    narrated_video.save_wav(out_dir / name, audio)
+    resp = send_from_directory(out_dir, name, mimetype="audio/wav")
+    resp.headers["X-Vozes"] = ",".join(sorted(used))
+    resp.headers["X-Duracao"] = f"{len(audio) / voice_director.SR:.1f}"
+    return resp
 
 
 @app.route("/sequence/voice-sample")
