@@ -101,6 +101,33 @@
             box-shadow: 0 0 24px rgba(255, 23, 68, 0.15);
         }
         .nav-item.active svg.i { color: #ff5a4a; }
+        .nav-chevron {
+            width: 8px;
+            height: 8px;
+            margin-left: auto;
+            border-right: 1.5px solid currentColor;
+            border-bottom: 1.5px solid currentColor;
+            transform: rotate(45deg) translateY(-2px);
+            transition: transform 0.2s;
+        }
+        .nav-item[aria-expanded="true"] .nav-chevron {
+            transform: rotate(225deg) translate(-2px, -1px);
+        }
+        .nav-submenu {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            margin: -2px 0 4px 16px;
+            padding-left: 8px;
+            border-left: 1px solid var(--line);
+        }
+        .nav-submenu[hidden] { display: none; }
+        .nav-subitem {
+            padding: 9px 12px;
+            gap: 10px;
+            font-size: 13px;
+        }
+        .nav-subitem svg.i { width: 18px; height: 18px; }
 
         .model-selector { padding: 14px 6px 4px; }
         .model-selector label { display: block; font-size: 10.5px; letter-spacing: 1.4px; text-transform: uppercase; color: var(--dim); margin: 0 0 8px 8px; }
@@ -1016,17 +1043,32 @@
             </div>
 
             <button class="nav-item active" data-nav="home" onclick="goHome()"><svg class="i"><use href="#i-home"/></svg>Início</button>
-            <button class="nav-item" data-nav="chat" onclick="setChatMode(true)"><svg class="i"><use href="#i-chat"/></svg>Conversa atual</button>
-            <button class="nav-item" onclick="chatHistory.showHistory()"><svg class="i"><use href="#i-doc"/></svg>Histórico</button>
-            <button class="nav-item" onclick="newChat()"><svg class="i"><use href="#i-plus"/></svg>Nova conversa</button>
-            <button class="nav-item" onclick="toggleImageGenerator()"><svg class="i"><use href="#i-image"/></svg>Imagem</button>
-            <button class="nav-item" onclick="toggleSeqGenerator()"><svg class="i"><use href="#i-film"/></svg>Sequências</button>
-            <button class="nav-item" onclick="toggleMontGenerator()"><svg class="i"><use href="#i-layers"/></svg>Montagem</button>
-            <button class="nav-item" onclick="toggleMemPanel()"><svg class="i"><use href="#i-brain"/></svg>Memória</button>
-            <button class="nav-item" onclick="toggleVideoGenerator()"><svg class="i"><use href="#i-video"/></svg>Vídeo</button>
-            <button class="nav-item" onclick="toggleVoiceGenerator()"><svg class="i"><use href="#i-voice"/></svg>Voz</button>
-            <button class="nav-item" onclick="toggleProcessPanel()"><svg class="i"><use href="#i-cpu"/></svg>Processos</button>
-            <button class="nav-item" onclick="window.location.href='interface-plugins.html'"><svg class="i"><use href="#i-plug"/></svg>Plugins</button>
+            <button class="nav-item" id="interactionToggle" aria-expanded="false" aria-controls="interactionMenu" onclick="toggleInteraction()">
+                <svg class="i"><use href="#i-chat"/></svg>interação<span class="nav-chevron" aria-hidden="true"></span>
+            </button>
+            <div class="nav-submenu" id="interactionMenu" hidden>
+                <button class="nav-item nav-subitem" data-nav="chat" onclick="setChatMode(true)"><svg class="i"><use href="#i-chat"/></svg>Conversa atual</button>
+                <button class="nav-item nav-subitem" onclick="chatHistory.showHistory()"><svg class="i"><use href="#i-doc"/></svg>Histórico</button>
+                <button class="nav-item nav-subitem" onclick="newChat()"><svg class="i"><use href="#i-plus"/></svg>Nova conversa</button>
+            </div>
+            <button class="nav-item" id="imageStudioToggle" aria-expanded="false" aria-controls="imageStudioMenu" onclick="toggleImageStudio()">
+                <svg class="i"><use href="#i-image"/></svg>studio de imagens<span class="nav-chevron" aria-hidden="true"></span>
+            </button>
+            <div class="nav-submenu" id="imageStudioMenu" hidden>
+                <button class="nav-item nav-subitem" onclick="toggleImageGenerator()"><svg class="i"><use href="#i-image"/></svg>Imagem</button>
+                <button class="nav-item nav-subitem" onclick="toggleSeqGenerator()"><svg class="i"><use href="#i-film"/></svg>Sequências</button>
+                <button class="nav-item nav-subitem" onclick="toggleMontGenerator()"><svg class="i"><use href="#i-layers"/></svg>Montagem</button>
+                <button class="nav-item nav-subitem" onclick="toggleVideoGenerator()"><svg class="i"><use href="#i-video"/></svg>Vídeo</button>
+                <button class="nav-item nav-subitem" onclick="toggleVoiceGenerator()"><svg class="i"><use href="#i-voice"/></svg>Voz</button>
+            </div>
+            <button class="nav-item" id="controlToggle" aria-expanded="false" aria-controls="controlMenu" onclick="toggleControl()">
+                <svg class="i"><use href="#i-cpu"/></svg>controle<span class="nav-chevron" aria-hidden="true"></span>
+            </button>
+            <div class="nav-submenu" id="controlMenu" hidden>
+                <button class="nav-item nav-subitem" onclick="toggleMemPanel()"><svg class="i"><use href="#i-brain"/></svg>Memória</button>
+                <button class="nav-item nav-subitem" onclick="toggleProcessPanel()"><svg class="i"><use href="#i-cpu"/></svg>Processos</button>
+                <button class="nav-item nav-subitem" onclick="window.location.href='interface-plugins.html'"><svg class="i"><use href="#i-plug"/></svg>Plugins</button>
+            </div>
 
             <div class="model-selector">
                 <label for="modelSelect">Modelo</label>
@@ -1878,6 +1920,22 @@
             document.querySelector('.main-scroll').scrollTo({ top: 0 });
         }
 
+        function toggleInteraction() {
+            const toggle = document.getElementById('interactionToggle');
+            const menu = document.getElementById('interactionMenu');
+            const isExpanded = toggle.getAttribute('aria-expanded') === 'true';
+            toggle.setAttribute('aria-expanded', String(!isExpanded));
+            menu.hidden = isExpanded;
+        }
+
+        function toggleControl() {
+            const toggle = document.getElementById('controlToggle');
+            const menu = document.getElementById('controlMenu');
+            const isExpanded = toggle.getAttribute('aria-expanded') === 'true';
+            toggle.setAttribute('aria-expanded', String(!isExpanded));
+            menu.hidden = isExpanded;
+        }
+
         // Entra no modo conversa quando uma mensagem do usuário aparece (envio ou histórico carregado)
         new MutationObserver(muts => {
             for (const m of muts) {
@@ -2168,6 +2226,14 @@
         function toggleImageGenerator() {
             const generator = document.getElementById('imageGenerator');
             generator.style.display = generator.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function toggleImageStudio() {
+            const toggle = document.getElementById('imageStudioToggle');
+            const menu = document.getElementById('imageStudioMenu');
+            const isExpanded = toggle.getAttribute('aria-expanded') === 'true';
+            toggle.setAttribute('aria-expanded', String(!isExpanded));
+            menu.hidden = isExpanded;
         }
 
         function toggleVideoGenerator() {
