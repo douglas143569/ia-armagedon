@@ -45,3 +45,5 @@ audio_generated/
 images_edited/
 backups/
 *.backup.*
+# Dados financeiros pessoais (nunca versionar)
+financas_data/

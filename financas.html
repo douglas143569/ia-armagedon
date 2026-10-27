@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ARMAGEDON — Minhas finanças</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+    --primary: #ff1744; --secondary: #ff6f00; --ember: #ff9e40;
+    --good: #3ddc84; --bad: #ff5a5f; --warn: #ffb000; --info: #00d4ff;
+    --bg: #07050a; --panel: rgba(24, 13, 17, 0.72); --panel-strong: rgba(18, 10, 13, 0.92);
+    --line: rgba(255, 90, 60, 0.16); --line-soft: rgba(255, 255, 255, 0.08);
+    --text: #f5ece9; --muted: #b09a94; --dim: #74615c;
+    --grad: linear-gradient(135deg, #ff1744 0%, #ff6f00 100%);
+    --font: 'Sora', 'Segoe UI', system-ui, sans-serif;
+}
+html, body { height: 100%; }
+body {
+    font-family: var(--font); color: var(--text); font-size: 14px;
+    background: radial-gradient(900px 500px at 70% -10%, rgba(255, 23, 68, 0.10), transparent 60%),
+                radial-gradient(700px 400px at 0% 100%, rgba(255, 111, 0, 0.06), transparent 60%), var(--bg);
+}
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+input, select { font: inherit; color: var(--text); }
+.app { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
+
+/* ---- lateral ---- */
+aside { border-right: 1px solid var(--line); background: var(--panel-strong); padding: 20px 14px; display: flex; flex-direction: column; gap: 4px; position: sticky; top: 0; height: 100vh; }
+.logo { padding: 4px 10px 18px; }
+.logo b { font-size: 18px; letter-spacing: 1px; background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.logo small { display: block; color: var(--muted); font-size: 11.5px; margin-top: 3px; }
+.nav { display: flex; align-items: center; gap: 10px; padding: 11px 12px; border-radius: 12px; color: var(--muted); text-align: left; width: 100%; }
+.nav:hover { color: #fff; background: rgba(255, 255, 255, 0.04); }
+.nav.active { color: #fff; background: linear-gradient(90deg, rgba(255, 90, 60, 0.22), rgba(255, 90, 60, 0.04)); box-shadow: inset 3px 0 0 var(--primary); }
+.nav .ic { width: 20px; text-align: center; }
+.side-spacer { flex: 1; }
+.quote { border: 1px solid var(--line-soft); border-radius: 14px; padding: 14px; color: var(--muted); font-size: 12.5px; line-height: 1.5; }
+
+/* ---- principal ---- */
+main { padding: 18px 26px 40px; min-width: 0; }
+.topbar { display: flex; gap: 14px; align-items: center; margin-bottom: 8px; }
+.ask { flex: 1; display: flex; gap: 8px; align-items: center; border: 1px solid var(--line); background: var(--panel); border-radius: 14px; padding: 8px 8px 8px 14px; }
+.ask input { flex: 1; background: none; border: 0; outline: 0; min-width: 0; }
+.btn { background: var(--grad); color: #fff; font-weight: 600; padding: 9px 16px; border-radius: 10px; }
+.btn:hover { box-shadow: 0 0 18px rgba(255, 90, 60, 0.45); }
+.btn:disabled { opacity: 0.5; cursor: wait; }
+.ghost { color: var(--muted); border: 1px solid var(--line-soft); padding: 7px 13px; border-radius: 10px; font-size: 12.5px; }
+.ghost:hover { color: #fff; border-color: rgba(255, 90, 60, 0.45); }
+.examples { color: var(--dim); font-size: 12px; margin-bottom: 12px; }
+.examples button { color: var(--muted); text-decoration: underline dotted; margin-right: 10px; }
+.ai-answer { border: 1px solid var(--line); background: var(--panel); border-radius: 14px; padding: 14px 16px; margin-bottom: 14px; line-height: 1.6; white-space: pre-wrap; }
+.ai-answer small { display: block; color: var(--dim); margin-top: 8px; white-space: normal; }
+
+.hero { border-radius: 18px; border: 1px solid var(--line); padding: 26px 28px; margin-bottom: 16px; position: relative; overflow: hidden;
+    background: linear-gradient(120deg, rgba(255, 23, 68, 0.16), rgba(255, 111, 0, 0.05) 60%, transparent); }
+.hero h1 { font-size: 26px; }
+.hero p { color: var(--muted); margin-top: 6px; }
+.hero svg { position: absolute; right: 0; bottom: 0; width: 46%; height: 100%; opacity: 0.35; }
+.card { border: 1px solid var(--line); background: var(--panel); border-radius: 16px; padding: 16px 18px; }
+.card h3 { font-size: 14.5px; font-weight: 600; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.card h3 a, .card h3 button { font-size: 12px; color: var(--ember); font-weight: 400; }
+.grid4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 14px; }
+.stat .label { color: var(--muted); font-size: 12.5px; display: flex; align-items: center; justify-content: space-between; }
+.stat .value { font-size: 23px; font-weight: 700; margin: 8px 0 6px; }
+.stat .delta { font-size: 12px; color: var(--muted); }
+.up { color: var(--good); } .down { color: var(--bad); }
+.cols { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 14px; }
+.stack { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.row2 { display: grid; grid-template-columns: 1.6fr 1fr; gap: 14px; }
+body.ocultar .money { filter: blur(7px); user-select: none; }
+
+/* gráficos */
+.chart svg { width: 100%; height: auto; display: block; }
+.chart text { fill: var(--muted); font-size: 11px; }
+.donut-wrap { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+.donut { width: 150px; height: 150px; flex: none; }
+.legend { flex: 1; min-width: 140px; display: flex; flex-direction: column; gap: 7px; font-size: 12.5px; }
+.legend div { display: flex; align-items: center; gap: 8px; }
+.legend i { width: 10px; height: 10px; border-radius: 3px; flex: none; }
+.legend span { margin-left: auto; color: var(--muted); }
+.empty { color: var(--dim); font-size: 13px; padding: 18px 4px; text-align: center; line-height: 1.5; }
+
+/* listas e cards */
+.tech-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.tech { border: 1px solid var(--line-soft); border-radius: 12px; padding: 12px; background: rgba(0, 0, 0, 0.2); text-align: left; }
+.tech:hover { border-color: rgba(255, 90, 60, 0.45); }
+.tech b { display: block; font-size: 13px; margin: 6px 0 4px; }
+.tech span { color: var(--muted); font-size: 12px; line-height: 1.4; }
+.goal-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; }
+.goal { border: 1px solid var(--line-soft); border-radius: 12px; padding: 12px; background: rgba(0, 0, 0, 0.2); }
+.goal .top { display: flex; align-items: center; gap: 8px; font-weight: 600; margin-bottom: 8px; }
+.bar { height: 7px; border-radius: 6px; background: rgba(255, 255, 255, 0.08); overflow: hidden; margin: 8px 0 4px; }
+.bar i { display: block; height: 100%; background: var(--grad); border-radius: 6px; }
+.goal small { color: var(--muted); font-size: 12px; }
+.goal .acts { margin-top: 8px; display: flex; gap: 8px; }
+.tips { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+.tips li { display: flex; gap: 9px; font-size: 13px; line-height: 1.45; color: #e6d8d3; }
+.tips .ok { color: var(--good); } .tips .aviso { color: var(--warn); } .tips .info { color: var(--info); }
+.sim-list button { width: 100%; text-align: left; padding: 11px 4px; border-bottom: 1px solid var(--line-soft); display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.sim-list button:last-child { border-bottom: 0; }
+.sim-list b { display: block; font-size: 13.5px; font-weight: 600; }
+.sim-list small { color: var(--muted); font-size: 12px; }
+.sim-list button:hover b { color: var(--ember); }
+
+/* formulários */
+.form { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; margin-bottom: 14px; }
+.form label { display: flex; flex-direction: column; gap: 5px; font-size: 12px; color: var(--muted); }
+.field { background: rgba(0, 0, 0, 0.3); border: 1px solid var(--line-soft); border-radius: 10px; padding: 9px 11px; outline: 0; min-width: 0; }
+.field:focus { border-color: rgba(255, 90, 60, 0.6); }
+select.field option { background: #1a0d11; }
+.quick-entry { margin-bottom: 14px; }
+.quick-entry h3 { justify-content: flex-start; }
+.quick-entry-icon { display: inline-grid; place-items: center; width: 32px; height: 32px; margin-right: 4px; border-radius: 10px; color: #fff; background: linear-gradient(135deg, #36b37e, #16885b); font-size: 23px; line-height: 1; }
+.quick-entry-form { display: grid; grid-template-columns: minmax(100px, .75fr) minmax(150px, 1.25fr) minmax(150px, 1fr) minmax(140px, .8fr); gap: 12px; align-items: end; }
+.quick-entry-form label { display: flex; flex-direction: column; gap: 5px; min-width: 0; color: var(--muted); font-size: 12px; }
+.quick-entry-form .field { width: 100%; }
+.quick-entry-actions { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.quick-entry-actions .btn { min-height: 48px; }
+.btn-income { background: linear-gradient(135deg, #36b37e, #16885b); }
+.btn-expense { background: linear-gradient(135deg, #ff5a5f, #d8262c); }
+.recent-table { overflow-x: auto; }
+.recent-table table { min-width: 540px; }
+.text-link { color: var(--ember); font-size: 12px; font-weight: 400; }
+.bill-alert { margin-bottom: 14px; border-color: var(--warn); }
+.bill-alert h3 { margin-bottom: 8px; }
+.bill-alert ul { padding-left: 20px; color: var(--muted); line-height: 1.8; }
+.bill-alert strong { color: var(--text); }
+.bill-toolbar { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 14px; }
+.bill-toolbar .hint { margin: 0; }
+.bill-status { font-size: 12px; }
+.bill-status.overdue { color: var(--bad); }
+.bill-status.today { color: var(--warn); }
+.bill-status.upcoming { color: var(--muted); }
+.bill-status.paid { color: var(--good); }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { text-align: left; color: var(--muted); font-weight: 500; font-size: 12px; padding: 8px 6px; border-bottom: 1px solid var(--line-soft); }
+td { padding: 9px 6px; border-bottom: 1px solid var(--line-soft); }
+td.num, th.num { text-align: right; }
+.tag { font-size: 11px; padding: 2px 8px; border-radius: 20px; border: 1px solid var(--line-soft); color: var(--muted); }
+.x { color: var(--dim); } .x:hover { color: var(--bad); }
+.view { display: none; } .view.on { display: block; }
+.page-title { font-size: 20px; margin: 4px 0 14px; }
+.hint { color: var(--muted); font-size: 12.5px; line-height: 1.5; margin-bottom: 12px; }
+.sim-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+.sim-tabs button { padding: 8px 14px; border-radius: 10px; border: 1px solid var(--line-soft); color: var(--muted); }
+.sim-tabs button.on { color: #fff; border-color: var(--primary); background: rgba(255, 23, 68, 0.12); }
+.result { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-top: 6px; }
+.result div { border: 1px solid var(--line-soft); border-radius: 12px; padding: 12px; background: rgba(0, 0, 0, 0.2); }
+.result small { color: var(--muted); display: block; font-size: 12px; }
+.result b { font-size: 18px; display: block; margin-top: 4px; }
+.weeks { display: grid; grid-template-columns: repeat(13, 1fr); gap: 6px; margin-top: 10px; }
+.weeks button { border: 1px solid var(--line-soft); border-radius: 8px; padding: 6px 0; font-size: 11px; color: var(--muted); }
+.weeks button.done { background: var(--grad); color: #fff; border-color: transparent; }
+.disclaimer { color: var(--dim); font-size: 11.5px; margin-top: 18px; line-height: 1.5; }
+#toast { position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%); background: #2a0f14; border: 1px solid var(--primary); padding: 10px 18px; border-radius: 12px; display: none; z-index: 9; max-width: 80vw; }
+
+@media (max-width: 1180px) { .cols { grid-template-columns: 1fr; } .grid4 { grid-template-columns: repeat(2, 1fr); } .tech-grid { grid-template-columns: repeat(2, 1fr); } .row2 { grid-template-columns: 1fr; } }
+@media (max-width: 900px) { .quick-entry-form { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 760px) { .app { grid-template-columns: 1fr; } aside { position: static; height: auto; flex-direction: row; flex-wrap: wrap; } .quote, .side-spacer { display: none; } .grid4, .tech-grid { grid-template-columns: 1fr; } .quick-entry-form, .quick-entry-actions { grid-template-columns: 1fr; } .quick-entry-actions { grid-column: 1; } .bill-toolbar { flex-direction: column; } main { padding: 14px; } }
+</style>
+</head>
+<body>
+<div class="app">
+    <aside>
+        <div class="logo"><b>MINHAS FINANÇAS</b><small>Dinheiro sob controle, só neste computador</small></div>
+        <button class="nav active" data-v="inicio"><span class="ic">🏠</span>Início</button>
+        <button class="nav" data-v="planejamento"><span class="ic">🧾</span>Planejamento</button>
+        <button class="nav" data-v="contas"><span class="ic">🔔</span>Contas a pagar</button>
+        <button class="nav" data-v="investimentos"><span class="ic">📈</span>Investimentos</button>
+        <button class="nav" data-v="metas"><span class="ic">🎯</span>Meus objetivos</button>
+        <button class="nav" data-v="simuladores"><span class="ic">🧮</span>Simuladores</button>
+        <button class="nav" data-v="tecnicas"><span class="ic">💡</span>Técnicas para guardar</button>
+        <div class="side-spacer"></div>
+        <div class="quote">“Pequenas escolhas financeiras hoje criam grandes possibilidades amanhã.”</div>
+        <a class="nav" href="/" style="text-decoration:none;margin-top:8px;"><span class="ic">⬅</span>Voltar ao ARMAGEDON</a>
+    </aside>
+
+    <main>
+        <div class="topbar">
+            <form class="ask" onsubmit="perguntar(event)">
+                <span>✨</span>
+                <input id="pergunta" maxlength="1000" placeholder="Pergunte sobre finanças ou peça uma análise dos seus números…" autocomplete="off">
+                <button class="btn" id="btnAsk" type="submit">Perguntar</button>
+            </form>
+            <button class="ghost" id="btnEye" onclick="alternarOcultar()" title="Ocultar valores na tela">👁 Ocultar valores</button>
+        </div>
+        <div class="examples">Exemplos:
+            <button onclick="exemplo('Como guardar dinheiro ganhando pouco?')">Como guardar dinheiro ganhando pouco?</button>
+            <button onclick="exemplo('Analise meus gastos deste mês')">Analise meus gastos deste mês</button>
+            <button onclick="exemplo('Minha carteira está diversificada?')">Minha carteira está diversificada?</button>
+        </div>
+        <div id="aiBox"></div>
+
+        <!-- INÍCIO -->
+        <section class="view on" id="v-inicio">
+            <div class="hero">
+                <svg viewBox="0 0 400 200" preserveAspectRatio="none"><path d="M0 200 L90 90 L140 140 L230 30 L310 120 L360 80 L400 130 L400 200 Z" fill="#ff1744" opacity=".5"/><path d="M0 200 L60 130 L130 170 L210 80 L290 160 L400 110 L400 200 Z" fill="#ff6f00" opacity=".35"/></svg>
+                <h1>Bem-vindo à sua Central Financeira</h1>
+                <p>Planeje, invista e conquiste seus objetivos. Mais que números, trabalhamos por sonhos.</p>
+            </div>
+            <div id="avisoVazio"></div>
+            <div class="grid4" id="cards"></div>
+            <div id="alertaContasInicio"></div>
+            <div class="card quick-entry" id="novoLancamento">
+                <h3><span class="quick-entry-icon" aria-hidden="true">+</span><span>Novo lançamento<small class="hint" style="display:block;margin:3px 0 0">Registre uma entrada ou saída em poucos segundos.</small></span></h3>
+                <form class="quick-entry-form" onsubmit="addLancamentoRapido(event)">
+                    <label>Valor (R$)<input class="field" id="qValor" inputmode="decimal" placeholder="0,00" required></label>
+                    <label>Descrição<input class="field" id="qDesc" maxlength="80" placeholder="Ex.: Salário, mercado, conta de luz"></label>
+                    <label>Categoria<select class="field" id="qCat" required></select></label>
+                    <label>Data<input class="field" id="qData" type="date" required></label>
+                    <div class="quick-entry-actions">
+                        <button class="btn btn-income" type="submit" value="receita">＋ Adicionar entrada</button>
+                        <button class="btn btn-expense" type="submit" value="despesa">− Adicionar saída</button>
+                    </div>
+                </form>
+            </div>
+            <div class="card" style="margin-bottom:14px">
+                <h3>Movimentações recentes<button class="text-link" type="button" onclick="ir('planejamento')">Ver todas ›</button></h3>
+                <div class="recent-table" id="lancamentosRecentes"></div>
+            </div>
+            <div class="cols">
+                <div class="stack">
+                    <div class="row2">
+                        <div class="card chart"><h3>Evolução do patrimônio <span style="color:var(--dim);font-weight:400;font-size:12px">últimos 12 meses</span></h3><div id="chartEvolucao"></div></div>
+                        <div class="card"><h3>Minha carteira de investimentos <button onclick="ir('investimentos')">Ver detalhes</button></h3><div id="chartCarteira"></div></div>
+                    </div>
+                    <div class="card"><h3>Técnicas para guardar dinheiro <button onclick="ir('tecnicas')">Ver todas</button></h3>
+                        <div class="tech-grid">
+                            <button class="tech" onclick="ir('tecnicas','t5030')">💸<b>Regra 50/30/20</b><span>Divida a renda entre necessidades, desejos e futuro.</span></button>
+                            <button class="tech" onclick="ir('tecnicas','t52')">🗓<b>Desafio das 52 semanas</b><span>Guarde um pouco a mais a cada semana do ano.</span></button>
+                            <button class="tech" onclick="ir('tecnicas','tenv')">✉️<b>Método dos envelopes</b><span>Controle os gastos por categoria, com limite.</span></button>
+                            <button class="tech" onclick="ir('tecnicas','tpeq')">🪙<b>Pequenas economias</b><span>Veja o que R$ poucos por dia viram no ano.</span></button>
+                        </div>
+                    </div>
+                    <div class="card"><h3>Meus objetivos <button onclick="ir('metas')">Ver todos</button></h3><div id="metasHome"></div></div>
+                </div>
+                <div class="stack">
+                    <div class="card"><h3>Simuladores e calculadoras</h3>
+                        <div class="sim-list">
+                            <button onclick="ir('simuladores','juros')"><span><b>Juros compostos</b><small>Veja o poder do tempo sobre os aportes</small></span>›</button>
+                            <button onclick="ir('simuladores','reserva')"><span><b>Reserva de emergência</b><small>Quanto guardar e em quanto tempo</small></span>›</button>
+                            <button onclick="ir('simuladores','liberdade')"><span><b>Liberdade financeira</b><small>Patrimônio para viver de renda</small></span>›</button>
+                            <button onclick="ir('simuladores','comparar')"><span><b>Comparador de investimentos</b><small>Compare duas rentabilidades</small></span>›</button>
+                        </div>
+                    </div>
+                    <div class="card"><h3>Dicas dos seus números</h3><ul class="tips" id="dicas"></ul></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PLANEJAMENTO -->
+        <section class="view" id="v-planejamento">
+            <h2 class="page-title">Planejamento financeiro</h2>
+            <div class="card" style="margin-bottom:14px">
+                <h3>Novo lançamento</h3>
+                <form class="form" onsubmit="addLancamento(event)">
+                    <label>Tipo<select class="field" id="lTipo" onchange="trocaCategorias()"><option value="despesa">Despesa</option><option value="receita">Receita</option></select></label>
+                    <label>Categoria<input class="field" id="lCat" list="listaCats" maxlength="40" style="width:160px"></label>
+                    <datalist id="listaCats"></datalist>
+                    <label>Descrição<input class="field" id="lDesc" maxlength="80" style="width:200px" placeholder="opcional"></label>
+                    <label>Valor (R$)<input class="field" id="lValor" inputmode="decimal" style="width:120px" placeholder="0,00" required></label>
+                    <label>Data<input class="field" id="lData" type="date" required></label>
+                    <button class="btn" type="submit">Adicionar</button>
+                </form>
+                <form class="form" onsubmit="salvarSaldoInicial(event)" style="margin-bottom:0">
+                    <label>Saldo inicial em conta (R$)<input class="field" id="cfgSaldo" inputmode="decimal" style="width:160px"></label>
+                    <button class="ghost" type="submit">Salvar</button>
+                    <span class="hint" style="margin:0 0 6px">Quanto você já tinha em conta antes do primeiro lançamento.</span>
+                </form>
+            </div>
+            <div class="card">
+                <h3>Lançamentos <select class="field" id="filtroMes" onchange="renderLancamentos()"></select></h3>
+                <div id="tabLanc"></div>
+            </div>
+        </section>
+
+        <!-- CONTAS A PAGAR -->
+        <section class="view" id="v-contas">
+            <h2 class="page-title">Contas a pagar</h2>
+            <div class="card" style="margin-bottom:14px">
+                <div class="bill-toolbar">
+                    <p class="hint">Cadastre o vencimento e receba um alerta no dia. Contas mensais repetem o vencimento automaticamente. Notificações do navegador exigem que Minhas Finanças esteja aberta.</p>
+                    <button class="ghost" id="btnNotificacoes" type="button" onclick="ativarNotificacoes()">Ativar notificações</button>
+                </div>
+                <form class="form" onsubmit="adicionarConta(event)">
+                    <label>Nome da conta<input class="field" id="contaDescricao" maxlength="80" required placeholder="Ex.: Aluguel, energia, internet"></label>
+                    <label>Valor (R$)<input class="field" id="contaValor" inputmode="decimal" required placeholder="0,00"></label>
+                    <label>Vencimento<input class="field" id="contaVencimento" type="date" required></label>
+                    <label>Frequência<select class="field" id="contaRecorrencia"><option value="unica">Única</option><option value="mensal">Mensal</option></select></label>
+                    <button class="btn" type="submit">＋ Adicionar conta</button>
+                </form>
+            </div>
+            <div class="card"><h3>Suas contas</h3><div id="listaContas"></div></div>
+        </section>
+
+        <!-- INVESTIMENTOS -->
+        <section class="view" id="v-investimentos">
+            <h2 class="page-title">Investimentos</h2>
+            <div class="card" style="margin-bottom:14px">
+                <h3>Novo investimento</h3>
+                <form class="form" onsubmit="addInvest(event)">
+                    <label>Classe<select class="field" id="iClasse"></select></label>
+                    <label>Nome / código<input class="field" id="iNome" maxlength="60" style="width:170px" required placeholder="ex.: Tesouro Selic"></label>
+                    <label>Valor investido (R$)<input class="field" id="iInv" inputmode="decimal" style="width:130px" required></label>
+                    <label>Valor atual (R$)<input class="field" id="iAtual" inputmode="decimal" style="width:130px" placeholder="= investido"></label>
+                    <label>Data do aporte<input class="field" id="iData" type="date" required></label>
+                    <button class="btn" type="submit">Adicionar</button>
+                </form>
+                <p class="hint" style="margin:0">As cotações não são buscadas na internet: atualize o “valor atual” quando quiser acompanhar o resultado.</p>
+            </div>
+            <div class="card"><h3>Meus ativos</h3><div id="tabInvest"></div></div>
+        </section>
+
+        <!-- METAS -->
+        <section class="view" id="v-metas">
+            <h2 class="page-title">Meus objetivos</h2>
+            <div class="card" style="margin-bottom:14px">
+                <h3>Novo objetivo</h3>
+                <form class="form" onsubmit="addMeta(event)">
+                    <label>Ícone<input class="field" id="mIcone" maxlength="2" style="width:60px" placeholder="🎯"></label>
+                    <label>Nome<input class="field" id="mNome" maxlength="60" style="width:200px" required placeholder="ex.: Viagem dos sonhos"></label>
+                    <label>Valor da meta (R$)<input class="field" id="mAlvo" inputmode="decimal" style="width:140px" required></label>
+                    <label>Já tenho (R$)<input class="field" id="mAtual" inputmode="decimal" style="width:130px" placeholder="0,00"></label>
+                    <button class="btn" type="submit">Adicionar</button>
+                </form>
+            </div>
+            <div class="card"><div id="metasLista"></div></div>
+        </section>
+
+        <!-- SIMULADORES -->
+        <section class="view" id="v-simuladores">
+            <h2 class="page-title">Simuladores e calculadoras</h2>
+            <div class="sim-tabs" id="simTabs">
+                <button data-s="juros">Juros compostos</button>
+                <button data-s="reserva">Reserva de emergência</button>
+                <button data-s="liberdade">Liberdade financeira</button>
+                <button data-s="comparar">Comparador</button>
+            </div>
+            <div class="card" id="simBody"></div>
+            <p class="disclaimer">Simulações usam taxas constantes que você informa; investimentos reais variam e rentabilidade passada não garante resultado futuro. Não é recomendação de investimento.</p>
+        </section>
+
+        <!-- TÉCNICAS -->
+        <section class="view" id="v-tecnicas">
+            <h2 class="page-title">Técnicas para guardar dinheiro</h2>
+            <div class="stack">
+                <div class="card" id="t5030">
+                    <h3>💸 Regra 50/30/20</h3>
+                    <p class="hint">Até 50% da renda para necessidades (moradia, comida, transporte), 30% para desejos (lazer, compras) e 20% para o futuro (reserva, investimentos, dívidas).</p>
+                    <div class="form"><label>Renda mensal líquida (R$)<input class="field" id="t5Renda" inputmode="decimal" oninput="calc5030()"></label></div>
+                    <div class="result" id="t5Res"></div>
+                </div>
+                <div class="card" id="t52">
+                    <h3>🗓 Desafio das 52 semanas</h3>
+                    <p class="hint">Na semana 1 guarde 1 vez o valor-base, na semana 2 guarde 2 vezes, e assim até a semana 52. Marque as semanas que já guardou (fica salvo neste navegador).</p>
+                    <div class="form"><label>Valor-base (R$)<input class="field" id="t52Base" inputmode="decimal" value="1" oninput="calc52()"></label></div>
+                    <div class="result" id="t52Res"></div>
+                    <div class="weeks" id="t52Weeks"></div>
+                </div>
+                <div class="card" id="tenv">
+                    <h3>✉️ Método dos envelopes</h3>
+                    <p class="hint">No início do mês, separe o dinheiro de cada categoria (um “envelope”, físico ou uma conta/caixinha). Acabou o envelope, acabou o gasto daquela categoria. Veja como seus gastos estão distribuídos neste mês:</p>
+                    <div id="tenvLista"></div>
+                </div>
+                <div class="card" id="tpeq">
+                    <h3>🪙 Pequenas economias</h3>
+                    <p class="hint">Cortes pequenos e constantes viram bastante dinheiro. Quanto você consegue economizar por dia?</p>
+                    <div class="form"><label>Economia por dia (R$)<input class="field" id="tpDia" inputmode="decimal" value="10" oninput="calcPeq()"></label></div>
+                    <div class="result" id="tpRes"></div>
+                </div>
+            </div>
+        </section>
+        <p class="disclaimer">As dicas e respostas da IA são educativas, calculadas a partir dos números que você registrou, e não substituem a orientação de um profissional certificado.</p>
+    </main>
+</div>
+<div id="toast"></div>
+
+<script>
+// ============ cálculos (puros, testáveis) ============
+const Calc = {
+    taxaMensal(aa) { return Math.pow(1 + aa / 100, 1 / 12) - 1; },
+    juros(inicial, aporte, aa, anos) {
+        const i = this.taxaMensal(aa), n = Math.round(anos * 12), f = Math.pow(1 + i, n);
+        const total = inicial * f + (i === 0 ? aporte * n : aporte * (f - 1) / i);
+        const investido = inicial + aporte * n;
+        return { total, investido, juros: total - investido };
+    },
+    reserva(despesas, meses, atual, aporte) {
+        const alvo = despesas * meses, falta = Math.max(0, alvo - atual);
+        return { alvo, falta, prazo: falta === 0 ? 0 : (aporte > 0 ? Math.ceil(falta / aporte) : null) };
+    },
+    liberdade(renda, aa, atual, aporte) {   // taxa real: serve para crescer e para sacar
+        if (!(aa > 0)) return { alvo: null, meses: null };
+        const alvo = renda * 12 / (aa / 100), i = this.taxaMensal(aa);
+        let pat = atual, m = 0;
+        while (pat < alvo && m < 1200) { pat = pat * (1 + i) + aporte; m++; }
+        return { alvo, meses: pat >= alvo ? m : null };
+    },
+    comparar(valor, aaA, aaB, anos) {
+        const f = aa => valor * Math.pow(1 + aa / 100, anos);
+        return { a: f(aaA), b: f(aaB) };
+    },
+};
+
+// ============ utilidades ============
+const brl = v => (v ?? 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+const money = v => `<span class="money">${brl(v)}</span>`;
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const $ = id => document.getElementById(id);
+const MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+const mesNome = m => `${MESES[+m.slice(5, 7) - 1]}/${m.slice(2, 4)}`;
+const hojeISO = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+const CORES = ['#ff6f00', '#ff1744', '#ffb000', '#00d4ff', '#a855f7', '#94a3b8'];
+const pct = (v, casas = 1) => `${v > 0 ? '+' : ''}${v.toFixed(casas).replace('.', ',')}%`;
+
+function num(s) {   // "1.234,56" ou "1234.56" → número
+    s = String(s ?? '').trim();
+    if (!s) return NaN;
+    return Number(s.includes(',') ? s.replace(/\./g, '').replace(',', '.') : s);
+}
+
+let toastT;
+function toast(msg) { const t = $('toast'); t.textContent = msg; t.style.display = 'block'; clearTimeout(toastT); toastT = setTimeout(() => t.style.display = 'none', 4500); }
+
+async function api(method, path, body) {
+    let r;
+    try {
+        r = await fetch('/api/financas' + path, { method, headers: body ? { 'Content-Type': 'application/json' } : {}, body: body ? JSON.stringify(body) : undefined });
+    } catch { throw new Error('Não consegui falar com o ARMAGEDON (hub offline?)'); }
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(j.error || `erro ${r.status}`);
+    return j;
+}
+
+// ============ estado e navegação ============
+let S = null, viewAtual = 'inicio', simAtual = 'juros';
+
+async function carregar() {
+    try { S = await api('GET', '/dados'); } catch (e) { toast('❌ ' + e.message); return; }
+    renderTudo();
+    verificarAlertas();
+}
+
+function ir(v, sub) {
+    viewAtual = v;
+    document.querySelectorAll('.view').forEach(x => x.classList.toggle('on', x.id === 'v-' + v));
+    document.querySelectorAll('aside .nav[data-v]').forEach(b => b.classList.toggle('active', b.dataset.v === v));
+    if (v === 'simuladores' && sub) simAtual = sub;
+    renderTudo();
+    if (v === 'tecnicas' && sub) $(sub).scrollIntoView({ behavior: 'smooth', block: 'start' });
+    else window.scrollTo({ top: 0 });
+}
+document.querySelectorAll('aside .nav[data-v]').forEach(b => b.onclick = () => ir(b.dataset.v));
+
+function alternarOcultar(forcar) {
+    const on = forcar ?? !document.body.classList.contains('ocultar');
+    document.body.classList.toggle('ocultar', on);
+    $('btnEye').textContent = on ? '👁 Mostrar valores' : '👁 Ocultar valores';
+    localStorage.setItem('fin_ocultar', on ? '1' : '');
+}
+
+function renderTudo() {
+    if (!S) return;
+    ({ inicio: renderInicio, planejamento: renderPlanejamento, contas: renderContas, investimentos: renderInvest, metas: renderMetas, simuladores: renderSim, tecnicas: renderTecnicas })[viewAtual]();
+}
+
+// ============ início ============
+function delta(texto, cls) { return `<div class="delta ${cls || ''}">${texto}</div>`; }
+
+function renderInicio() {
+    const r = S.resumo;
+    const vazio = !S.lancamentos.length && !S.investimentos.length && !S.metas.length && !S.contas.length;
+    $('avisoVazio').innerHTML = vazio
+        ? `<div class="card" style="margin-bottom:14px;border-color:var(--warn)">👋 Seu painel começa vazio: nenhum dado de exemplo. Registre receitas e despesas no <a href="#novoLancamento" style="color:var(--ember)">formulário abaixo</a>, seus ativos em <a href="#" onclick="ir('investimentos');return false" style="color:var(--ember)">Investimentos</a> e suas metas em <a href="#" onclick="ir('metas');return false" style="color:var(--ember)">Meus objetivos</a>.</div>` : '';
+
+    const cp = r.patrimonio_var_pct == null ? delta('sem histórico ainda') : delta(`${pct(r.patrimonio_var_pct)} em ${r.evolucao.length} meses`, r.patrimonio_var_pct >= 0 ? 'up' : 'down');
+    const cr = r.renda_anterior > 0 ? delta(`${r.renda_var_valor >= 0 ? '+' : '−'} ${brl(Math.abs(r.renda_var_valor))} vs. mês anterior`, r.renda_var_valor >= 0 ? 'up' : 'down') : delta('sem mês anterior para comparar');
+    const cd = r.despesas_var_pct == null ? delta('sem mês anterior para comparar') : delta(`${pct(r.despesas_var_pct)} vs. mês anterior`, r.despesas_var_pct <= 0 ? 'up' : 'down');
+    const ci = r.rentabilidade_pct == null ? delta('nenhum investimento') : delta(`${pct(r.rentabilidade_pct)} sobre o aportado`, r.rentabilidade_pct >= 0 ? 'up' : 'down');
+    $('cards').innerHTML = [
+        ['Patrimônio total', r.patrimonio, cp, '💰'], ['Renda mensal', r.renda, cr, '👛'],
+        ['Despesas mensais', r.despesas, cd, '🧾'], ['Valor investido', r.investido, ci, '📊'],
+    ].map(([t, v, d, i]) => `<div class="card stat"><div class="label">${t}<span>${i}</span></div><div class="value">${money(v)}</div>${d}</div>`).join('');
+
+    renderCategoriasRapidas();
+    if (!$('qData').value) $('qData').value = hojeISO();
+    renderLancamentosRecentes();
+    renderAlertasContas();
+    $('chartEvolucao').innerHTML = graficoEvolucao(r.evolucao);
+    $('chartCarteira').innerHTML = rosca(r);
+    $('metasHome').innerHTML = S.metas.length ? `<div class="goal-grid">${S.metas.slice(0, 4).map(m => cardMeta(m)).join('')}</div>` : '<div class="empty">Nenhum objetivo ainda. Crie o primeiro em “Meus objetivos”.</div>';
+    $('dicas').innerHTML = S.dicas.map(d => `<li><span class="${d.tipo}">${d.tipo === 'ok' ? '✔' : d.tipo === 'aviso' ? '⚠' : '●'}</span><span>${esc(d.texto)}</span></li>`).join('');
+}
+
+function vencimentoMensal(inicial, mesesDepois) {
+    const [ano, mes, dia] = inicial.split('-').map(Number);
+    const ultimoDia = new Date(Date.UTC(ano, mes - 1 + mesesDepois + 1, 0)).getUTCDate();
+    const data = new Date(Date.UTC(ano, mes - 1 + mesesDepois, Math.min(dia, ultimoDia)));
+    return `${data.getUTCFullYear()}-${String(data.getUTCMonth() + 1).padStart(2, '0')}-${String(data.getUTCDate()).padStart(2, '0')}`;
+}
+
+function proximoVencimento(conta) {
+    const pagamentos = Array.isArray(conta.pagamentos) ? conta.pagamentos : [];
+    if (conta.recorrencia === 'unica') {
+        return pagamentos.includes(conta.vencimento) ? null : conta.vencimento;
+    }
+
+    for (let mes = 0; mes < 12000; mes++) {
+        const vencimento = vencimentoMensal(conta.vencimento, mes);
+        if (!pagamentos.includes(vencimento)) return vencimento;
+    }
+    return null;
+}
+
+function dataPorExtenso(data) {
+    return data.split('-').reverse().join('/');
+}
+
+function contasComAlerta() {
+    const hoje = hojeISO();
+    return S.contas.map(conta => ({ conta, vencimento: proximoVencimento(conta) }))
+        .filter(item => item.vencimento && item.vencimento <= hoje)
+        .sort((a, b) => a.vencimento.localeCompare(b.vencimento));
+}
+
+function renderAlertasContas() {
+    const alertas = contasComAlerta();
+    $('alertaContasInicio').innerHTML = alertas.length
+        ? `<div class="card bill-alert" role="status"><h3>🔔 Contas para pagar</h3><ul>${alertas.map(({ conta, vencimento }) => `<li><strong>${esc(conta.descricao)}</strong> — ${vencimento < hojeISO() ? `vencida em ${dataPorExtenso(vencimento)}` : 'vence hoje'} · ${money(conta.valor)}</li>`).join('')}</ul><button class="text-link" type="button" onclick="ir('contas')">Ver contas e marcar pagamento ›</button></div>`
+        : '';
+}
+
+function renderContas() {
+    if (!$('contaVencimento').value) $('contaVencimento').value = hojeISO();
+    const hoje = hojeISO();
+    const linhas = S.contas.map(conta => {
+        const vencimento = proximoVencimento(conta);
+        const paga = conta.recorrencia === 'unica' && !vencimento;
+        const data = vencimento || conta.vencimento;
+        const status = paga
+            ? '<span class="bill-status paid">Paga</span>'
+            : vencimento < hoje
+                ? '<span class="bill-status overdue">Atrasada</span>'
+                : vencimento === hoje
+                    ? '<span class="bill-status today">Vence hoje</span>'
+                    : '<span class="bill-status upcoming">Próximo vencimento</span>';
+        const frequencia = conta.recorrencia === 'mensal' ? 'Mensal' : 'Única';
+        return { conta, vencimento: data, paga, status, frequencia };
+    }).sort((a, b) => a.vencimento.localeCompare(b.vencimento));
+
+    if (!linhas.length) {
+        $('listaContas').innerHTML = '<div class="empty">Nenhuma conta cadastrada. Adicione uma conta acima para receber um lembrete no vencimento.</div>';
+        atualizarBotaoNotificacoes();
+        return;
+    }
+
+    $('listaContas').innerHTML = `<div class="recent-table"><table><thead><tr><th>Conta</th><th>Frequência</th><th>Vencimento</th><th>Status</th><th class="num">Valor</th><th></th></tr></thead><tbody>${linhas.map(({ conta, vencimento, paga, status, frequencia }) => `<tr>
+        <td>${esc(conta.descricao)}</td><td>${frequencia}</td><td>${dataPorExtenso(vencimento)}</td><td>${status}</td>
+        <td class="num">${money(conta.valor)}</td><td class="num"><div class="table-actions">${!paga ? `<button class="text-link" type="button" onclick="marcarContaPaga('${esc(conta.id)}','${vencimento}')">Marcar paga</button>` : ''}<button class="x" type="button" title="Excluir conta" aria-label="Excluir conta ${esc(conta.descricao)}" onclick="excluir('contas','${esc(conta.id)}')">✕</button></div></td></tr>`).join('')}</tbody></table></div>`;
+    atualizarBotaoNotificacoes();
+}
+
+const notificacoesDaSessao = new Set();
+let erroHistoricoNotificacoesRegistrada = false;
+
+function atualizarBotaoNotificacoes() {
+    const botao = $('btnNotificacoes');
+    if (!botao) return;
+    if (!('Notification' in window)) {
+        botao.textContent = 'Notificações indisponíveis';
+        botao.disabled = true;
+    } else if (Notification.permission === 'granted') {
+        botao.textContent = 'Notificações ativadas';
+        botao.disabled = true;
+    } else if (Notification.permission === 'denied') {
+        botao.textContent = 'Permissão bloqueada';
+        botao.disabled = true;
+    } else {
+        botao.textContent = 'Ativar notificações';
+        botao.disabled = false;
+    }
+}
+
+async function ativarNotificacoes() {
+    if (!('Notification' in window)) return toast('❌ Este navegador não oferece notificações de sistema');
+    try {
+        const permissao = await Notification.requestPermission();
+        atualizarBotaoNotificacoes();
+        if (permissao === 'granted') {
+            toast('✔ Notificações de vencimentos ativadas');
+            verificarAlertas();
+        } else if (permissao === 'denied') {
+            toast('❌ Permissão bloqueada. Altere-a nas configurações do navegador.');
+        }
+    } catch (e) {
+        console.error('[finanças] não foi possível ativar notificações:', e);
+        toast('❌ Não foi possível ativar notificações neste navegador');
+    }
+}
+
+function verificarAlertas() {
+    if (!S || !('Notification' in window) || Notification.permission !== 'granted') return;
+    let enviados;
+    try {
+        enviados = JSON.parse(localStorage.getItem('fin_contas_notificadas') || '[]');
+        if (!Array.isArray(enviados)) enviados = [];
+    } catch (e) {
+        if (!erroHistoricoNotificacoesRegistrada) console.error('[finanças] histórico local de notificações inválido:', e);
+        erroHistoricoNotificacoesRegistrada = true;
+        enviados = [];
+    }
+
+    let alterado = false;
+    for (const { conta, vencimento } of contasComAlerta()) {
+        const chave = `${conta.id}:${vencimento}`;
+        if (enviados.includes(chave) || notificacoesDaSessao.has(chave)) continue;
+        try {
+            const atrasada = vencimento < hojeISO();
+            const notificacao = new Notification(atrasada ? 'Conta vencida' : 'Conta vence hoje', {
+                body: `${conta.descricao} · ${brl(conta.valor)}${atrasada ? ` · vencimento em ${dataPorExtenso(vencimento)}` : ''}`,
+                tag: chave,
+            });
+            notificacao.onclick = () => {
+                window.focus();
+                ir('contas');
+                notificacao.close();
+            };
+            notificacoesDaSessao.add(chave);
+            enviados.push(chave);
+            alterado = true;
+        } catch (e) {
+            console.error('[finanças] falha ao exibir notificação de vencimento:', e);
+        }
+    }
+
+    if (alterado) {
+        try {
+            localStorage.setItem('fin_contas_notificadas', JSON.stringify(enviados.slice(-200)));
+        } catch (e) {
+            console.error('[finanças] não foi possível salvar o histórico de notificações:', e);
+        }
+    }
+}
+
+function renderCategoriasRapidas() {
+    const select = $('qCat');
+    const selecionada = select.value;
+    const categorias = [...new Set([...CATS_DESP, ...CATS_REC])];
+    select.innerHTML = '<option value="">Selecione uma categoria</option>' +
+        categorias.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
+    if (categorias.includes(selecionada)) select.value = selecionada;
+}
+
+function renderLancamentosRecentes() {
+    const recentes = S.lancamentos.map((l, ordem) => ({ ...l, ordem }))
+        .sort((a, b) => b.data.localeCompare(a.data) || b.ordem - a.ordem)
+        .slice(0, 7);
+    if (!recentes.length) {
+        $('lancamentosRecentes').innerHTML = '<div class="empty">Nenhuma movimentação registrada. Use o formulário acima para adicionar sua primeira entrada ou saída.</div>';
+        return;
+    }
+
+    $('lancamentosRecentes').innerHTML = `<table><thead><tr><th>Descrição</th><th>Categoria</th><th>Data</th><th class="num">Valor</th><th></th></tr></thead><tbody>${recentes.map(l => `<tr>
+        <td>${esc(l.descricao || l.categoria)}</td><td><span class="tag">${esc(l.categoria)}</span></td>
+        <td>${l.data.split('-').reverse().join('/')}</td>
+        <td class="num ${l.tipo === 'receita' ? 'up' : 'down'}">${l.tipo === 'receita' ? '+' : '−'} ${money(l.valor)}</td>
+        <td class="num"><button class="x" title="Excluir lançamento" aria-label="Excluir lançamento de ${esc(l.descricao || l.categoria)}" onclick="excluir('lancamentos','${l.id}')">✕</button></td></tr>`).join('')}</tbody></table>`;
+}
+
+function graficoEvolucao(serie) {
+    if (!serie.length) return '<div class="empty">Registre lançamentos ou investimentos para ver a evolução do patrimônio mês a mês.</div>';
+    const W = 560, H = 240, L = 62, R = 30, T = 12, B = 28;
+    const vals = serie.map(s => s.patrimonio);
+    let min = Math.min(0, ...vals), max = Math.max(...vals, 1);
+    if (max === min) max = min + 1;
+    const x = i => L + (serie.length === 1 ? (W - L - R) / 2 : i * (W - L - R) / (serie.length - 1));
+    const y = v => T + (H - T - B) * (1 - (v - min) / (max - min));
+    const ticks = [0, 1, 2, 3, 4].map(k => min + (max - min) * k / 4);
+    const abrev = v => Math.abs(v) >= 1000 ? `${(v / 1000).toFixed(Math.abs(v) >= 10000 ? 0 : 1).replace('.', ',')} mil` : v.toFixed(0);
+    const pts = serie.map((s, i) => `${x(i).toFixed(1)},${y(s.patrimonio).toFixed(1)}`);
+    const area = `${pts.join(' ')} ${x(serie.length - 1).toFixed(1)},${y(min)} ${x(0).toFixed(1)},${y(min)}`;
+    return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Evolução do patrimônio">
+        <defs><linearGradient id="gA" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff6f00" stop-opacity=".45"/><stop offset="1" stop-color="#ff6f00" stop-opacity="0"/></linearGradient></defs>
+        ${ticks.map(t => `<line x1="${L}" x2="${W - R}" y1="${y(t)}" y2="${y(t)}" stroke="rgba(255,255,255,.07)"/><text class="money" x="${L - 8}" y="${y(t) + 4}" text-anchor="end">R$ ${abrev(t)}</text>`).join('')}
+        ${serie.length > 1 ? `<polygon points="${area}" fill="url(#gA)"/><polyline points="${pts.join(' ')}" fill="none" stroke="#ff9e40" stroke-width="2.5" stroke-linejoin="round"/>` : ''}
+        ${serie.map((s, i) => `<circle cx="${x(i)}" cy="${y(s.patrimonio)}" r="4" fill="#ff1744" stroke="#ffd0a0"><title>${mesNome(s.mes)}: ${brl(s.patrimonio)}</title></circle><text x="${x(i)}" y="${H - 8}" text-anchor="middle">${mesNome(s.mes)}</text>`).join('')}
+    </svg>${serie.length === 1 ? '<div class="hint" style="margin:6px 0 0">O gráfico ganha forma conforme você registra mais meses.</div>' : ''}`;
+}
+
+function rosca(r) {
+    if (!r.carteira.length) return '<div class="empty">Cadastre seus investimentos para ver a divisão da carteira.</div>';
+    let acc = 0;
+    const seg = r.carteira.map((c, i) => {
+        const s = `<circle r="15.9155" cx="21" cy="21" fill="none" stroke="${CORES[i % CORES.length]}" stroke-width="6" stroke-dasharray="${c.pct} ${100 - c.pct}" stroke-dashoffset="${25 - acc}"><title>${esc(c.classe)}: ${c.pct}%</title></circle>`;
+        acc += c.pct; return s;
+    }).join('');
+    return `<div class="donut-wrap">
+        <svg class="donut" viewBox="0 0 42 42">${seg}<text class="money" x="21" y="21" text-anchor="middle" font-size="4.2" fill="#f5ece9" font-weight="700">${brl(r.investido)}</text><text x="21" y="26" text-anchor="middle" font-size="3" fill="#b09a94">investidos</text></svg>
+        <div class="legend">${r.carteira.map((c, i) => `<div><i style="background:${CORES[i % CORES.length]}"></i>${esc(c.classe)}<span>${c.pct.toFixed(0)}%</span></div>`).join('')}</div></div>`;
+}
+
+// ============ planejamento ============
+const CATS_DESP = ['Moradia', 'Mercado', 'Transporte', 'Saúde', 'Educação', 'Lazer', 'Assinaturas', 'Dívidas', 'Outros'];
+const CATS_REC = ['Salário', 'Freelance', 'Rendimentos', 'Outros'];
+
+function trocaCategorias() {
+    $('listaCats').innerHTML = ($('lTipo').value === 'receita' ? CATS_REC : CATS_DESP).map(c => `<option value="${c}">`).join('');
+}
+
+function renderPlanejamento() {
+    if (!$('lData').value) $('lData').value = hojeISO();
+    trocaCategorias();
+    $('cfgSaldo').value = S.config.saldo_inicial ? String(S.config.saldo_inicial).replace('.', ',') : '';
+    const meses = [...new Set(S.lancamentos.map(l => l.data.slice(0, 7)))].sort().reverse();
+    const atual = $('filtroMes').value;
+    $('filtroMes').innerHTML = '<option value="">Todos os meses</option>' + meses.map(m => `<option value="${m}">${mesNome(m)}</option>`).join('');
+    $('filtroMes').value = meses.includes(atual) ? atual : '';
+    renderLancamentos();
+}
+
+function renderLancamentos() {
+    const f = $('filtroMes').value;
+    const lista = S.lancamentos.filter(l => !f || l.data.startsWith(f)).sort((a, b) => b.data.localeCompare(a.data));
+    if (!lista.length) { $('tabLanc').innerHTML = '<div class="empty">Nenhum lançamento ainda.</div>'; return; }
+    $('tabLanc').innerHTML = `<table><tr><th>Data</th><th>Categoria</th><th>Descrição</th><th class="num">Valor</th><th></th></tr>${lista.map(l => `<tr>
+        <td>${l.data.split('-').reverse().join('/')}</td><td><span class="tag">${esc(l.categoria)}</span></td><td>${esc(l.descricao)}</td>
+        <td class="num ${l.tipo === 'receita' ? 'up' : 'down'}">${l.tipo === 'receita' ? '+' : '−'} ${money(l.valor)}</td>
+        <td class="num"><button class="x" title="Excluir" onclick="excluir('lancamentos','${l.id}')">✕</button></td></tr>`).join('')}</table>`;
+}
+
+async function enviar(fn, ok) {
+    try { S = await fn(); renderTudo(); if (ok) toast(ok); return true; } catch (e) { toast('❌ ' + e.message); return false; }
+}
+
+async function addLancamento(ev) {
+    ev.preventDefault();
+    const valor = num($('lValor').value);
+    if (!(valor > 0)) return toast('❌ Informe um valor maior que zero');
+    const ok = await enviar(() => api('POST', '/lancamentos', { tipo: $('lTipo').value, categoria: $('lCat').value, descricao: $('lDesc').value, valor, data: $('lData').value }), '✔ Lançamento adicionado');
+    if (ok) { $('lValor').value = ''; $('lDesc').value = ''; }
+}
+
+async function addLancamentoRapido(ev) {
+    ev.preventDefault();
+    const tipo = ev.submitter?.value;
+    if (!['receita', 'despesa'].includes(tipo)) return toast('❌ Escolha adicionar uma entrada ou uma saída');
+    const valor = num($('qValor').value);
+    if (!(valor > 0)) return toast('❌ Informe um valor maior que zero');
+    if (!$('qCat').value) return toast('❌ Selecione uma categoria');
+
+    const ok = await enviar(() => api('POST', '/lancamentos', {
+        tipo, categoria: $('qCat').value, descricao: $('qDesc').value, valor, data: $('qData').value,
+    }), `✔ ${tipo === 'receita' ? 'Entrada' : 'Saída'} adicionada`);
+    if (ok) {
+        $('qValor').value = '';
+        $('qDesc').value = '';
+    }
+}
+
+async function adicionarConta(ev) {
+    ev.preventDefault();
+    const valor = num($('contaValor').value);
+    if (!(valor > 0)) return toast('❌ Informe um valor maior que zero');
+    const descricao = $('contaDescricao').value.trim();
+    if (!descricao) return toast('❌ Informe o nome da conta');
+
+    const ok = await enviar(() => api('POST', '/contas', {
+        descricao,
+        valor,
+        vencimento: $('contaVencimento').value,
+        recorrencia: $('contaRecorrencia').value,
+    }), '✔ Conta cadastrada');
+    if (ok) {
+        $('contaDescricao').value = '';
+        $('contaValor').value = '';
+        verificarAlertas();
+    }
+}
+
+async function marcarContaPaga(id, vencimento) {
+    await enviar(() => api('PUT', `/contas/${id}`, { pagar: vencimento }), '✔ Conta marcada como paga');
+}
+
+async function salvarSaldoInicial(ev) {
+    ev.preventDefault();
+    const v = $('cfgSaldo').value.trim() === '' ? 0 : num($('cfgSaldo').value);
+    if (!Number.isFinite(v)) return toast('❌ Valor inválido');
+    enviar(() => api('PUT', '/config', { saldo_inicial: v }), '✔ Saldo inicial salvo');
+}
+
+async function excluir(colecao, id) {
+    if (!confirm('Excluir este item? Isso não pode ser desfeito.')) return;
+    enviar(() => api('DELETE', `/${colecao}/${id}`), '🗑 Excluído');
+}
+
+// ============ investimentos ============
+function renderInvest() {
+    if (!$('iClasse').options.length) $('iClasse').innerHTML = S.classes.map(c => `<option>${esc(c)}</option>`).join('');
+    if (!$('iData').value) $('iData').value = hojeISO();
+    if (!S.investimentos.length) { $('tabInvest').innerHTML = '<div class="empty">Nenhum investimento cadastrado.</div>'; return; }
+    $('tabInvest').innerHTML = `<table><tr><th>Ativo</th><th>Classe</th><th class="num">Investido</th><th class="num">Valor atual</th><th class="num">Resultado</th><th></th></tr>${S.investimentos.map(i => {
+        const res = i.valor_investido > 0 ? (i.valor_atual - i.valor_investido) / i.valor_investido * 100 : 0;
+        return `<tr><td>${esc(i.nome)}</td><td><span class="tag">${esc(i.classe)}</span></td><td class="num">${money(i.valor_investido)}</td>
+        <td class="num"><input class="field" style="width:120px;text-align:right" inputmode="decimal" value="${String(i.valor_atual).replace('.', ',')}" onchange="atualizarAtivo('${i.id}', this.value)" title="Edite e saia do campo para salvar"></td>
+        <td class="num ${res >= 0 ? 'up' : 'down'}">${pct(res)}</td>
+        <td class="num"><button class="x" title="Excluir" onclick="excluir('investimentos','${i.id}')">✕</button></td></tr>`;
+    }).join('')}</table>`;
+}
+
+async function addInvest(ev) {
+    ev.preventDefault();
+    const inv = num($('iInv').value), atualTxt = $('iAtual').value.trim();
+    if (!Number.isFinite(inv) || inv < 0) return toast('❌ Valor investido inválido');
+    const body = { classe: $('iClasse').value, nome: $('iNome').value, valor_investido: inv, valor_atual: atualTxt === '' ? null : num(atualTxt), data: $('iData').value };
+    if (atualTxt !== '' && !Number.isFinite(body.valor_atual)) return toast('❌ Valor atual inválido');
+    const ok = await enviar(() => api('POST', '/investimentos', body), '✔ Investimento adicionado');
+    if (ok) { $('iNome').value = ''; $('iInv').value = ''; $('iAtual').value = ''; }
+}
+
+function atualizarAtivo(id, txt) {
+    const v = num(txt);
+    if (!Number.isFinite(v) || v < 0) { toast('❌ Valor inválido'); return renderInvest(); }
+    enviar(() => api('PUT', `/investimentos/${id}`, { valor_atual: v }), '✔ Valor atualizado');
+}
+
+// ============ metas ============
+function cardMeta(m, extra = '') {
+    const p = Math.min(100, m.alvo > 0 ? m.atual / m.alvo * 100 : 0);
+    return `<div class="goal"><div class="top"><span>${esc(m.icone)}</span>${esc(m.nome)}</div>
+        <div>${money(m.atual)} <small>/ ${money(m.alvo)}</small></div><div class="bar"><i style="width:${p}%"></i></div><small>${p.toFixed(0)}%</small>${extra}</div>`;
+}
+
+function renderMetas() {
+    if (!S.metas.length) { $('metasLista').innerHTML = '<div class="empty">Nenhum objetivo ainda. Crie o primeiro acima.</div>'; return; }
+    $('metasLista').innerHTML = `<div class="goal-grid">${S.metas.map(m => cardMeta(m, `<div class="acts"><button class="ghost" onclick="somarMeta('${m.id}')">+ Adicionar valor</button><button class="x" title="Excluir" onclick="excluir('metas','${m.id}')">✕</button></div>`)).join('')}</div>`;
+}
+
+async function addMeta(ev) {
+    ev.preventDefault();
+    const alvo = num($('mAlvo').value), atualTxt = $('mAtual').value.trim();
+    if (!(alvo > 0)) return toast('❌ Informe o valor da meta');
+    const atual = atualTxt === '' ? 0 : num(atualTxt);
+    if (!Number.isFinite(atual) || atual < 0) return toast('❌ Valor atual inválido');
+    const ok = await enviar(() => api('POST', '/metas', { icone: $('mIcone').value, nome: $('mNome').value, alvo, atual }), '✔ Objetivo criado');
+    if (ok) { $('mNome').value = ''; $('mAlvo').value = ''; $('mAtual').value = ''; $('mIcone').value = ''; }
+}
+
+function somarMeta(id) {
+    const t = prompt('Quanto adicionar a este objetivo? (use valor negativo para retirar)');
+    if (t == null) return;
+    const v = num(t);
+    if (!Number.isFinite(v) || v === 0) return toast('❌ Valor inválido');
+    enviar(() => api('PUT', `/metas/${id}`, { somar: v }), '✔ Objetivo atualizado');
+}
+
+// ============ simuladores ============
+function campo(id, rotulo, valor, w = 150) { return `<label>${rotulo}<input class="field" id="${id}" inputmode="decimal" value="${valor}" style="width:${w}px" oninput="calcSim()"></label>`; }
+const fmt = v => String(Math.round(v * 100) / 100).replace('.', ',');
+
+function renderSim() {
+    document.querySelectorAll('#simTabs button').forEach(b => { b.classList.toggle('on', b.dataset.s === simAtual); b.onclick = () => { simAtual = b.dataset.s; renderSim(); }; });
+    const r = S.resumo, desp = r.despesas || r.despesas_anterior || 0;
+    const corpo = {
+        juros: `<h3>Juros compostos</h3><p class="hint">Quanto seu dinheiro pode render com aportes mensais e o tempo.</p><div class="form">${campo('s1', 'Valor inicial (R$)', fmt(r.investido))}${campo('s2', 'Aporte mensal (R$)', '500')}${campo('s3', 'Rentabilidade anual (%)', '10', 130)}${campo('s4', 'Prazo (anos)', '10', 100)}</div>`,
+        reserva: `<h3>Reserva de emergência</h3><p class="hint">Uma reserva costuma cobrir de 3 a 12 meses das suas despesas (mais para quem tem renda variável).</p><div class="form">${campo('s1', 'Despesas mensais (R$)', fmt(desp))}${campo('s2', 'Meses de cobertura', '6', 120)}${campo('s3', 'Já tenho guardado (R$)', fmt(Math.max(r.saldo, 0)))}${campo('s4', 'Posso guardar por mês (R$)', fmt(Math.max(r.sobra_mes, 0)))}</div>`,
+        liberdade: `<h3>Liberdade financeira</h3><p class="hint">Patrimônio necessário para viver de renda, sacando só o rendimento (sem consumir o principal).</p><div class="form">${campo('s1', 'Renda mensal desejada (R$)', '5000')}${campo('s2', 'Rentabilidade real anual (%)', '6', 150)}${campo('s3', 'Patrimônio atual (R$)', fmt(Math.max(r.patrimonio, 0)))}${campo('s4', 'Aporte mensal (R$)', fmt(Math.max(r.sobra_mes, 0)))}</div>`,
+        comparar: `<h3>Comparador de investimentos</h3><p class="hint">Compare duas opções com rentabilidades anuais diferentes sobre o mesmo valor.</p><div class="form">${campo('s1', 'Valor (R$)', '10000')}${campo('s2', 'Opção A (% ao ano)', '8', 130)}${campo('s3', 'Opção B (% ao ano)', '12', 130)}${campo('s4', 'Prazo (anos)', '5', 100)}</div>`,
+    }[simAtual];
+    $('simBody').innerHTML = corpo + '<div class="result" id="simRes"></div>';
+    calcSim();
+}
+
+function calcSim() {
+    const v = [1, 2, 3, 4].map(k => num($('s' + k).value));
+    const box = $('simRes');
+    if (v.some(x => !Number.isFinite(x) || x < 0)) { box.innerHTML = '<div class="empty" style="grid-column:1/-1">Preencha os campos com números válidos.</div>'; return; }
+    const cx = (t, val) => `<div><small>${t}</small><b>${val}</b></div>`;
+    const tempo = m => m === 0 ? 'já alcançado' : m == null ? 'não alcança em 100 anos' : `${Math.floor(m / 12)} anos e ${m % 12} meses`;
+    if (simAtual === 'juros') { const c = Calc.juros(v[0], v[1], v[2], v[3]); box.innerHTML = cx('Valor final', money(c.total)) + cx('Total investido', money(c.investido)) + cx('Juros ganhos', money(c.juros)); }
+    if (simAtual === 'reserva') { const c = Calc.reserva(v[0], v[1], v[2], v[3]); box.innerHTML = cx('Reserva ideal', money(c.alvo)) + cx('Falta guardar', money(c.falta)) + cx('Tempo para completar', c.prazo === 0 ? 'já completa' : c.prazo == null ? 'informe quanto pode guardar' : `${c.prazo} mês(es)`); }
+    if (simAtual === 'liberdade') { const c = Calc.liberdade(v[0], v[1], v[2], v[3]); box.innerHTML = c.alvo == null ? '<div class="empty" style="grid-column:1/-1">Informe uma rentabilidade maior que zero.</div>' : cx('Patrimônio necessário', money(c.alvo)) + cx('Falta', money(Math.max(0, c.alvo - v[2]))) + cx('Tempo estimado', tempo(c.meses)); }
+    if (simAtual === 'comparar') { const c = Calc.comparar(v[0], v[1], v[2], v[3]); box.innerHTML = cx('Opção A', money(c.a)) + cx('Opção B', money(c.b)) + cx('Diferença (B − A)', money(c.b - c.a)); }
+}
+
+// ============ técnicas ============
+function renderTecnicas() {
+    const renda = S.resumo.renda;
+    if (!$('t5Renda').value && renda) $('t5Renda').value = fmt(renda);
+    calc5030(); calc52(); calcPeq();
+    const d = S.resumo.despesas_por_categoria;
+    $('tenvLista').innerHTML = d.length ? `<table><tr><th>Categoria</th><th class="num">Gasto no mês</th></tr>${d.map(c => `<tr><td>${esc(c.categoria)}</td><td class="num">${money(c.valor)}</td></tr>`).join('')}</table>` : '<div class="empty">Sem despesas registradas neste mês.</div>';
+}
+
+function calc5030() {
+    const r = num($('t5Renda').value);
+    $('t5Res').innerHTML = Number.isFinite(r) && r > 0
+        ? [['Necessidades (50%)', .5], ['Desejos (30%)', .3], ['Futuro (20%)', .2]].map(([t, p]) => `<div><small>${t}</small><b>${money(r * p)}</b></div>`).join('')
+        : '<div class="empty" style="grid-column:1/-1">Informe sua renda mensal.</div>';
+}
+
+const semanas = () => { try { return JSON.parse(localStorage.getItem('fin_52') || '[]'); } catch { return []; } };
+function calc52() {
+    const base = num($('t52Base').value), feitas = new Set(semanas());
+    const ok = Number.isFinite(base) && base > 0;
+    const total = ok ? base * 1378 : 0;   // 1+2+...+52 = 1378
+    const guardado = ok ? [...feitas].reduce((s, w) => s + w * base, 0) : 0;
+    $('t52Res').innerHTML = `<div><small>Total no fim das 52 semanas</small><b>${money(total)}</b></div><div><small>Já guardado (${feitas.size} semanas)</small><b>${money(guardado)}</b></div>`;
+    $('t52Weeks').innerHTML = Array.from({ length: 52 }, (_, i) => `<button class="${feitas.has(i + 1) ? 'done' : ''}" onclick="marcaSemana(${i + 1})" title="${ok ? brl(base * (i + 1)) : ''}">${i + 1}</button>`).join('');
+}
+function marcaSemana(w) { const s = new Set(semanas()); s.has(w) ? s.delete(w) : s.add(w); localStorage.setItem('fin_52', JSON.stringify([...s])); calc52(); }
+
+function calcPeq() {
+    const d = num($('tpDia').value);
+    $('tpRes').innerHTML = Number.isFinite(d) && d >= 0
+        ? `<div><small>Por mês (30 dias)</small><b>${money(d * 30)}</b></div><div><small>Por ano</small><b>${money(d * 365)}</b></div><div><small>Em 5 anos, a 8% a.a.</small><b>${money(Calc.juros(0, d * 30, 8, 5).total)}</b></div>`
+        : '<div class="empty" style="grid-column:1/-1">Informe um valor válido.</div>';
+}
+
+// ============ IA ============
+function exemplo(t) { $('pergunta').value = t; $('pergunta').focus(); }
+
+async function perguntar(ev) {
+    ev.preventDefault();
+    const p = $('pergunta').value.trim();
+    if (!p) return;
+    $('btnAsk').disabled = true; $('btnAsk').textContent = 'Pensando…';
+    $('aiBox').innerHTML = '<div class="ai-answer">⏳ A IA local está analisando seus números. Neste computador pode levar de 1 a 2 minutos.</div>';
+    try {
+        const r = await api('POST', '/ia', { pergunta: p });
+        $('aiBox').innerHTML = `<div class="ai-answer">${esc(r.resposta)}<small>Modelo: ${esc(r.modelo)} · orientação educativa, não é consultoria financeira.</small></div>`;
+    } catch (e) {
+        $('aiBox').innerHTML = `<div class="ai-answer" style="border-color:var(--bad)">❌ ${esc(e.message)}</div>`;
+    } finally { $('btnAsk').disabled = false; $('btnAsk').textContent = 'Perguntar'; }
+}
+
+// ============ início ============
+if (localStorage.getItem('fin_ocultar')) alternarOcultar(true);
+carregar();
+setInterval(verificarAlertas, 60 * 1000);
+document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) verificarAlertas();
+});
+</script>
+</body>
+</html>

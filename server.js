@@ -6,6 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const url = require('url');
 const { spawn } = require('child_process');
+const financas = require('./financas');
 
 const PORT = 3000;
 const OLLAMA_URL = 'http://localhost:11434';
@@ -202,6 +203,9 @@ const server = http.createServer(async (req, res) => {
         });
         return;
     }
+
+    // Minhas finanças (dados locais em financas_data/)
+    if (await financas.handle(req, res)) return;
 
     // Montagem de vídeos → gerador (porta 5000). Repasse em fluxo: uploads grandes não passam pela memória
     // e o player de vídeo pode pedir trechos (Range)
@@ -579,6 +583,16 @@ const server = http.createServer(async (req, res) => {
         fs.readFile(path.join(__dirname, 'chat-history.js'), (err, data) => {
             if (err) { res.writeHead(404); res.end(); return; }
             res.writeHead(200, { 'Content-Type': 'application/javascript; charset=utf-8' });
+            res.end(data);
+        });
+        return;
+    }
+
+    // Servir financas.html (Minhas finanças)
+    if (req.url === '/financas' || req.url === '/financas.html') {
+        fs.readFile(path.join(__dirname, 'financas.html'), (err, data) => {
+            if (err) { res.writeHead(404); res.end('Página não encontrada'); return; }
+            res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
             res.end(data);
         });
         return;

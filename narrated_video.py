@@ -295,7 +295,28 @@ def build_video(seq_dir, ctx, voice="francisca", rate=0, progress=lambda f, m: N
     fade = int(0.4 * SR)
     track[-fade:] *= np.linspace(1, 0, fade)
 
-    # 4) um clipe por quadro (fundo em movimento + texto parado)
+    # 4–5) cenas em movimento + transições + narração
+    with tempfile.TemporaryDirectory() as tmp:
+        wav = Path(tmp) / "narracao.wav"
+        save_wav(wav, track[: int(total * SR)])
+        out = seq_dir / "video.mp4"
+        assemble(seq_dir, ctx, raws, durs, xfade, total, out, progress, cancelled, audio=wav)
+    shutil.copy2(out, seq_dir / NARRATED_MASTER)   # guarda a versão narrada (base para "música de fundo")
+    import voice_director as vd
+    names = sorted(vd.VOICES.get(v, {}).get("name", v) for v in voices_used)
+    return out.name, ", ".join(names) or "sem narração", round(total, 1)
+
+
+NARRATED_MASTER = "video_narrado.mp4"    # última versão com a narração automática
+SILENT_MASTER = "video_sem_audio.mp4"    # versão sem áudio (base para unir um áudio seu)
+USER_AUDIO_LOUDNESS = "loudnorm=I=-16:TP=-1.5:LRA=11"
+
+
+def assemble(seq_dir, ctx, raws, durs, xfade, total, out, progress, cancelled, audio=None, audio_filter=None):
+    """Cenas → vídeo final: um clipe por quadro (fundo em movimento + texto parado), unidos com transição.
+    audio: arquivo de áudio (ou None = vídeo sem áudio); audio_filter: filtro ffmpeg aplicado a ele ([a] na saída)."""
+    kind, frames = ctx["type"], ctx["plan"]["frames"]
+    n = len(raws)
     size = even_size(raws[0])
     with tempfile.TemporaryDirectory() as tmp:
         tmp = Path(tmp)
@@ -309,29 +330,126 @@ def build_video(seq_dir, ctx, voice="francisca", rate=0, progress=lambda f, m: N
             clip = tmp / f"clip_{i:02d}.mp4"
             render_clip(raw, layer, size, d, motion, clip)
             clips.append(clip)
-        wav = tmp / "narracao.wav"
-        save_wav(wav, track[: int(total * SR)])
 
-        # 5) junta tudo com transições e põe a narração
-        progress(0.88, "Juntando as cenas e o áudio...")
+        progress(0.88, "Juntando as cenas" + (" e o áudio..." if audio else "..."))
         args = []
         for c in clips:
             args += ["-i", str(c)]
-        args += ["-i", str(wav)]
         if n == 1 or xfade == 0:
             chain = "".join(f"[{i}:v]" for i in range(n)) + f"concat=n={n}:v=1:a=0[v]"
         else:
             parts, prev, acc = [], "[0:v]", 0.0
             for i in range(1, n):
                 acc += durs[i - 1] - xfade
-                out = f"[v{i}]" if i < n - 1 else "[v]"
-                parts.append(f"{prev}[{i}:v]xfade=transition=fade:duration={xfade}:offset={acc:.3f}{out}")
-                prev = out
+                o = f"[v{i}]" if i < n - 1 else "[v]"
+                parts.append(f"{prev}[{i}:v]xfade=transition=fade:duration={xfade}:offset={acc:.3f}{o}")
+                prev = o
             chain = ";".join(parts)
-        out = seq_dir / "video.mp4"
-        run_ffmpeg([*args, "-filter_complex", chain, "-map", "[v]", "-map", f"{n}:a",
+        maps = ["-map", "[v]"]
+        if audio:
+            args += ["-i", str(audio)]
+            if audio_filter:
+                chain += f";[{n}:a]{audio_filter}[a]"
+                maps += ["-map", "[a]"]
+            else:
+                maps += ["-map", f"{n}:a"]
+            enc_audio = ["-c:a", "aac", "-b:a", "160k"]
+        else:
+            enc_audio = ["-an"]
+        run_ffmpeg([*args, "-filter_complex", chain, *maps,
                     "-c:v", "libx264", "-preset", "veryfast", "-crf", "20", "-pix_fmt", "yuv420p",
-                    "-c:a", "aac", "-b:a", "160k", "-t", f"{total:.3f}", "-movflags", "+faststart", str(out)], "vídeo final")
-    import voice_director as vd
-    names = sorted(vd.VOICES.get(v, {}).get("name", v) for v in voices_used)
-    return out.name, ", ".join(names) or "sem narração", round(total, 1)
+                    *enc_audio, "-t", f"{total:.3f}", "-movflags", "+faststart", str(out)], "vídeo final")
+    return out
+
+
+def _timeline(n, each, xfade):
+    """Duração de cada clipe para todos os quadros ficarem `each` segundos na tela (a transição come o fim)."""
+    durs = [each + (xfade if i < n - 1 else 0) for i in range(n)]
+    return durs, sum(durs) - xfade * (n - 1)
+
+
+def _load_raws(seq_dir, ctx):
+    raws = sequences.load_raws(seq_dir, len(ctx["plan"]["frames"]))
+    if any(r is None for r in raws):
+        raise RuntimeError("A sequência ainda não tem todos os quadros.")
+    return raws
+
+
+def build_silent_video(seq_dir, ctx, seconds_per_frame=4.0, progress=lambda f, m: None, cancelled=lambda: False):
+    """Mesmas cenas, transições e textos do vídeo narrado, mas SEM áudio — para unir um áudio seu depois."""
+    raws = _load_raws(seq_dir, ctx)
+    n = len(raws)
+    each = max(0.4 if ctx["type"] == "movimento" else 1.5, min(60.0, float(seconds_per_frame or 4)))
+    xfade = 0.0 if ctx["type"] == "movimento" and each < 1.5 else min(XFADE, each / 3)
+    durs, total = _timeline(n, each, xfade)
+    out = seq_dir / SILENT_MASTER
+    assemble(seq_dir, ctx, raws, durs, xfade, total, out, progress, cancelled)
+    shutil.copy2(out, seq_dir / "video.mp4")
+    return "video.mp4", "sem áudio", round(total, 1)
+
+
+def attach_audio(seq_dir, ctx, audio_path, mode="ajustar", volume=1.0, progress=lambda f, m: None, cancelled=lambda: False):
+    """Une um arquivo de áudio ao vídeo da sequência.
+      ajustar — refaz as cenas para o vídeo ter a duração do áudio (cada quadro fica o mesmo tempo na tela)
+      manter  — mantém o vídeo como está; o áudio é cortado (com fade) ou completado com silêncio
+      fundo   — mantém a narração e põe o áudio por baixo, abaixando sozinho quando há fala (música de fundo)
+    Retorna (arquivo, descrição do áudio, duração)."""
+    audio_path = Path(audio_path)
+    info = _probe(audio_path)
+    if not info["has_audio"] or info["duration"] <= 0:
+        raise RuntimeError("Não consegui ler o áudio desse arquivo.")
+    A = info["duration"]
+    vol = max(0.05, min(2.0, float(volume or 1.0)))
+    out = seq_dir / "video.mp4"
+    name = audio_path.name.split("_", 1)[-1] if audio_path.name.startswith("audio_") else audio_path.name
+
+    if mode == "ajustar":
+        raws = _load_raws(seq_dir, ctx)
+        n = len(raws)
+        xfade = 0.0 if ctx["type"] == "movimento" else XFADE
+        each = max(1.0, (A + xfade * (n - 1) - xfade * (n - 1)) / n)   # cada quadro na tela: A/n segundos
+        durs, total = _timeline(n, each, xfade)
+        filt = (f"aresample={SR * 2},aformat=channel_layouts=stereo,volume={vol:.2f},{USER_AUDIO_LOUDNESS},"
+                f"apad,atrim=0:{total:.3f},afade=t=out:st={max(0, total - 1.2):.2f}:d=1.2")
+        assemble(seq_dir, ctx, raws, durs, xfade, total, out, progress, cancelled, audio=audio_path, audio_filter=filt)
+        return out.name, f"arquivo: {name} (vídeo ajustado ao áudio)", round(total, 1)
+
+    if mode == "fundo":
+        base = seq_dir / NARRATED_MASTER
+        if not base.exists():
+            raise RuntimeError("Este vídeo não tem narração. Use “substituir o áudio”.")
+        T = _probe(base)["duration"]
+        progress(0.3, "Mixando o áudio por baixo da narração...")
+        fc = (f"[1:a]aresample={SR * 2},aformat=channel_layouts=stereo,volume={0.35 * vol:.3f},"
+              f"afade=t=in:st=0:d=1.5,afade=t=out:st={max(0, T - 2.5):.2f}:d=2.5[m];"
+              f"[0:a]aresample={SR * 2},aformat=channel_layouts=stereo,asplit[voz][chave];"
+              f"[m][chave]sidechaincompress=threshold=0.02:ratio=8:attack=20:release=500[duck];"
+              f"[voz][duck]amix=inputs=2:duration=first:dropout_transition=0:normalize=0,alimiter=limit=0.95[a]")
+        run_ffmpeg(["-i", str(base), "-stream_loop", "-1", "-i", str(audio_path), "-filter_complex", fc,
+                    "-map", "0:v", "-map", "[a]", "-c:v", "copy", "-c:a", "aac", "-b:a", "160k",
+                    "-t", f"{T:.3f}", "-movflags", "+faststart", str(out)], "música de fundo")
+        return out.name, f"narração + {name} de fundo", round(T, 1)
+
+    # manter: a imagem fica como está, o áudio é trocado
+    base = next((p for p in (seq_dir / SILENT_MASTER, seq_dir / NARRATED_MASTER, seq_dir / "video.mp4") if p.exists()), None)
+    if base is None:
+        raise RuntimeError("Gere o vídeo primeiro (com narração ou sem áudio).")
+    T = _probe(base)["duration"]
+    tmp_out = seq_dir / "video_tmp.mp4"
+    progress(0.3, "Unindo o áudio ao vídeo...")
+    fc = (f"[1:a]aresample={SR * 2},aformat=channel_layouts=stereo,volume={vol:.2f},{USER_AUDIO_LOUDNESS},"
+          f"apad,atrim=0:{T:.3f},afade=t=out:st={max(0, T - 1.2):.2f}:d=1.2[a]")
+    run_ffmpeg(["-i", str(base), "-i", str(audio_path), "-filter_complex", fc, "-map", "0:v", "-map", "[a]",
+                "-c:v", "copy", "-c:a", "aac", "-b:a", "160k", "-t", f"{T:.3f}", "-movflags", "+faststart", str(tmp_out)],
+               "unir áudio")
+    tmp_out.replace(out)
+    cut = " — áudio cortado no fim do vídeo" if A > T + 0.5 else " — completado com silêncio" if A < T - 0.5 else ""
+    return out.name, f"arquivo: {name}{cut}", round(T, 1)
+
+
+def _probe(path):
+    r = subprocess.run([shutil.which("ffprobe") or "ffprobe", "-v", "error", "-show_entries",
+                        "format=duration:stream=codec_type", "-of", "json", str(path)], capture_output=True, text=True)
+    data = json.loads(r.stdout or "{}")
+    return {"duration": float(data.get("format", {}).get("duration") or 0),
+            "has_audio": any(s.get("codec_type") == "audio" for s in data.get("streams", []))}

@@ -141,6 +141,19 @@ Parâmetros expostos na interface: modo, resolução (512/384), steps (auto/1–
 - [ ] Orquestração multi-agente — modelos/instâncias especializadas colaborando (planeja / executa / revisa) em vez de um modelo genérico fazendo tudo
 - [ ] Adotar MCP (Model Context Protocol) como padrão de ferramentas — protocolo aberto para conectar a IA a ferramentas/dados de forma padronizada, em vez de solução caseira
 
+### Fase 8 — Minhas finanças (módulo pessoal de finanças)
+Pedido em 2026-10-27, com base numa imagem de referência (dashboard "Central Financeira"). Página própria `financas.html` (aberta pelo menu do hub), API `/api/financas/*` em `financas.js`, dados SOMENTE locais em `financas_data/financas.json` (fora do git).
+- [x] Painel inicial: patrimônio, renda do mês, despesas do mês, valor investido (com variação vs. mês anterior)
+- [x] Gráfico de evolução do patrimônio (histórico mensal) e carteira de investimentos por classe (rosca)
+- [x] Lançamentos de receitas/despesas por categoria, com formulário rápido e movimentações recentes no painel inicial
+- [x] Contas únicas ou mensais com alertas de vencimento, notificação do navegador e baixa de pagamento
+- [x] Investimentos por classe (Ações, FIIs, Renda Fixa, ETFs, Cripto, Outros)
+- [x] Metas/objetivos com progresso
+- [x] Simuladores: juros compostos, reserva de emergência, liberdade financeira, comparador
+- [x] Técnicas para guardar dinheiro (50/30/20, desafio 52 semanas, envelopes, pequenas economias)
+- [x] Dicas calculadas dos próprios dados + pergunta livre à IA local (Ollama) com o resumo financeiro como contexto
+- Regras: nenhum dado de exemplo inventado (o painel começa vazio); a IA dá orientação educativa, não recomendação personalizada de investimento.
+
 ## Descobertas recentes (pesquisado em 2026-08-25)
 
 - **BitNet / quantização 1-bit (Microsoft)** — pesos reduzidos a 3 valores possíveis (-1, 0, 1), permite rodar modelos bem maiores em CPU puro com bem menos RAM. Modelo `Bonsai 8B` (abr/2026) roda em ~1GB. **É a tecnologia mais relevante pra situação de hardware (CPU sem GPU) — acompanhar de perto.**
