@@ -253,6 +253,30 @@ td.num, th.num { text-align: right; }
         <section class="view" id="v-planejamento">
             <h2 class="page-title">Planejamento financeiro</h2>
             <div class="card" style="margin-bottom:14px">
+                <h3>Conta do banco (Open Finance) <span id="pgStatus" class="hint" style="margin:0"></span></h3>
+                <div id="pgSetup" style="display:none">
+                    <p class="hint">Crie uma aplicação em dashboard.pluggy.ai e cole o Client ID e o Client Secret. Eles ficam só neste computador (financas_data/pluggy.json) e nunca voltam para o navegador.</p>
+                    <form class="form" onsubmit="pgSalvarCredenciais(event)">
+                        <label>Client ID<input class="field" id="pgId" autocomplete="off" style="width:280px" required></label>
+                        <label>Client Secret<input class="field" id="pgSecret" type="password" autocomplete="off" style="width:280px" required></label>
+                        <button class="btn" type="submit">Salvar</button>
+                    </form>
+                </div>
+                <div id="pgConectar" style="display:none">
+                    <p class="hint">Você autoriza o Santander pelo fluxo oficial do Open Finance. O ARMAGEDON nunca vê sua senha do banco.</p>
+                    <button class="btn" type="button" onclick="pgConectar()">Conectar banco</button>
+                </div>
+                <div id="pgConectado" style="display:none">
+                    <div id="pgContas" class="hint"></div>
+                    <div class="form" style="margin-bottom:0">
+                        <button class="btn" type="button" id="pgBtnSync" onclick="pgSincronizar()">Sincronizar agora</button>
+                        <button class="ghost" type="button" onclick="pgConectar()">Reautorizar</button>
+                        <button class="ghost" type="button" onclick="pgDesconectar()">Desconectar</button>
+                    </div>
+                    <p class="hint" style="margin:8px 0 0">Entram só as contas bancárias (o cartão fica de fora para não contar a fatura duas vezes). Ao sincronizar, o “saldo inicial” é recalculado para o saldo do painel bater com o do banco.</p>
+                </div>
+            </div>
+            <div class="card" style="margin-bottom:14px">
                 <h3>Novo lançamento</h3>
                 <form class="form" onsubmit="addLancamento(event)">
                     <label>Tipo<select class="field" id="lTipo" onchange="trocaCategorias()"><option value="despesa">Despesa</option><option value="receita">Receita</option></select></label>
@@ -708,7 +732,76 @@ function trocaCategorias() {
     $('listaCats').innerHTML = ($('lTipo').value === 'receita' ? CATS_REC : CATS_DESP).map(c => `<option value="${c}">`).join('');
 }
 
+// ============ banco (Open Finance via Pluggy) ============
+const PLUGGY_WIDGET = 'https://cdn.pluggy.ai/pluggy-connect/v2.7.0/pluggy-connect.js';   // se o botão falhar, confira a versão atual na doc do Pluggy
+let PG = null;
+
+async function pgCarregar() {
+    try { PG = await api('GET', '/pluggy'); } catch { return; }
+    $('pgSetup').style.display = PG.configurado ? 'none' : '';
+    $('pgConectar').style.display = PG.configurado && !PG.conectado ? '' : 'none';
+    $('pgConectado').style.display = PG.conectado ? '' : 'none';
+    $('pgStatus').textContent = PG.conectado ? `✔ ${PG.banco || 'banco'} conectado${PG.ultima_sync ? ' · última sincronização ' + PG.ultima_sync.split('-').reverse().join('/') : ''}` : '';
+    $('pgContas').innerHTML = PG.contas.map(c => `${esc(c.nome)}: ${money(c.saldo)}`).join(' · ');
+}
+
+async function pgSalvarCredenciais(ev) {
+    ev.preventDefault();
+    try {
+        await api('POST', '/pluggy/credenciais', { clientId: $('pgId').value, clientSecret: $('pgSecret').value });
+        $('pgId').value = ''; $('pgSecret').value = '';
+        toast('✔ Credenciais do Pluggy salvas');
+        pgCarregar();
+    } catch (e) { toast('❌ ' + e.message); }
+}
+
+function pgCarregarWidget() {
+    if (window.PluggyConnect) return Promise.resolve();
+    return new Promise((ok, falha) => {
+        const s = document.createElement('script');
+        s.src = PLUGGY_WIDGET; s.onload = ok; s.onerror = () => falha(new Error('não consegui carregar o widget do Pluggy (sem internet?)'));
+        document.head.appendChild(s);
+    });
+}
+
+async function pgConectar() {
+    try {
+        const { accessToken } = await api('POST', '/pluggy/connect-token');
+        await pgCarregarWidget();
+        const widget = new window.PluggyConnect({
+            connectToken: accessToken,
+            onSuccess: async ({ item }) => {
+                try {
+                    await api('POST', '/pluggy/item', { itemId: item.id });
+                    toast('✔ Banco conectado — sincronizando…');
+                    await pgCarregar();
+                    pgSincronizar();
+                } catch (e) { toast('❌ ' + e.message); }
+            },
+            onError: (erro) => toast('❌ ' + (erro?.message || 'falha ao conectar o banco')),
+        });
+        await widget.init();
+    } catch (e) { toast('❌ ' + e.message); }
+}
+
+async function pgSincronizar() {
+    const b = $('pgBtnSync'); b.disabled = true; b.textContent = 'Sincronizando…';
+    try {
+        const r = await api('POST', '/pluggy/sync', {});
+        S = r; renderTudo();
+        toast(`✔ ${r.sync.novos} lançamento(s) novo(s) · saldo do banco ${money(r.sync.saldo_banco)}`);
+        pgCarregar();
+    } catch (e) { toast('❌ ' + e.message); }
+    b.disabled = false; b.textContent = 'Sincronizar agora';
+}
+
+async function pgDesconectar() {
+    if (!confirm('Desconectar o banco? Os lançamentos já importados continuam no painel.')) return;
+    try { await api('DELETE', '/pluggy'); toast('Banco desconectado'); pgCarregar(); } catch (e) { toast('❌ ' + e.message); }
+}
+
 function renderPlanejamento() {
+    pgCarregar();
     if (!$('lData').value) $('lData').value = hojeISO();
     trocaCategorias();
     $('cfgSaldo').value = S.config.saldo_inicial ? String(S.config.saldo_inicial).replace('.', ',') : '';

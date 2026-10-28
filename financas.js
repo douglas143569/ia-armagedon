@@ -1,6 +1,6 @@
 // ARMAGEDON — Minhas finanças (API local em /api/financas/*)
-// Dados pessoais: ficam só em financas_data/financas.json (fora do git). Nada é enviado para a internet;
-// a pergunta à IA vai para o Ollama local.
+// Dados pessoais: ficam só em financas_data/financas.json (fora do git). A pergunta à IA vai para o Ollama local.
+// Única saída para a internet: a sincronização opcional com o banco via Pluggy (pluggy.js).
 
 const fs = require('fs');
 const path = require('path');
@@ -51,6 +51,9 @@ function numero(v, { min = 0, max = 1e12, campo = 'valor' } = {}) {
 }
 
 class Erro extends Error {}
+
+const pluggy = require('./pluggy')(Erro, DATA_DIR);
+let sincronizando = false;
 
 function hoje() {
     const d = new Date();
@@ -337,6 +340,56 @@ function criarConta(b) {
     };
 }
 
+// Junta as transações do banco aos lançamentos (sem duplicar) e acerta o saldo inicial para o saldo
+// do painel bater com o saldo real da conta.
+function aplicarSync(d, r) {
+    const conhecidos = new Set(d.lancamentos.map(l => l.ext_id).filter(Boolean));
+    let novos = 0, ignorados = 0;
+    for (const t of r.transacoes) {
+        if (conhecidos.has(t.ext_id)) continue;
+        try {
+            const l = criarLancamento(t);
+            l.ext_id = t.ext_id;
+            l.origem = 'pluggy';
+            d.lancamentos.push(l);
+            conhecidos.add(t.ext_id);
+            novos++;
+        } catch { ignorados++; }
+    }
+    const liquido = d.lancamentos.reduce((s, l) => s + (l.tipo === 'receita' ? l.valor : -l.valor), 0);
+    d.config.saldo_inicial = reais(r.saldo - liquido);
+    return { novos, ignorados, saldo_banco: reais(r.saldo), ignoradasCartao: r.ignoradasCartao };
+}
+
+async function rotaPluggy(req, res, sub, m) {
+    if (m === 'GET' && !sub) { enviar(res, 200, pluggy.status()); return; }
+    if (m === 'POST' && sub === 'credenciais') {
+        const b = await lerCorpo(req);
+        enviar(res, 200, await pluggy.salvarCredenciais(b.clientId, b.clientSecret));
+    } else if (m === 'POST' && sub === 'connect-token') {
+        enviar(res, 200, await pluggy.connectToken());
+    } else if (m === 'POST' && sub === 'item') {
+        enviar(res, 200, await pluggy.vincular((await lerCorpo(req)).itemId));
+    } else if (m === 'POST' && sub === 'sync') {
+        if (sincronizando) throw new Erro('já existe uma sincronização em andamento');
+        sincronizando = true;
+        try {
+            const b = await lerCorpo(req);
+            const dias = Math.min(365, Math.max(1, Math.round(Number(b.dias)) || 90));
+            const r = await pluggy.buscar(dias);
+            const d = carregar();   // relê depois da espera de rede: não atropela o que foi lançado nesse meio-tempo
+            const sync = aplicarSync(d, r);
+            salvar(d);
+            pluggy.concluirSync(r);
+            enviar(res, 200, { ...resposta(d), sync, pluggy: pluggy.status() });
+        } finally { sincronizando = false; }
+    } else if (m === 'DELETE' && !sub) {
+        enviar(res, 200, await pluggy.desconectar());
+    } else {
+        enviar(res, 405, { error: 'método não permitido' });
+    }
+}
+
 // Devolve true se tratou a requisição
 async function handle(req, res) {
     const u = (req.url || '').split('?')[0];
@@ -351,6 +404,8 @@ async function handle(req, res) {
         const m = req.method;
 
         if (m === 'GET' && recurso === 'dados') { enviar(res, 200, resposta(d)); return true; }
+
+        if (recurso === 'pluggy') { await rotaPluggy(req, res, id, m); return true; }
 
         const colecoes = { lancamentos: criarLancamento, investimentos: criarInvestimento, metas: criarMeta, contas: criarConta };
         if (colecoes[recurso]) {
@@ -408,4 +463,4 @@ async function handle(req, res) {
     return true;
 }
 
-module.exports = { handle, resumo, dicas, carregar, vazio, CLASSES, _interno: { criarLancamento, criarInvestimento, criarMeta, criarConta, numero, dataValida, mesAnterior, vencimentoMensal, ehVencimento } };
+module.exports = { handle, resumo, dicas, carregar, vazio, CLASSES, _interno: { aplicarSync, criarLancamento, criarInvestimento, criarMeta, criarConta, numero, dataValida, mesAnterior, vencimentoMensal, ehVencimento } };

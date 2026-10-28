@@ -152,6 +152,8 @@ Pedido em 2026-10-27, com base numa imagem de referência (dashboard "Central Fi
 - [x] Simuladores: juros compostos, reserva de emergência, liberdade financeira, comparador
 - [x] Técnicas para guardar dinheiro (50/30/20, desafio 52 semanas, envelopes, pequenas economias)
 - [x] Dicas calculadas dos próprios dados + pergunta livre à IA local (Ollama) com o resumo financeiro como contexto
+- [x] Conta do banco via Open Finance (Pluggy, pedido em 2026-10-28): `pluggy.js` + rotas `/api/financas/pluggy/*`, card "Conta do banco" em Lançamentos. Autoriza o Santander pelo widget oficial, sincroniza transações das contas bancárias (sem duplicar, saldo inicial recalculado). Credenciais só em `financas_data/pluggy.json` ou env `PLUGGY_CLIENT_ID`/`PLUGGY_CLIENT_SECRET`. Testado só contra um Pluggy simulado — falta validar com credenciais reais.
+- [ ] Importar extrato OFX/CSV (alternativa gratuita ao Pluggy)
 - Regras: nenhum dado de exemplo inventado (o painel começa vazio); a IA dá orientação educativa, não recomendação personalizada de investimento.
 
 ## Descobertas recentes (pesquisado em 2026-08-25)
