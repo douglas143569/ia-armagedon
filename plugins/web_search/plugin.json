@@ -1,0 +1,18 @@
+{
+  "name": "Web Search",
+  "version": "1.0.0",
+  "description": "Busca informações na web (simulado)",
+  "author": "ARMAGEDON",
+  "enabled": false,
+  "config": {
+    "max_results": 5,
+    "timeout": 10
+  },
+  "endpoints": [
+    {
+      "path": "/api/search",
+      "method": "POST",
+      "description": "Busca na web"
+    }
+  ]
+}

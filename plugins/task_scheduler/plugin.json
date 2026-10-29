@@ -1,0 +1,55 @@
+{
+  "name": "Task Scheduler",
+  "version": "1.0.0",
+  "description": "Agendador de tarefas automáticas com suporte a cron",
+  "author": "ARMAGEDON",
+  "enabled": true,
+  "config": {
+    "enable_scheduler": true,
+    "check_interval_seconds": 60,
+    "max_workers": 4
+  },
+  "hooks": [],
+  "endpoints": [
+    {
+      "path": "/api/scheduler/create",
+      "method": "POST",
+      "description": "Criar nova tarefa agendada"
+    },
+    {
+      "path": "/api/scheduler/list",
+      "method": "GET",
+      "description": "Listar todas as tarefas"
+    },
+    {
+      "path": "/api/scheduler/delete",
+      "method": "POST",
+      "description": "Deletar tarefa"
+    },
+    {
+      "path": "/api/scheduler/execute",
+      "method": "POST",
+      "description": "Executar tarefa imediatamente"
+    },
+    {
+      "path": "/api/scheduler/history",
+      "method": "GET",
+      "description": "Histórico de execuções"
+    },
+    {
+      "path": "/api/scheduler/pause",
+      "method": "POST",
+      "description": "Pausar/retomar tarefa"
+    }
+  ],
+  "features": [
+    "Agendar tarefas por cron",
+    "Executar após intervalo de tempo",
+    "Gerar imagem automaticamente",
+    "Limpar cache em horários específicos",
+    "Fazer backup automático",
+    "Executar scripts customizados",
+    "Histórico de execuções",
+    "Pausar/retomar tarefas"
+  ]
+}

@@ -80,6 +80,8 @@ Eu (Douglas) só converso com o **ARMAGEDON**, num lugar só (chat/hub — Fase 
 ### Fase 2.5 — Interface gráfica personalizada (hub central do computador)
 - [x] **Launcher único + supervisor** (`armagedon.ps1` / `ARMAGEDON.bat`) — sobe os 5 serviços na ordem, espera cada health check, abre o navegador e reinicia sozinho o que cair (checa a cada 15s). Flags `-Stop`, `-WithVideo`, `-Once`, `-NoBrowser`. Status ao vivo no painel lateral (`GET /api/status`). Logs em `logs/`. Ver `INICIAR.md`. Falta: entrada no Agendador de Tarefas p/ subir no logon (instruções no `INICIAR.md`).
 - [x] **Redesign premium da interface** (`interface.html`, 2026-10-13) — design system próprio (tokens de cor semântica, escala tipográfica Display/Heading/Title/Body/Caption, espaçamento 4px, raios, sombras/profundidade, motion), dark nativo + tema claro + modo "efeitos leves" (sem blur/aurora, p/ a iGPU). Telas: Chat · Estúdio (imagem/vídeo + galeria) · Processos · Conhecimento · Sistema (dashboard com gráficos de RAM/GPU). Paleta de comandos (Ctrl+K), toasts, popovers, diálogos, skeletons, empty states, markdown com blocos de código copiáveis, WCAG (foco visível, landmarks, aria-live, reduced-motion). **Sem framework/build** (decisão: Next.js/React gastaria RAM e build num app local de 1 usuário; usa APIs nativas — View Transitions, Popover, `<dialog>`, container queries, subgrid). Hub ganhou `GET /media/{images,videos}/<arquivo>` p/ mostrar o resultado na tela.
+  - **2026-10-29 — merge do branch `atualizacoes-2026-10-19`** (voz/TTS, finanças, plugins, sequências, montagem de vídeo): a interface do branch virou a principal (`interface.html`); o redesign ficou em `interface-premium.html` p/ receber essas funções depois. Geradores trocados por `image_generator.py` / `video_generator.py` (launcher atualizado).
+  - **Mapa de portas**: 3000 hub · 5000 imagem · 5001 vídeo · 5002 cérebro (RAG/web/roteador) · 5003 assistente de voz · 5004 memória (`memory_service.py`) · **5005 TTS** (`tts_generator.py` — estava na 5002 e colidia com o cérebro).
 - [ ] Decidir stack de empacotamento: **Tauri** (recomendado — leve, frontend em HTML/CSS/JS) ou Electron (100% JS, mais pesado)
 - [ ] Frontend de chat consumindo a API local do Ollama diretamente (HTTP)
 - [ ] Painel de status: voz ativa, automação residencial, últimas ações do ARMAGEDON
@@ -154,6 +156,21 @@ Pipeline montado 2026-08-28 — ver **`FASE-6-FINETUNING.md`**. Pasta `finetune/
 - [x] Roteamento de modelos — `route_model()` em `armagedon_brain.py` (heurística por regex, sem custo): matemática/lógica → `deepseek-r1:7b`, escrita criativa → `dolphin-llama3`, resto → `armagedon`. O hub aplica quando o modelo escolhido na interface é "🤖 Automático" e devolve `X-Router-Model`/`X-Router-Reason`; a interface mostra "🧭 roteado para ...". Dropdown ainda permite forçar um modelo. Falta: classificador via LLM p/ casos ambíguos, rotear "gerar imagem/vídeo" (depende de tool calling)
 - [ ] Orquestração multi-agente — modelos/instâncias especializadas colaborando (planeja / executa / revisa) em vez de um modelo genérico fazendo tudo
 - [ ] Adotar MCP (Model Context Protocol) como padrão de ferramentas — protocolo aberto para conectar a IA a ferramentas/dados de forma padronizada, em vez de solução caseira
+
+### Fase 8 — Minhas finanças (módulo pessoal de finanças)
+Pedido em 2026-10-27, com base numa imagem de referência (dashboard "Central Financeira"). Página própria `financas.html` (aberta pelo menu do hub), API `/api/financas/*` em `financas.js`, dados SOMENTE locais em `financas_data/financas.json` (fora do git).
+- [x] Painel inicial: patrimônio, renda do mês, despesas do mês, valor investido (com variação vs. mês anterior)
+- [x] Gráfico de evolução do patrimônio (histórico mensal) e carteira de investimentos por classe (rosca)
+- [x] Lançamentos de receitas/despesas por categoria, com formulário rápido e movimentações recentes no painel inicial
+- [x] Contas únicas ou mensais com alertas de vencimento, notificação do navegador e baixa de pagamento
+- [x] Investimentos por classe (Ações, FIIs, Renda Fixa, ETFs, Cripto, Outros)
+- [x] Metas/objetivos com progresso
+- [x] Simuladores: juros compostos, reserva de emergência, liberdade financeira, comparador
+- [x] Técnicas para guardar dinheiro (50/30/20, desafio 52 semanas, envelopes, pequenas economias)
+- [x] Dicas calculadas dos próprios dados + pergunta livre à IA local (Ollama) com o resumo financeiro como contexto
+- [x] Conta do banco via Open Finance (Pluggy, pedido em 2026-10-28): `pluggy.js` + rotas `/api/financas/pluggy/*`, card "Conta do banco" em Lançamentos. Autoriza o Santander pelo widget oficial, sincroniza transações das contas bancárias (sem duplicar, saldo inicial recalculado). Credenciais só em `financas_data/pluggy.json` ou env `PLUGGY_CLIENT_ID`/`PLUGGY_CLIENT_SECRET`. Testado só contra um Pluggy simulado — falta validar com credenciais reais.
+- [ ] Importar extrato OFX/CSV (alternativa gratuita ao Pluggy)
+- Regras: nenhum dado de exemplo inventado (o painel começa vazio); a IA dá orientação educativa, não recomendação personalizada de investimento.
 
 ## Descobertas recentes (pesquisado em 2026-08-25)
 

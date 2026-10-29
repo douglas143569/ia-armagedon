@@ -55,16 +55,23 @@ $Services = @(
                     -RedirectStandardError  (Join-Path $LogDir "hub.err.log") } }
 
     @{ Name = "imagem"; Port = 5000; Health = "http://localhost:5000/health";
-       Match = "image_generator_final"; StartupSec = 180; Auto = $true
-       Start = { Start-Process $Py -ArgumentList "image_generator_final.py" -WorkingDirectory $Root -WindowStyle Hidden `
+       Match = "image_generator\.py"; StartupSec = 180; Auto = $true
+       Start = { Start-Process $Py -ArgumentList "image_generator.py" -WorkingDirectory $Root -WindowStyle Hidden `
                     -RedirectStandardOutput (Join-Path $LogDir "imagem.out.log") `
                     -RedirectStandardError  (Join-Path $LogDir "imagem.err.log") } }
 
     @{ Name = "video"; Port = 5001; Health = "http://localhost:5001/health";
-       Match = "video_generator_flask"; StartupSec = 180; Auto = [bool]$WithVideo
-       Start = { Start-Process $Py -ArgumentList "video_generator_flask.py" -WorkingDirectory $Root -WindowStyle Hidden `
+       Match = "video_generator\.py"; StartupSec = 180; Auto = [bool]$WithVideo
+       Start = { Start-Process $Py -ArgumentList "video_generator.py" -WorkingDirectory $Root -WindowStyle Hidden `
                     -RedirectStandardOutput (Join-Path $LogDir "video.out.log") `
                     -RedirectStandardError  (Join-Path $LogDir "video.err.log") } }
+
+    # Voz (TTS) na 5005 - a 5002 e do cerebro, 5003 do assistente de voz, 5004 da memoria (o hub sobe esses dois)
+    @{ Name = "tts"; Port = 5005; Health = "http://localhost:5005/health";
+       Match = "tts_generator"; StartupSec = 30; Auto = $true
+       Start = { Start-Process $Py -ArgumentList "tts_generator.py" -WorkingDirectory $Root -WindowStyle Hidden `
+                    -RedirectStandardOutput (Join-Path $LogDir "tts.out.log") `
+                    -RedirectStandardError  (Join-Path $LogDir "tts.err.log") } }
 )
 
 function Test-Svc($svc, $tries = 1) {

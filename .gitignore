@@ -50,3 +50,17 @@ logs/
 gpu-video/venv/
 gpu-video/videos_out/
 gpu-video/__pycache__/
+
+# Chaves (nunca versionar)
+test_hf_key.py
+
+# Dados locais e arquivos gerados
+*.db
+armagedon_export_*.json
+scheduled_tasks.json
+audio_generated/
+images_edited/
+backups/
+*.backup.*
+# Dados financeiros pessoais (nunca versionar)
+financas_data/

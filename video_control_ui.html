@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ARMAGEDON - Controlador de Vídeos</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 0.95em;
+        }
+
+        .control-group {
+            margin-bottom: 30px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 0.95em;
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        input[type="range"] {
+            flex: 1;
+            height: 8px;
+            border-radius: 5px;
+            background: linear-gradient(to right, #667eea, #764ba2);
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: white;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            border: 3px solid #667eea;
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: white;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            border: 3px solid #667eea;
+        }
+
+        .value-display {
+            min-width: 60px;
+            text-align: right;
+            font-weight: bold;
+            color: #667eea;
+            font-size: 1.2em;
+        }
+
+        .radio-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .radio-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .radio-option input[type="radio"] {
+            cursor: pointer;
+        }
+
+        .radio-option:hover {
+            border-color: #667eea;
+            background: #f5f7ff;
+        }
+
+        .radio-option input[type="radio"]:checked + label {
+            color: #667eea;
+        }
+
+        input[type="radio"]:checked + label {
+            font-weight: bold;
+        }
+
+        .radio-option label {
+            margin: 0;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .estimate-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .estimate-time {
+            font-size: 2em;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .estimate-frames {
+            font-size: 0.9em;
+            opacity: 0.9;
+            margin-top: 10px;
+        }
+
+        .estimate-label {
+            font-size: 0.85em;
+            opacity: 0.85;
+        }
+
+        button {
+            width: 100%;
+            padding: 15px 30px;
+            font-size: 1.1em;
+            font-weight: bold;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            margin-bottom: 10px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .secondary-btn {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .secondary-btn:hover {
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .preset-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .preset-btn {
+            padding: 10px;
+            font-size: 0.9em;
+        }
+
+        .status-message {
+            text-align: center;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .status-message.success {
+            background: #d4edda;
+            color: #155724;
+            display: block;
+        }
+
+        .status-message.error {
+            background: #f8d7da;
+            color: #721c24;
+            display: block;
+        }
+
+        .info-box {
+            background: #f5f7ff;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            margin-bottom: 20px;
+            font-size: 0.9em;
+            color: #555;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 1.8em;
+            }
+
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎬 ARMAGEDON</h1>
+            <p class="subtitle">Controlador de Geração de Vídeos</p>
+        </header>
+
+        <div class="info-box">
+            ⚡ Com as otimizações ativas, videos são gerados 5-7x mais rápido!
+        </div>
+
+        <!-- Presets -->
+        <div class="control-group">
+            <label>📌 Presets Rápidos</label>
+            <div class="preset-buttons">
+                <button class="preset-btn secondary-btn" onclick="applyPreset('fast')">⚡ Rápido (1 min)</button>
+                <button class="preset-btn secondary-btn" onclick="applyPreset('medium')">🎬 Médio (1.5 min)</button>
+                <button class="preset-btn secondary-btn" onclick="applyPreset('quality')">✨ Qualidade (3 min)</button>
+                <button class="preset-btn secondary-btn" onclick="applyPreset('cinema')">🎥 Cinema (5+ min)</button>
+            </div>
+        </div>
+
+        <!-- Duration -->
+        <div class="control-group">
+            <label for="duration">⏱️ Duração do Vídeo</label>
+            <div class="slider-container">
+                <input type="range" id="duration" min="1" max="30" value="4" oninput="updateEstimate()">
+                <span class="value-display"><span id="durationValue">4</span>s</span>
+            </div>
+            <small style="color: #999; margin-top: 5px;">Duração total do vídeo em segundos</small>
+        </div>
+
+        <!-- FPS -->
+        <div class="control-group">
+            <label for="fps">🎞️ Frames por Segundo (FPS)</label>
+            <div class="slider-container">
+                <input type="range" id="fps" min="1" max="30" value="6" oninput="updateEstimate()">
+                <span class="value-display"><span id="fpsValue">6</span> FPS</span>
+            </div>
+            <small style="color: #999; margin-top: 5px;">Mais FPS = animação mais suave (e mais lento)</small>
+        </div>
+
+        <!-- Mode -->
+        <div class="control-group">
+            <label>🎨 Modo de Geração</label>
+            <div class="radio-group">
+                <div class="radio-option">
+                    <input type="radio" id="camera" name="mode" value="camera" checked onchange="updateEstimate()">
+                    <label for="camera">Camera (Zoom)</label>
+                </div>
+                <div class="radio-option">
+                    <input type="radio" id="frames" name="mode" value="frames" onchange="updateEstimate()">
+                    <label for="frames">Frames</label>
+                </div>
+                <div class="radio-option">
+                    <input type="radio" id="evolucao" name="mode" value="evolucao" onchange="updateEstimate()">
+                    <label for="evolucao">Evolução</label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Model -->
+        <div class="control-group">
+            <label>🤖 Modelo de IA</label>
+            <div class="radio-group">
+                <div class="radio-option">
+                    <input type="radio" id="turbo" name="model" value="turbo" checked onchange="updateEstimate()">
+                    <label for="turbo">SD-Turbo (Rápido)</label>
+                </div>
+                <div class="radio-option">
+                    <input type="radio" id="sd15" name="model" value="sd15" onchange="updateEstimate()">
+                    <label for="sd15">SD-1.5 (Qualidade)</label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Size -->
+        <div class="control-group">
+            <label>📐 Resolução</label>
+            <div class="radio-group">
+                <div class="radio-option">
+                    <input type="radio" id="size384" name="size" value="384" onchange="updateEstimate()">
+                    <label for="size384">384x384 (Rápido)</label>
+                </div>
+                <div class="radio-option">
+                    <input type="radio" id="size512" name="size" value="512" checked onchange="updateEstimate()">
+                    <label for="size512">512x512 (Padrão)</label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Estimate -->
+        <div class="estimate-box">
+            <div class="estimate-label">⏳ Tempo Estimado de Geração</div>
+            <div class="estimate-time"><span id="estimateMinutes">1.5</span> min</div>
+            <div class="estimate-frames">
+                ~<span id="estimateFrames">20</span> frames |
+                <span id="estimatePixels">5.2</span>M pixels
+            </div>
+        </div>
+
+        <!-- Generate Button -->
+        <button onclick="generateVideo()">🚀 Gerar Vídeo Agora</button>
+        <button class="secondary-btn" onclick="copyCommand()">📋 Copiar Comando curl</button>
+
+        <!-- Status -->
+        <div class="status-message" id="statusMessage"></div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:5001';
+
+        function updateEstimate() {
+            const duration = parseInt(document.getElementById('duration').value);
+            const fps = parseInt(document.getElementById('fps').value);
+            const mode = document.querySelector('input[name="mode"]:checked').value;
+            const model = document.querySelector('input[name="model"]:checked').value;
+            const size = parseInt(document.querySelector('input[name="size"]:checked').value);
+
+            document.getElementById('durationValue').textContent = duration;
+            document.getElementById('fpsValue').textContent = fps;
+
+            fetch(`${API_URL}/estimate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    duration, fps, mode,
+                    turbo: model === 'turbo',
+                    size
+                })
+            })
+            .then(r => r.json())
+            .then(data => {
+                document.getElementById('estimateMinutes').textContent = data.estimated_minutes;
+                document.getElementById('estimateFrames').textContent = data.frames;
+                document.getElementById('estimatePixels').textContent =
+                    (data.total_pixels / 1000000).toFixed(1);
+            })
+            .catch(e => console.error('Erro na estimativa:', e));
+        }
+
+        function applyPreset(preset) {
+            const presets = {
+                fast: { duration: 2, fps: 4, mode: 'camera', model: 'turbo', size: 384 },
+                medium: { duration: 4, fps: 6, mode: 'camera', model: 'turbo', size: 512 },
+                quality: { duration: 4, fps: 8, mode: 'frames', model: 'sd15', size: 512 },
+                cinema: { duration: 8, fps: 12, mode: 'evolucao', model: 'sd15', size: 512 }
+            };
+
+            const p = presets[preset];
+            document.getElementById('duration').value = p.duration;
+            document.getElementById('fps').value = p.fps;
+            document.querySelector(`input[value="${p.mode}"]`).checked = true;
+            document.querySelector(`input[value="${p.model === 'turbo' ? 'turbo' : 'sd15'}"]`).checked = true;
+            document.querySelector(`input[value="${p.size}"]`).checked = true;
+
+            updateEstimate();
+        }
+
+        function generateVideo() {
+            const prompt = prompt('Descrição do vídeo (ex: "um robô futurista com neon"):');
+            if (!prompt) return;
+
+            const duration = parseInt(document.getElementById('duration').value);
+            const fps = parseInt(document.getElementById('fps').value);
+            const mode = document.querySelector('input[name="mode"]:checked').value;
+            const model = document.querySelector('input[name="model"]:checked').value;
+            const size = parseInt(document.querySelector('input[name="size"]:checked').value);
+
+            const payload = {
+                prompt,
+                duration,
+                fps,
+                mode,
+                turbo: model === 'turbo',
+                size
+            };
+
+            fetch(`${API_URL}/generate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.job_id) {
+                    showStatus('✅ Vídeo iniciado! ID: ' + data.job_id, 'success');
+                    setTimeout(() => monitorJob(data.job_id), 1000);
+                } else {
+                    showStatus('❌ Erro: ' + (data.error || 'Desconhecido'), 'error');
+                }
+            })
+            .catch(e => showStatus('❌ Erro de conexão: ' + e.message, 'error'));
+        }
+
+        function monitorJob(jobId) {
+            const checkInterval = setInterval(() => {
+                fetch(`${API_URL}/status/${jobId}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.status === 'concluído') {
+                            clearInterval(checkInterval);
+                            showStatus(
+                                `✅ Vídeo pronto! ${data.result.filename}`,
+                                'success'
+                            );
+                        } else if (data.status === 'erro' || data.status === 'cancelado') {
+                            clearInterval(checkInterval);
+                            showStatus('❌ ' + data.error, 'error');
+                        } else {
+                            showStatus(
+                                `⏳ ${data.status}: ${data.message} (${data.percent}%)`,
+                                'success'
+                            );
+                        }
+                    });
+            }, 2000);
+        }
+
+        function copyCommand() {
+            const duration = document.getElementById('duration').value;
+            const fps = document.getElementById('fps').value;
+            const mode = document.querySelector('input[name="mode"]:checked').value;
+            const model = document.querySelector('input[name="model"]:checked').value;
+            const size = document.querySelector('input[name="size"]:checked').value;
+
+            const cmd = `curl -X POST http://localhost:5001/generate \\
+  -H "Content-Type: application/json" \\
+  -d '{"prompt":"seu prompt aqui","duration":${duration},"fps":${fps},"mode":"${mode}","turbo":${model === 'turbo'},"size":${size}}'`;
+
+            navigator.clipboard.writeText(cmd).then(() => {
+                showStatus('📋 Comando copiado!', 'success');
+            });
+        }
+
+        function showStatus(msg, type) {
+            const el = document.getElementById('statusMessage');
+            el.textContent = msg;
+            el.className = 'status-message ' + type;
+            setTimeout(() => el.className = 'status-message', 5000);
+        }
+
+        // Initialize
+        updateEstimate();
+    </script>
+</body>
+</html>

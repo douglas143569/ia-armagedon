@@ -1,31 +1,42 @@
 @echo off
-REM ARMAGEDON - Gerador de Videos/GIFs (porta 5001)
-REM Criado em 2026-08-27
+REM ARMAGEDON - Iniciar Gerador de Videos com Interface de Controle
+REM Data: 2026-08-28
 
 echo.
-echo ================================
-echo  ARMAGEDON - Gerador de Videos
-echo ================================
+echo ====================================================
+echo  ARMAGEDON - Gerador de Videos (Interface Completa)
+echo ====================================================
+echo.
+
+echo Iniciando servidor Python...
 echo.
 
 cd /d "%~dp0"
 
-REM Verificar se venv existe
-if not exist "venv_images" (
-    echo Ambiente Python nao encontrado!
-    echo Execute primeiro: .\setup-images.ps1
-    echo.
-    pause
-    exit /b 1
-)
+REM Iniciar servidor Flask
+start "ARMAGEDON Video Generator" cmd /k python video_generator_flask.py
 
-echo AVISO: geracao de video em CPU e MUITO lenta nesta maquina.
-echo Um GIF de 2s (12 frames) pode levar cerca de 1 hora.
+REM Aguardar servidor inicializar
+echo Aguardando servidor inicializar (~30 segundos)...
+timeout /t 5 /nobreak
+
+REM Abrir interface no navegador
 echo.
+echo Abrindo interface no navegador...
+start http://localhost:5001/ui
 
-REM Ativar venv e executar gerador
-call venv_images\Scripts\activate.bat
-set HF_HUB_DISABLE_SYMLINKS_WARNING=1
-python video_generator_flask.py
-
+echo.
+echo ====================================================
+echo OK! Interface aberta em: http://localhost:5001/ui
+echo ====================================================
+echo.
+echo Controle:
+echo - FPS: 1-30 frames por segundo
+echo - Duracao: 1-30 segundos
+echo - Modo: Camera, Frames, Evolucao
+echo - Modelo: SD-Turbo ou SD-1.5
+echo.
+echo Mantenha esta janela aberta enquanto usar.
+echo Feche para parar o servidor.
+echo.
 pause

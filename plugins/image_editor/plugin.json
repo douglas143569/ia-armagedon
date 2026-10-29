@@ -1,0 +1,47 @@
+{
+  "name": "Image Editor",
+  "version": "1.0.0",
+  "description": "Editor de imagens com filtros, redimensionamento e efeitos",
+  "author": "ARMAGEDON",
+  "enabled": true,
+  "hooks": [
+    {
+      "event": "image_generated",
+      "method": "on_image_generated"
+    }
+  ],
+  "endpoints": [
+    {
+      "path": "/api/image-editor/resize",
+      "method": "POST",
+      "description": "Redimensiona imagem"
+    },
+    {
+      "path": "/api/image-editor/crop",
+      "method": "POST",
+      "description": "Corta imagem"
+    },
+    {
+      "path": "/api/image-editor/adjust",
+      "method": "POST",
+      "description": "Ajusta contraste/brilho"
+    },
+    {
+      "path": "/api/image-editor/filter",
+      "method": "POST",
+      "description": "Aplica filtro"
+    },
+    {
+      "path": "/api/image-editor/watermark",
+      "method": "POST",
+      "description": "Adiciona marca d'água"
+    }
+  ],
+  "features": [
+    "Cortar/redimensionar",
+    "Ajustar contraste/brilho",
+    "Aplicar filtros (blur, sharpen, etc)",
+    "Adicionar texto/marcas d'água",
+    "Converter formatos"
+  ]
+}

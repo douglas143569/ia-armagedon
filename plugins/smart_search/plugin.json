@@ -1,0 +1,51 @@
+{
+  "name": "Smart Search",
+  "version": "1.0.0",
+  "description": "Busca inteligente e semântica em todo o histórico do ARMAGEDON",
+  "author": "ARMAGEDON",
+  "enabled": true,
+  "config": {
+    "max_results": 50,
+    "min_relevance": 0.3,
+    "enable_semantic": true
+  },
+  "hooks": [],
+  "endpoints": [
+    {
+      "path": "/api/smart-search/search",
+      "method": "POST",
+      "description": "Busca inteligente com filtros"
+    },
+    {
+      "path": "/api/smart-search/advanced",
+      "method": "POST",
+      "description": "Busca avançada com múltiplos filtros"
+    },
+    {
+      "path": "/api/smart-search/suggest",
+      "method": "POST",
+      "description": "Sugestões de busca baseadas no histórico"
+    },
+    {
+      "path": "/api/smart-search/trending",
+      "method": "GET",
+      "description": "Tópicos em tendência"
+    },
+    {
+      "path": "/api/smart-search/analytics",
+      "method": "GET",
+      "description": "Análise de padrões de busca"
+    }
+  ],
+  "features": [
+    "Busca por palavra-chave",
+    "Busca por data/período",
+    "Filtros por tipo (chat, imagem, vídeo, áudio)",
+    "Busca semântica (por significado)",
+    "Ranking de relevância",
+    "Sugestões inteligentes",
+    "Análise de padrões",
+    "Tópicos em tendência",
+    "Busca combinada"
+  ]
+}

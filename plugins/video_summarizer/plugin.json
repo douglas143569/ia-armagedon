@@ -1,0 +1,47 @@
+{
+  "name": "Video Summarizer",
+  "version": "1.0.0",
+  "description": "Extrai resumos de vídeos, frames-chave e cria GIFs",
+  "author": "ARMAGEDON",
+  "enabled": true,
+  "hooks": [
+    {
+      "event": "video_generated",
+      "method": "on_video_generated"
+    }
+  ],
+  "endpoints": [
+    {
+      "path": "/api/video-summarizer/extract-frames",
+      "method": "POST",
+      "description": "Extrai frames-chave do vídeo"
+    },
+    {
+      "path": "/api/video-summarizer/detect-scenes",
+      "method": "POST",
+      "description": "Detecta mudanças de cena"
+    },
+    {
+      "path": "/api/video-summarizer/create-gif",
+      "method": "POST",
+      "description": "Cria GIF resumido"
+    },
+    {
+      "path": "/api/video-summarizer/get-duration",
+      "method": "POST",
+      "description": "Obtém duração do vídeo"
+    },
+    {
+      "path": "/api/video-summarizer/create-thumbnail",
+      "method": "POST",
+      "description": "Cria thumbnail do vídeo"
+    }
+  ],
+  "features": [
+    "Extrair frames-chave",
+    "Detectar cenas automaticamente",
+    "Criar GIF resumido",
+    "Gerar thumbnail",
+    "Obter metadados do vídeo"
+  ]
+}

@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ARMAGEDON - Texto para Voz</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 0.95em;
+        }
+
+        .control-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 0.95em;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 1em;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 120px;
+            transition: border-color 0.3s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 1em;
+            cursor: pointer;
+            background: white;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        input[type="range"] {
+            flex: 1;
+            height: 8px;
+            border-radius: 5px;
+            background: linear-gradient(to right, #667eea, #764ba2);
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: white;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            border: 3px solid #667eea;
+        }
+
+        .value-display {
+            min-width: 60px;
+            text-align: right;
+            font-weight: bold;
+            color: #667eea;
+            font-size: 1.1em;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            flex: 1;
+            padding: 15px;
+            font-size: 1em;
+            font-weight: bold;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .primary-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .primary-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .primary-btn:active {
+            transform: translateY(0);
+        }
+
+        .secondary-btn {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .secondary-btn:hover {
+            background: #e0e0e0;
+        }
+
+        .char-count {
+            font-size: 0.85em;
+            color: #999;
+            margin-top: 5px;
+        }
+
+        .status {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .status.show {
+            display: block;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .progress-container {
+            display: none;
+            margin-bottom: 20px;
+        }
+
+        .progress-container.show {
+            display: block;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #ddd;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .progress-text {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .audio-player {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f5f7ff;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .audio-player.show {
+            display: block;
+        }
+
+        audio {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        .download-btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .download-btn:hover {
+            background: #764ba2;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 1.8em;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎤 ARMAGEDON</h1>
+            <p class="subtitle">Texto para Voz (Text-to-Speech)</p>
+        </header>
+
+        <!-- Textarea -->
+        <div class="control-group">
+            <label for="textInput">📝 Seu Texto</label>
+            <textarea id="textInput" placeholder="Escreva o texto que quer converter em áudio..." oninput="updateCharCount()"></textarea>
+            <div class="char-count"><span id="charCount">0</span>/1000 caracteres</div>
+        </div>
+
+        <!-- Voz -->
+        <div class="control-group">
+            <label for="voiceSelect">🗣️ Voz</label>
+            <select id="voiceSelect">
+                <option value="pt-br-default">Português (Padrão)</option>
+                <option value="pt-br-female">Português (Feminina)</option>
+                <option value="en-us-default">English (US)</option>
+                <option value="es-es-default">Español</option>
+            </select>
+        </div>
+
+        <!-- Velocidade -->
+        <div class="control-group">
+            <label for="speedSlider">⚡ Velocidade</label>
+            <div class="slider-container">
+                <input type="range" id="speedSlider" min="0.5" max="2.0" step="0.1" value="1.0" oninput="updateSpeed()">
+                <span class="value-display"><span id="speedValue">1.0</span>x</span>
+            </div>
+        </div>
+
+        <!-- Status -->
+        <div id="statusMessage" class="status"></div>
+
+        <!-- Progress -->
+        <div id="progressContainer" class="progress-container">
+            <div class="progress-bar">
+                <div id="progressFill" class="progress-fill"></div>
+            </div>
+            <div class="progress-text">
+                <span id="progressLabel">Gerando...</span>
+                <span id="progressPercent">0%</span>
+            </div>
+        </div>
+
+        <!-- Botões -->
+        <div class="button-group">
+            <button class="primary-btn" onclick="generateAudio()">🎵 Gerar Áudio</button>
+            <button class="secondary-btn" onclick="clearForm()">🗑️ Limpar</button>
+        </div>
+
+        <!-- Player de Áudio -->
+        <div id="audioPlayer" class="audio-player">
+            <audio id="audioElement" controls></audio>
+            <a id="downloadBtn" class="download-btn" download>📥 Baixar Áudio</a>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:5005';
+
+        function updateCharCount() {
+            const count = document.getElementById('textInput').value.length;
+            document.getElementById('charCount').textContent = count;
+        }
+
+        function updateSpeed() {
+            const speed = document.getElementById('speedSlider').value;
+            document.getElementById('speedValue').textContent = speed;
+        }
+
+        function showStatus(message, type = 'info') {
+            const el = document.getElementById('statusMessage');
+            el.textContent = message;
+            el.className = `status show ${type}`;
+            setTimeout(() => el.className = 'status', 5000);
+        }
+
+        function generateAudio() {
+            const text = document.getElementById('textInput').value.trim();
+            if (!text) {
+                showStatus('❌ Digite algum texto!', 'error');
+                return;
+            }
+
+            const voice = document.getElementById('voiceSelect').value;
+            const speed = parseFloat(document.getElementById('speedSlider').value);
+
+            const progressContainer = document.getElementById('progressContainer');
+            progressContainer.classList.add('show');
+            document.getElementById('audioPlayer').classList.remove('show');
+
+            fetch(`${API_URL}/generate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text, voice, speed })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (!data.job_id) throw new Error(data.error || 'Erro desconhecido');
+                monitorJob(data.job_id);
+            })
+            .catch(e => showStatus('❌ ' + e.message, 'error'));
+        }
+
+        function monitorJob(jobId) {
+            const checkInterval = setInterval(() => {
+                fetch(`${API_URL}/status/${jobId}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        document.getElementById('progressFill').style.width = data.percent + '%';
+                        document.getElementById('progressPercent').textContent = data.percent + '%';
+                        document.getElementById('progressLabel').textContent = data.message;
+
+                        if (data.status === 'concluído') {
+                            clearInterval(checkInterval);
+                            showStatus('✅ Áudio pronto!', 'success');
+                            playAudio(jobId, data.result.filename);
+                        } else if (data.status === 'erro') {
+                            clearInterval(checkInterval);
+                            showStatus('❌ ' + data.error, 'error');
+                        }
+                    });
+            }, 500);
+        }
+
+        function playAudio(jobId, filename) {
+            const audioElement = document.getElementById('audioElement');
+            audioElement.src = `${API_URL}/download/${jobId}`;
+            document.getElementById('downloadBtn').href = `${API_URL}/download/${jobId}`;
+            document.getElementById('downloadBtn').download = filename;
+            document.getElementById('audioPlayer').classList.add('show');
+            document.getElementById('progressContainer').classList.remove('show');
+        }
+
+        function clearForm() {
+            document.getElementById('textInput').value = '';
+            document.getElementById('speedSlider').value = '1.0';
+            document.getElementById('audioPlayer').classList.remove('show');
+            document.getElementById('progressContainer').classList.remove('show');
+            updateCharCount();
+            updateSpeed();
+        }
+
+        // Initialize
+        updateCharCount();
+        updateSpeed();
+    </script>
+</body>
+</html>

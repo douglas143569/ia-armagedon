@@ -1,0 +1,82 @@
+{
+  "name": "Video Editor Pro",
+  "version": "1.0.0",
+  "description": "Editor profissional de vídeos com efeitos, legendas e múltiplos formatos",
+  "author": "ARMAGEDON",
+  "enabled": true,
+  "config": {
+    "output_quality": "high",
+    "default_format": "mp4",
+    "max_file_size_mb": 500
+  },
+  "hooks": [
+    {
+      "event": "video_generated",
+      "method": "on_video_generated"
+    }
+  ],
+  "endpoints": [
+    {
+      "path": "/api/video-editor/trim",
+      "method": "POST",
+      "description": "Cortar vídeo"
+    },
+    {
+      "path": "/api/video-editor/split",
+      "method": "POST",
+      "description": "Dividir vídeo em partes"
+    },
+    {
+      "path": "/api/video-editor/add-text",
+      "method": "POST",
+      "description": "Adicionar texto/legendas"
+    },
+    {
+      "path": "/api/video-editor/add-audio",
+      "method": "POST",
+      "description": "Adicionar áudio/música"
+    },
+    {
+      "path": "/api/video-editor/change-speed",
+      "method": "POST",
+      "description": "Mudar velocidade"
+    },
+    {
+      "path": "/api/video-editor/add-transition",
+      "method": "POST",
+      "description": "Adicionar transição"
+    },
+    {
+      "path": "/api/video-editor/resize",
+      "method": "POST",
+      "description": "Redimensionar vídeo"
+    },
+    {
+      "path": "/api/video-editor/convert",
+      "method": "POST",
+      "description": "Converter formato"
+    },
+    {
+      "path": "/api/video-editor/merge",
+      "method": "POST",
+      "description": "Mesclar múltiplos vídeos"
+    },
+    {
+      "path": "/api/video-editor/get-info",
+      "method": "POST",
+      "description": "Obter informações do vídeo"
+    }
+  ],
+  "features": [
+    "Cortar/dividir vídeos",
+    "Adicionar texto e legendas",
+    "Adicionar áudio/música",
+    "Ajustar velocidade",
+    "Efeitos de transição",
+    "Redimensionar/crop",
+    "Converter formatos (MP4, MKV, AVI, WebM)",
+    "Mesclar múltiplos vídeos",
+    "Ajustar qualidade",
+    "Exportar em alta definição"
+  ]
+}

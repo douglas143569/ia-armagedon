@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚡ ARMAGEDON — Apocalipse Digital (Plugins)</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #ff1744;
+            --secondary: #ff6f00;
+            --accent1: #00ff41;
+            --accent2: #a855f7;
+            --accent3: #00d4ff;
+            --dark: #0a0a0a;
+            --light: #1a1a1a;
+            --border: #333333;
+            --text: #ffffff;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #000000 0%, #1a0000 50%, #000000 100%);
+            color: var(--text);
+            height: 100vh;
+            overflow: hidden;
+            background-attachment: fixed;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                0deg,
+                rgba(255, 23, 68, 0.03),
+                rgba(255, 23, 68, 0.03) 1px,
+                transparent 1px,
+                transparent 2px
+            );
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+            gap: 0;
+            position: relative;
+            z-index: 2;
+        }
+
+        .sidebar {
+            width: 320px;
+            background: linear-gradient(180deg, #1a1a1a 0%, #0f0f0f 100%);
+            border-right: 2px solid var(--primary);
+            padding: 20px;
+            overflow-y: auto;
+            box-shadow: 0 0 30px rgba(255, 23, 68, 0.3), inset 0 0 20px rgba(255, 23, 68, 0.05);
+        }
+
+        .logo {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-shadow: 0 0 10px rgba(255, 23, 68, 0.8);
+            letter-spacing: 2px;
+            animation: pulse-glow 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { text-shadow: 0 0 10px rgba(255, 23, 68, 0.8); }
+            50% { text-shadow: 0 0 20px rgba(255, 23, 68, 1); }
+        }
+
+        .plugin-tabs {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .plugin-btn {
+            padding: 12px 15px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: rgba(255, 23, 68, 0.05);
+            color: var(--text);
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: left;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            overflow: hidden;
+        }
+
+        .plugin-btn:hover {
+            background: rgba(255, 23, 68, 0.15);
+            border-color: var(--primary);
+            box-shadow: 0 0 15px rgba(255, 23, 68, 0.4);
+        }
+
+        .plugin-btn.active {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            border-color: var(--primary);
+            box-shadow: 0 0 20px rgba(255, 23, 68, 0.8);
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #0a0a0a;
+            overflow-y: auto;
+        }
+
+        .plugin-header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 0 30px rgba(255, 23, 68, 0.5);
+            letter-spacing: 1px;
+        }
+
+        .plugin-content {
+            display: none;
+            padding: 20px;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .plugin-content.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: #a0aec0;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: #1a1a1a;
+            color: var(--text);
+            font-family: inherit;
+            font-size: 12px;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 15px rgba(255, 23, 68, 0.3);
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 12px;
+        }
+
+        button:hover {
+            box-shadow: 0 0 20px rgba(255, 23, 68, 0.8);
+            transform: translateY(-2px);
+        }
+
+        .result-box {
+            background: rgba(0, 255, 65, 0.05);
+            border: 1px solid var(--accent1);
+            border-radius: 6px;
+            padding: 12px;
+            margin-top: 15px;
+            font-size: 12px;
+            color: var(--accent1);
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .result-box.error {
+            background: rgba(255, 23, 68, 0.05);
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+            margin-top: 10px;
+        }
+
+        .table th, .table td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .table th {
+            background: rgba(255, 23, 68, 0.1);
+            font-weight: 600;
+            color: var(--accent1);
+        }
+
+        .status-tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        .status-ok {
+            background: rgba(0, 255, 65, 0.2);
+            color: var(--accent1);
+        }
+
+        .status-error {
+            background: rgba(255, 23, 68, 0.2);
+            color: var(--primary);
+        }
+
+        .status-pending {
+            background: rgba(255, 111, 0, 0.2);
+            color: #ff9e40;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1a1a1a;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #404040;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <div class="logo">⚡ PLUGINS ⚡</div>
+
+            <div class="plugin-tabs">
+                <!-- ============ GERADORES ============ -->
+                <div style="font-size: 11px; color: #666; margin: 10px 0 5px; font-weight: bold; text-transform: uppercase;">Geradores</div>
+                <button class="plugin-btn active" onclick="switchPlugin('imageEditor', this)">🖼️ Image Editor</button>
+                <button class="plugin-btn" onclick="switchPlugin('videoSummarizer', this)">🎬 Video Summarizer</button>
+                <button class="plugin-btn" onclick="switchPlugin('videoEditorPro', this)">✂️ Video Editor Pro</button>
+
+                <!-- ============ UTILITÁRIOS ============ -->
+                <div style="font-size: 11px; color: #666; margin: 15px 0 5px; font-weight: bold; text-transform: uppercase;">Utilitários</div>
+                <button class="plugin-btn" onclick="switchPlugin('databaseMgr', this)">💾 Database Manager</button>
+                <button class="plugin-btn" onclick="switchPlugin('taskScheduler', this)">⏰ Task Scheduler</button>
+                <button class="plugin-btn" onclick="switchPlugin('smartSearch', this)">🔍 Smart Search</button>
+
+                <!-- ============ RETORNAR ============ -->
+                <div style="font-size: 11px; color: #666; margin: 15px 0 5px; font-weight: bold; text-transform: uppercase;">Navegação</div>
+                <button class="plugin-btn" onclick="window.location.href='interface.html'" style="background: rgba(168, 85, 247, 0.1); border-color: var(--accent2); color: var(--accent2);">← Voltar ao Chat</button>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <!-- ============ IMAGE EDITOR ============ -->
+            <div class="plugin-content active" id="imageEditor">
+                <div class="plugin-header">🖼️ Image Editor — Edição Profissional de Imagens</div>
+                <div style="padding: 20px;">
+                    <div class="form-group">
+                        <label>Caminho da Imagem</label>
+                        <input type="text" id="imgEditorPath" placeholder="Ex: images_generated/sunset.png">
+                    </div>
+
+                    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                        <button onclick="editorResize()">↔️ Redimensionar</button>
+                        <button onclick="editorCrop()">✂️ Recortar</button>
+                        <button onclick="editorAdjust()">🌞 Ajustar Cores</button>
+                        <button onclick="editorFilter()">✨ Filtro</button>
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label>Largura (px)</label>
+                            <input type="number" id="imgWidth" value="512">
+                        </div>
+                        <div class="form-group">
+                            <label>Altura (px)</label>
+                            <input type="number" id="imgHeight" value="512">
+                        </div>
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label>Brilho (-100 a 100)</label>
+                            <input type="number" id="imgBrightness" value="0" min="-100" max="100">
+                        </div>
+                        <div class="form-group">
+                            <label>Contraste (-100 a 100)</label>
+                            <input type="number" id="imgContrast" value="0" min="-100" max="100">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Tipo de Filtro</label>
+                        <select id="imgFilterType">
+                            <option value="blur">Desfoque</option>
+                            <option value="sharpen">Nitidez</option>
+                            <option value="emboss">Relevo</option>
+                            <option value="edge">Detecção de Borda</option>
+                            <option value="detail">Detalhes</option>
+                        </select>
+                    </div>
+
+                    <button onclick="editorConvert()">💾 Converter Formato</button>
+
+                    <div id="imageEditorResult" class="result-box" style="display:none;"></div>
+                </div>
+            </div>
+
+            <!-- ============ VIDEO SUMMARIZER ============ -->
+            <div class="plugin-content" id="videoSummarizer">
+                <div class="plugin-header">🎬 Video Summarizer — Análise e Resumo de Vídeos</div>
+                <div style="padding: 20px;">
+                    <div class="form-group">
+                        <label>Caminho do Vídeo</label>
+                        <input type="text" id="vidPath" placeholder="Ex: videos_generated/demo.mp4">
+                    </div>
+
+                    <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
+                        <button onclick="vidGetInfo()">📊 Informações</button>
+                        <button onclick="vidExtractFrames()">🖼️ Extrair Frames</button>
+                        <button onclick="vidDetectScenes()">🔍 Detectar Cenas</button>
+                        <button onclick="vidCreateGif()">🎞️ Gerar GIF</button>
+                        <button onclick="vidCreateThumbnail()">📸 Miniatura</button>
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label>Número de Frames</label>
+                            <input type="number" id="vidFrameCount" value="5" min="1" max="30">
+                        </div>
+                        <div class="form-group">
+                            <label>Duração do GIF (s)</label>
+                            <input type="number" id="vidGifDuration" value="3" min="1" max="10">
+                        </div>
+                    </div>
+
+                    <div id="videoSummarizerResult" class="result-box" style="display:none;"></div>
+                </div>
+            </div>
+
+            <!-- ============ VIDEO EDITOR PRO ============ -->
+            <div class="plugin-content" id="videoEditorPro">
+                <div class="plugin-header">✂️ Video Editor Pro — Edição Profissional de Vídeos</div>
+                <div style="padding: 20px;">
+                    <div class="form-group">
+                        <label>Vídeo Principal</label>
+                        <input type="text" id="veVideoPath" placeholder="Ex: videos_generated/main.mp4">
+                    </div>
+
+                    <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; font-size: 11px;">
+                        <button onclick="veGetInfo()">ℹ️ Info</button>
+                        <button onclick="veTrim()">✂️ Cortar</button>
+                        <button onclick="veSplit()">📂 Dividir</button>
+                        <button onclick="veAddText()">📝 Texto</button>
+                        <button onclick="veChangeSpeed()">⏩ Velocidade</button>
+                        <button onclick="veResize()">↔️ Redim.</button>
+                        <button onclick="veConvert()">💾 Converter</button>
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label>Início (MM:SS)</label>
+                            <input type="text" id="veStartTime" placeholder="00:00:10">
+                        </div>
+                        <div class="form-group">
+                            <label>Fim (MM:SS)</label>
+                            <input type="text" id="veEndTime" placeholder="00:00:30">
+                        </div>
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label>Velocidade (0.25-4.0)</label>
+                            <input type="number" id="veSpeed" value="1.0" step="0.1" min="0.25" max="4.0">
+                        </div>
+                        <div class="form-group">
+                            <label>Partes</label>
+                            <input type="number" id="veParts" value="2" min="2" max="10">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Texto/Legenda</label>
+                        <input type="text" id="veText" placeholder="Texto para adicionar">
+                    </div>
+
+                    <div id="videoEditorProResult" class="result-box" style="display:none;"></div>
+                </div>
+            </div>
+
+            <!-- ============ DATABASE MANAGER ============ -->
+            <div class="plugin-content" id="databaseMgr">
+                <div class="plugin-header">💾 Database Manager — Gerenciamento de Dados</div>
+                <div style="padding: 20px;">
+                    <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
+                        <button onclick="dbGetStats()">📊 Estatísticas</button>
+                        <button onclick="dbGetChats()">💬 Histórico Chat</button>
+                        <button onclick="dbGetImages()">🖼️ Imagens</button>
+                        <button onclick="dbGetVideos()">🎬 Vídeos</button>
+                        <button onclick="dbGetAudios()">🔊 Áudios</button>
+                        <button onclick="dbBackup()">💾 Backup</button>
+                        <button onclick="dbSearch()">🔍 Buscar</button>
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label>Tipo de Conteúdo</label>
+                            <select id="dbContentType">
+                                <option value="chat">Chat</option>
+                                <option value="image">Imagem</option>
+                                <option value="video">Vídeo</option>
+                                <option value="audio">Áudio</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Limite de Resultados</label>
+                            <input type="number" id="dbLimit" value="10" min="1" max="100">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Termo de Busca</label>
+                        <input type="text" id="dbSearchTerm" placeholder="Buscar...">
+                    </div>
+
+                    <div id="databaseMgrResult" class="result-box" style="display:none;"></div>
+                </div>
+            </div>
+
+            <!-- ============ TASK SCHEDULER ============ -->
+            <div class="plugin-content" id="taskScheduler">
+                <div class="plugin-header">⏰ Task Scheduler — Agendamento de Tarefas</div>
+                <div style="padding: 20px;">
+                    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                        <button onclick="tsGetTasks()">📋 Listar Tarefas</button>
+                        <button onclick="tsCreateTask()">✨ Nova Tarefa</button>
+                        <button onclick="tsExecuteNow()">▶️ Executar Agora</button>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Nome da Tarefa</label>
+                        <input type="text" id="tsName" placeholder="Ex: backup_diário">
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label>Tipo de Agendamento</label>
+                            <select id="tsScheduleType">
+                                <option value="at_time">Horário Fixo</option>
+                                <option value="interval">Intervalo (seg)</option>
+                                <option value="cron">Cron</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Valor (HH:MM ou segundos)</label>
+                            <input type="text" id="tsScheduleValue" placeholder="14:30 ou 3600">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Tipo de Ação</label>
+                        <select id="tsActionType">
+                            <option value="backup">Backup</option>
+                            <option value="cleanup">Limpeza</option>
+                            <option value="generate_image">Gerar Imagem</option>
+                            <option value="script">Executar Script</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Parâmetros (JSON)</label>
+                        <textarea id="tsParams" placeholder='{"file": "data.db"}' style="min-height: 80px;"></textarea>
+                    </div>
+
+                    <div id="taskSchedulerResult" class="result-box" style="display:none;"></div>
+                </div>
+            </div>
+
+            <!-- ============ SMART SEARCH ============ -->
+            <div class="plugin-content" id="smartSearch">
+                <div class="plugin-header">🔍 Smart Search — Busca Inteligente</div>
+                <div style="padding: 20px;">
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label>Termo de Busca</label>
+                            <input type="text" id="ssQuery" placeholder="Buscar...">
+                        </div>
+                        <div class="form-group">
+                            <label>Tipo</label>
+                            <select id="ssType">
+                                <option value="all">Todos</option>
+                                <option value="chat">Chat</option>
+                                <option value="image">Imagem</option>
+                                <option value="video">Vídeo</option>
+                                <option value="audio">Áudio</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
+                        <button onclick="ssBasicSearch()">🔍 Busca Simples</button>
+                        <button onclick="ssAdvancedSearch()">🔎 Busca Avançada</button>
+                        <button onclick="ssSuggest()">💡 Sugestões</button>
+                        <button onclick="ssTrending()">📈 Tendências</button>
+                        <button onclick="ssAnalytics()">📊 Analytics</button>
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label>Data Inicial</label>
+                            <input type="date" id="ssDateFrom">
+                        </div>
+                        <div class="form-group">
+                            <label>Data Final</label>
+                            <input type="date" id="ssDateTo">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Limite</label>
+                        <input type="number" id="ssLimit" value="20" min="1" max="100">
+                    </div>
+
+                    <div id="smartSearchResult" class="result-box" style="display:none;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function switchPlugin(pluginId, button) {
+            // Hide all content
+            document.querySelectorAll('.plugin-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.plugin-btn').forEach(el => el.classList.remove('active'));
+
+            // Show selected
+            document.getElementById(pluginId).classList.add('active');
+            button.classList.add('active');
+        }
+
+        // ============ IMAGE EDITOR ============
+        async function editorResize() {
+            const path = document.getElementById('imgEditorPath').value;
+            const width = document.getElementById('imgWidth').value;
+            const height = document.getElementById('imgHeight').value;
+            if (!path) { alert('Indique o caminho da imagem'); return; }
+
+            try {
+                const res = await fetch('/api/plugins/Image%20Editor/resize', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ image_path: path, width: parseInt(width), height: parseInt(height) })
+                });
+                const data = await res.json();
+                showResult('imageEditorResult', data);
+            } catch (e) {
+                showResult('imageEditorResult', { error: e.message }, true);
+            }
+        }
+
+        async function editorCrop() {
+            const path = document.getElementById('imgEditorPath').value;
+            if (!path) { alert('Indique o caminho'); return; }
+            // Simplified - você pode expandir com inputs de x, y, w, h
+            const res = await fetch('/api/plugins/Image%20Editor/crop', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ image_path: path, x: 0, y: 0, width: 256, height: 256 })
+            });
+            const data = await res.json();
+            showResult('imageEditorResult', data);
+        }
+
+        async function editorAdjust() {
+            const path = document.getElementById('imgEditorPath').value;
+            const brightness = document.getElementById('imgBrightness').value;
+            const contrast = document.getElementById('imgContrast').value;
+            if (!path) { alert('Indique o caminho'); return; }
+
+            const res = await fetch('/api/plugins/Image%20Editor/adjust', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    image_path: path,
+                    brightness: parseFloat(brightness),
+                    contrast: parseFloat(contrast),
+                    saturation: 1.0
+                })
+            });
+            const data = await res.json();
+            showResult('imageEditorResult', data);
+        }
+
+        async function editorFilter() {
+            const path = document.getElementById('imgEditorPath').value;
+            const filterType = document.getElementById('imgFilterType').value;
+            if (!path) { alert('Indique o caminho'); return; }
+
+            const res = await fetch('/api/plugins/Image%20Editor/apply_filter', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ image_path: path, filter_type: filterType })
+            });
+            const data = await res.json();
+            showResult('imageEditorResult', data);
+        }
+
+        async function editorConvert() {
+            const path = document.getElementById('imgEditorPath').value;
+            if (!path) { alert('Indique o caminho'); return; }
+
+            const res = await fetch('/api/plugins/Image%20Editor/convert_format', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ image_path: path, output_format: 'png' })
+            });
+            const data = await res.json();
+            showResult('imageEditorResult', data);
+        }
+
+        // ============ VIDEO SUMMARIZER ============
+        async function vidGetInfo() {
+            const path = document.getElementById('vidPath').value;
+            if (!path) { alert('Indique o caminho do vídeo'); return; }
+
+            const res = await fetch('/api/plugins/Video%20Summarizer/get_metadata', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ video_path: path })
+            });
+            const data = await res.json();
+            showResult('videoSummarizerResult', data);
+        }
+
+        async function vidExtractFrames() {
+            const path = document.getElementById('vidPath').value;
+            const count = document.getElementById('vidFrameCount').value;
+            if (!path) { alert('Indique o caminho'); return; }
+
+            const res = await fetch('/api/plugins/Video%20Summarizer/extract_frames', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ video_path: path, num_frames: parseInt(count) })
+            });
+            const data = await res.json();
+            showResult('videoSummarizerResult', data);
+        }
+
+        async function vidDetectScenes() {
+            const path = document.getElementById('vidPath').value;
+            if (!path) { alert('Indique o caminho'); return; }
+
+            const res = await fetch('/api/plugins/Video%20Summarizer/detect_scenes', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ video_path: path })
+            });
+            const data = await res.json();
+            showResult('videoSummarizerResult', data);
+        }
+
+        async function vidCreateGif() {
+            const path = document.getElementById('vidPath').value;
+            const duration = document.getElementById('vidGifDuration').value;
+            if (!path) { alert('Indique o caminho'); return; }
+
+            const res = await fetch('/api/plugins/Video%20Summarizer/create_gif', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ video_path: path, start_time: 0, end_time: parseInt(duration) })
+            });
+            const data = await res.json();
+            showResult('videoSummarizerResult', data);
+        }
+
+        async function vidCreateThumbnail() {
+            const path = document.getElementById('vidPath').value;
+            if (!path) { alert('Indique o caminho'); return; }
+
+            const res = await fetch('/api/plugins/Video%20Summarizer/create_thumbnail', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ video_path: path, time: 5 })
+            });
+            const data = await res.json();
+            showResult('videoSummarizerResult', data);
+        }
+
+        // ============ VIDEO EDITOR PRO ============
+        async function veGetInfo() {
+            const path = document.getElementById('veVideoPath').value;
+            if (!path) { alert('Indique o caminho'); return; }
+
+            const res = await fetch('/api/plugins/Video%20Editor%20Pro/get_info', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ video_path: path })
+            });
+            const data = await res.json();
+            showResult('videoEditorProResult', data);
+        }
+
+        async function veTrim() {
+            const path = document.getElementById('veVideoPath').value;
+            const start = document.getElementById('veStartTime').value;
+            const end = document.getElementById('veEndTime').value;
+            if (!path) { alert('Indique o caminho'); return; }
+
+            const res = await fetch('/api/plugins/Video%20Editor%20Pro/trim', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ video_path: path, start_time: start, end_time: end })
+            });
+            const data = await res.json();
+            showResult('videoEditorProResult', data);
+        }
+
+        async function veSplit() {
+            const path = document.getElementById('veVideoPath').value;
+            const parts = document.getElementById('veParts').value;
+            if (!path) { alert('Indique o caminho'); return; }
+
+            const res = await fetch('/api/plugins/Video%20Editor%20Pro/split', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ video_path: path, num_parts: parseInt(parts) })
+            });
+            const data = await res.json();
+            showResult('videoEditorProResult', data);
+        }
+
+        async function veAddText() {
+            const path = document.getElementById('veVideoPath').value;
+            const text = document.getElementById('veText').value;
+            if (!path || !text) { alert('Indique caminho e texto'); return; }
+
+            const res = await fetch('/api/plugins/Video%20Editor%20Pro/add_text', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ video_path: path, text: text, position: 'bottom-center' })
+            });
+            const data = await res.json();
+            showResult('videoEditorProResult', data);
+        }
+
+        async function veChangeSpeed() {
+            const path = document.getElementById('veVideoPath').value;
+            const speed = document.getElementById('veSpeed').value;
+            if (!path) { alert('Indique o caminho'); return; }
+
+            const res = await fetch('/api/plugins/Video%20Editor%20Pro/change_speed', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ video_path: path, speed: parseFloat(speed) })
+            });
+            const data = await res.json();
+            showResult('videoEditorProResult', data);
+        }
+
+        async function veResize() {
+            const path = document.getElementById('veVideoPath').value;
+            const width = document.getElementById('imgWidth').value;
+            const height = document.getElementById('imgHeight').value;
+            if (!path) { alert('Indique o caminho'); return; }
+
+            const res = await fetch('/api/plugins/Video%20Editor%20Pro/resize', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ video_path: path, width: parseInt(width), height: parseInt(height) })
+            });
+            const data = await res.json();
+            showResult('videoEditorProResult', data);
+        }
+
+        async function veConvert() {
+            const path = document.getElementById('veVideoPath').value;
+            if (!path) { alert('Indique o caminho'); return; }
+
+            const res = await fetch('/api/plugins/Video%20Editor%20Pro/convert_format', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ video_path: path, output_format: 'webm' })
+            });
+            const data = await res.json();
+            showResult('videoEditorProResult', data);
+        }
+
+        // ============ DATABASE MANAGER ============
+        async function dbGetStats() {
+            const res = await fetch('/api/plugins/Database%20Manager/get_stats', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({})
+            });
+            const data = await res.json();
+            showResult('databaseMgrResult', data);
+        }
+
+        async function dbGetChats() {
+            const limit = document.getElementById('dbLimit').value;
+            const res = await fetch('/api/plugins/Database%20Manager/get_chat_history', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ limit: parseInt(limit) })
+            });
+            const data = await res.json();
+            showResult('databaseMgrResult', data);
+        }
+
+        async function dbGetImages() {
+            const limit = document.getElementById('dbLimit').value;
+            const res = await fetch('/api/plugins/Database%20Manager/get_images', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ limit: parseInt(limit) })
+            });
+            const data = await res.json();
+            showResult('databaseMgrResult', data);
+        }
+
+        async function dbGetVideos() {
+            const limit = document.getElementById('dbLimit').value;
+            const res = await fetch('/api/plugins/Database%20Manager/get_videos', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ limit: parseInt(limit) })
+            });
+            const data = await res.json();
+            showResult('databaseMgrResult', data);
+        }
+
+        async function dbGetAudios() {
+            const limit = document.getElementById('dbLimit').value;
+            const res = await fetch('/api/plugins/Database%20Manager/get_audios', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ limit: parseInt(limit) })
+            });
+            const data = await res.json();
+            showResult('databaseMgrResult', data);
+        }
+
+        async function dbBackup() {
+            const res = await fetch('/api/plugins/Database%20Manager/backup', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({})
+            });
+            const data = await res.json();
+            showResult('databaseMgrResult', data);
+        }
+
+        async function dbSearch() {
+            const query = document.getElementById('dbSearchTerm').value;
+            const contentType = document.getElementById('dbContentType').value;
+            if (!query) { alert('Digite um termo de busca'); return; }
+
+            const res = await fetch('/api/plugins/Database%20Manager/search', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ query: query, content_type: contentType })
+            });
+            const data = await res.json();
+            showResult('databaseMgrResult', data);
+        }
+
+        // ============ TASK SCHEDULER ============
+        async function tsGetTasks() {
+            const res = await fetch('/api/plugins/Task%20Scheduler/get_tasks', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({})
+            });
+            const data = await res.json();
+            showResult('taskSchedulerResult', data);
+        }
+
+        async function tsCreateTask() {
+            const name = document.getElementById('tsName').value;
+            const scheduleType = document.getElementById('tsScheduleType').value;
+            const scheduleValue = document.getElementById('tsScheduleValue').value;
+            const actionType = document.getElementById('tsActionType').value;
+            const params = document.getElementById('tsParams').value;
+
+            if (!name || !scheduleValue) { alert('Preencha nome e valor de agendamento'); return; }
+
+            try {
+                const res = await fetch('/api/plugins/Task%20Scheduler/create_task', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: name,
+                        schedule_type: scheduleType,
+                        schedule_value: scheduleValue,
+                        action_type: actionType,
+                        params: params ? JSON.parse(params) : {}
+                    })
+                });
+                const data = await res.json();
+                showResult('taskSchedulerResult', data);
+            } catch (e) {
+                showResult('taskSchedulerResult', { error: e.message }, true);
+            }
+        }
+
+        async function tsExecuteNow() {
+            const name = document.getElementById('tsName').value;
+            if (!name) { alert('Indique o nome da tarefa'); return; }
+
+            const res = await fetch('/api/plugins/Task%20Scheduler/execute_task_now', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ task_name: name })
+            });
+            const data = await res.json();
+            showResult('taskSchedulerResult', data);
+        }
+
+        // ============ SMART SEARCH ============
+        async function ssBasicSearch() {
+            const query = document.getElementById('ssQuery').value;
+            const type = document.getElementById('ssType').value;
+            const limit = document.getElementById('ssLimit').value;
+            if (!query) { alert('Digite um termo de busca'); return; }
+
+            const res = await fetch('/api/plugins/Smart%20Search/search', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ query: query, search_type: type, limit: parseInt(limit) })
+            });
+            const data = await res.json();
+            showResult('smartSearchResult', data);
+        }
+
+        async function ssAdvancedSearch() {
+            const query = document.getElementById('ssQuery').value;
+            const type = document.getElementById('ssType').value;
+            const dateFrom = document.getElementById('ssDateFrom').value;
+            const dateTo = document.getElementById('ssDateTo').value;
+            if (!query) { alert('Digite um termo de busca'); return; }
+
+            const res = await fetch('/api/plugins/Smart%20Search/advanced_search', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    query: query,
+                    search_type: type,
+                    date_from: dateFrom,
+                    date_to: dateTo
+                })
+            });
+            const data = await res.json();
+            showResult('smartSearchResult', data);
+        }
+
+        async function ssSuggest() {
+            const query = document.getElementById('ssQuery').value;
+            if (!query) { alert('Digite uma busca parcial'); return; }
+
+            const res = await fetch('/api/plugins/Smart%20Search/suggest', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ partial_query: query, limit: 10 })
+            });
+            const data = await res.json();
+            showResult('smartSearchResult', data);
+        }
+
+        async function ssTrending() {
+            const res = await fetch('/api/plugins/Smart%20Search/trending_topics', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ days: 7 })
+            });
+            const data = await res.json();
+            showResult('smartSearchResult', data);
+        }
+
+        async function ssAnalytics() {
+            const res = await fetch('/api/plugins/Smart%20Search/search_analytics', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({})
+            });
+            const data = await res.json();
+            showResult('smartSearchResult', data);
+        }
+
+        // ============ UTILITIES ============
+        function showResult(elementId, data, isError = false) {
+            const el = document.getElementById(elementId);
+            el.style.display = 'block';
+            el.className = 'result-box' + (isError ? ' error' : '');
+            el.innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+        }
+    </script>
+</body>
+</html>
