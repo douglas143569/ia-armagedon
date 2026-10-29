@@ -190,10 +190,15 @@ module.exports = function criarPluggy(Erro, dataDir) {
         const bancarias = contas.filter(c => c.type === 'BANK');
         const transacoes = [];
         for (const c of bancarias) {
-            for (let pagina = 1, total = 1; pagina <= total && pagina <= 40; pagina++) {
-                const j = await chamar('GET', '/transactions', { apiKey: key, consulta: { accountId: c.id, from: datas(inicio), to: datas(hoje), pageSize: 500, page: pagina } });
-                total = j.totalPages || 1;
+            // v2 (o GET /transactions antigo responde 410): páginas de 500 por cursor — o `next` da resposta
+            // já vem como "?accountId=...&after=..." e vai colado no caminho para pedir a página seguinte
+            let rota = '/v2/transactions';
+            let consulta = { accountId: c.id, dateFrom: datas(inicio), dateTo: datas(hoje) };
+            for (let pagina = 0; rota && pagina < 40; pagina++) {
+                const j = await chamar('GET', rota, { apiKey: key, consulta });
                 for (const t of j.results || []) { const n = normalizar(t); if (n) transacoes.push(n); }
+                rota = typeof j.next === 'string' && j.next ? '/v2/transactions' + j.next : null;
+                consulta = undefined;
             }
         }
         const lista = bancarias.map(c => ({
