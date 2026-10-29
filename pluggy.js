@@ -46,6 +46,33 @@ function normalizar(t) {
     };
 }
 
+const CLASSES_INVEST = [   // type/subtype do Pluggy → classes do painel
+    [/crypto/i, 'Criptomoedas'],
+    [/real_estate|fii|fund.*imobili/i, 'Fundos Imobiliários (FIIs)'],
+    [/etf/i, 'ETFs'],
+    [/stock|equity|bdr|acao|ação/i, 'Ações'],
+    [/fixed_income|treasury|cdb|lci|lca|cri|cra|debenture|poupan/i, 'Renda Fixa'],
+];
+
+// Investimento do Pluggy → formato do painel. "investido" é o que você aportou; "atual" é o valor de hoje.
+function normalizarInvestimento(i, hoje) {
+    if (!i || !i.id) return null;
+    const atual = Number(i.balance ?? i.value);
+    if (!Number.isFinite(atual) || atual < 0) return null;
+    const original = Number(i.amountOriginal ?? i.amount);
+    const tipo = `${i.type || ''} ${i.subtype || ''}`;
+    const achada = CLASSES_INVEST.find(([re]) => re.test(tipo));
+    const data = String(i.purchaseDate || i.date || i.issueDate || '').slice(0, 10);
+    return {
+        ext_id: `pluggy:${i.id}`,
+        nome: String(i.name || i.code || 'Investimento').trim().slice(0, 60),
+        classe: achada ? achada[1] : 'Outros',
+        valor_atual: atual,
+        valor_investido: Number.isFinite(original) && original >= 0 ? original : atual,
+        data: /^\d{4}-\d{2}-\d{2}$/.test(data) && data <= hoje ? data : hoje,
+    };
+}
+
 module.exports = function criarPluggy(Erro, dataDir) {
     const arquivo = path.join(dataDir, 'pluggy.json');
     let chave = null;   // { apiKey, expira } — a API key do Pluggy dura 2 h
@@ -169,10 +196,31 @@ module.exports = function criarPluggy(Erro, dataDir) {
                 for (const t of j.results || []) { const n = normalizar(t); if (n) transacoes.push(n); }
             }
         }
+        const lista = bancarias.map(c => ({
+            nome: String(c.name || c.marketingName || 'Conta').slice(0, 60),
+            tipo: c.subtype === 'SAVINGS_ACCOUNT' ? 'poupanca' : 'corrente',
+            saldo: Number(c.balance) || 0,
+        }));
+        const soma = (tipo) => lista.filter(c => c.tipo === tipo).reduce((s, c) => s + c.saldo, 0);
+
+        // Investimentos é um produto à parte: se o banco não compartilhar, o resto da sincronização segue.
+        let investimentos = null;
+        try {
+            investimentos = [];
+            for (let pagina = 1, total = 1; pagina <= total && pagina <= 10; pagina++) {
+                const j = await chamar('GET', '/investments', { apiKey: key, consulta: { itemId: e.itemId, pageSize: 500, page: pagina } });
+                total = j.totalPages || 1;
+                for (const i of j.results || []) { const n = normalizarInvestimento(i, datas(hoje)); if (n) investimentos.push(n); }
+            }
+        } catch { investimentos = null; }
+
         return {
             transacoes,
-            saldo: bancarias.reduce((s, c) => s + (Number(c.balance) || 0), 0),
-            contas: bancarias.map(c => ({ nome: String(c.name || c.marketingName || 'Conta').slice(0, 60), saldo: Number(c.balance) || 0 })),
+            saldo: soma('corrente') + soma('poupanca'),
+            saldo_corrente: soma('corrente'),
+            saldo_poupanca: soma('poupanca'),
+            contas: lista,
+            investimentos,
             ignoradasCartao: contas.length - bancarias.length,
             hoje: datas(hoje),
         };
@@ -194,3 +242,4 @@ module.exports = function criarPluggy(Erro, dataDir) {
 };
 
 module.exports.normalizar = normalizar;
+module.exports.normalizarInvestimento = normalizarInvestimento;

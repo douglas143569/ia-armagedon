@@ -17,7 +17,7 @@ const MAX_BODY = 100 * 1024;
 
 // ---------- armazenamento ----------
 function vazio() {
-    return { versao: 1, config: { saldo_inicial: 0 }, lancamentos: [], investimentos: [], metas: [], contas: [] };
+    return { versao: 1, config: { saldo_inicial: 0 }, lancamentos: [], investimentos: [], metas: [], contas: [], banco: null };
 }
 
 function carregar() {
@@ -296,7 +296,7 @@ function mesmaOrigem(req) {
 
 function resposta(d) {
     const r = resumo(d);
-    return { config: d.config, lancamentos: d.lancamentos, investimentos: d.investimentos, metas: d.metas, contas: d.contas, resumo: r, dicas: dicas(d, r), classes: CLASSES };
+    return { config: d.config, lancamentos: d.lancamentos, investimentos: d.investimentos, metas: d.metas, contas: d.contas, banco: d.banco || null, resumo: r, dicas: dicas(d, r), classes: CLASSES };
 }
 
 function criarLancamento(b) {
@@ -356,9 +356,31 @@ function aplicarSync(d, r) {
             novos++;
         } catch { ignorados++; }
     }
+    // "saldo" do painel = conta corrente + poupança; a poupança é só um detalhe dele, não soma de novo no patrimônio
     const liquido = d.lancamentos.reduce((s, l) => s + (l.tipo === 'receita' ? l.valor : -l.valor), 0);
     d.config.saldo_inicial = reais(r.saldo - liquido);
-    return { novos, ignorados, saldo_banco: reais(r.saldo), ignoradasCartao: r.ignoradasCartao };
+    d.banco = {
+        atualizado: r.hoje,
+        contas: r.contas.map(c => ({ nome: c.nome, tipo: c.tipo, saldo: reais(c.saldo) })),
+        saldo_corrente: reais(r.saldo_corrente), saldo_poupanca: reais(r.saldo_poupanca),
+    };
+
+    // Investimentos do banco substituem os importados antes (valor atual muda); os cadastrados à mão ficam intactos.
+    let investimentos = null;
+    if (r.investimentos) {
+        const anteriores = new Map(d.investimentos.filter(i => i.ext_id).map(i => [i.ext_id, i]));
+        const importados = [];
+        for (const t of r.investimentos) {
+            try {
+                const novo = criarInvestimento({ classe: t.classe, nome: t.nome, valor_investido: t.valor_investido, valor_atual: t.valor_atual, data: t.data });
+                const antigo = anteriores.get(t.ext_id);
+                importados.push({ ...novo, id: antigo ? antigo.id : novo.id, ext_id: t.ext_id, origem: 'pluggy' });
+            } catch { ignorados++; }
+        }
+        d.investimentos = [...d.investimentos.filter(i => !i.ext_id), ...importados];
+        investimentos = importados.length;
+    }
+    return { novos, ignorados, saldo_banco: reais(r.saldo), investimentos, ignoradasCartao: r.ignoradasCartao };
 }
 
 async function rotaPluggy(req, res, sub, m) {

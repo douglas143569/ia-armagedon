@@ -200,6 +200,7 @@ td.num, th.num { text-align: right; }
                 <p>Planeje, invista e conquiste seus objetivos. Mais que números, trabalhamos por sonhos.</p>
             </div>
             <div id="avisoVazio"></div>
+            <div class="grid4" id="cardsBanco" style="margin-bottom:14px"></div>
             <div class="grid4" id="cards"></div>
             <div id="alertaContasInicio"></div>
             <div class="card quick-entry" id="novoLancamento">
@@ -263,8 +264,13 @@ td.num, th.num { text-align: right; }
                     </form>
                 </div>
                 <div id="pgConectar" style="display:none">
-                    <p class="hint">Você autoriza o Santander pelo fluxo oficial do Open Finance. O ARMAGEDON nunca vê sua senha do banco.</p>
-                    <button class="btn" type="button" onclick="pgConectar()">Conectar banco</button>
+                    <p class="hint"><b>Opção 1 — Meu Pluggy (conta pessoal):</b> conecte o banco no Meu Pluggy e cole aqui o Item ID dessa conexão (na aplicação Demo do painel do Pluggy, menu ⋮ → copiar Item ID). O ARMAGEDON nunca vê sua senha do banco.</p>
+                    <form class="form" onsubmit="pgVincularItem(event)">
+                        <label>Item ID<input class="field" id="pgItem" autocomplete="off" style="width:340px" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" required></label>
+                        <button class="btn" type="submit">Vincular e sincronizar</button>
+                    </form>
+                    <p class="hint" style="margin-top:14px"><b>Opção 2 — widget do Pluggy:</b> só funciona depois que o Pluggy liberar dados reais na sua aplicação. Em conta de teste aparece “Contas de teste só podem conectar conectores sandbox”.</p>
+                    <button class="ghost" type="button" onclick="pgConectar()">Conectar pelo widget</button>
                 </div>
                 <div id="pgConectado" style="display:none">
                     <div id="pgContas" class="hint"></div>
@@ -498,15 +504,14 @@ function renderInicio() {
     $('avisoVazio').innerHTML = vazio
         ? `<div class="card" style="margin-bottom:14px;border-color:var(--warn)">👋 Seu painel começa vazio: nenhum dado de exemplo. Registre receitas e despesas no <a href="#novoLancamento" style="color:var(--ember)">formulário abaixo</a>, seus ativos em <a href="#" onclick="ir('investimentos');return false" style="color:var(--ember)">Investimentos</a> e suas metas em <a href="#" onclick="ir('metas');return false" style="color:var(--ember)">Meus objetivos</a>.</div>` : '';
 
-    const cp = r.patrimonio_var_pct == null ? delta('sem histórico ainda') : delta(`${pct(r.patrimonio_var_pct)} em ${r.evolucao.length} meses`, r.patrimonio_var_pct >= 0 ? 'up' : 'down');
     const cr = r.renda_anterior > 0 ? delta(`${r.renda_var_valor >= 0 ? '+' : '−'} ${brl(Math.abs(r.renda_var_valor))} vs. mês anterior`, r.renda_var_valor >= 0 ? 'up' : 'down') : delta('sem mês anterior para comparar');
     const cd = r.despesas_var_pct == null ? delta('sem mês anterior para comparar') : delta(`${pct(r.despesas_var_pct)} vs. mês anterior`, r.despesas_var_pct <= 0 ? 'up' : 'down');
-    const ci = r.rentabilidade_pct == null ? delta('nenhum investimento') : delta(`${pct(r.rentabilidade_pct)} sobre o aportado`, r.rentabilidade_pct >= 0 ? 'up' : 'down');
     $('cards').innerHTML = [
-        ['Patrimônio total', r.patrimonio, cp, '💰'], ['Renda mensal', r.renda, cr, '👛'],
-        ['Despesas mensais', r.despesas, cd, '🧾'], ['Valor investido', r.investido, ci, '📊'],
+        ['Renda mensal', r.renda, cr, '👛'],
+        ['Despesas mensais', r.despesas, cd, '🧾'],
     ].map(([t, v, d, i]) => `<div class="card stat"><div class="label">${t}<span>${i}</span></div><div class="value">${money(v)}</div>${d}</div>`).join('');
 
+    renderCardsBanco(r);
     renderCategoriasRapidas();
     if (!$('qData').value) $('qData').value = hojeISO();
     renderLancamentosRecentes();
@@ -516,6 +521,27 @@ function renderInicio() {
     $('metasHome').innerHTML = S.metas.length ? `<div class="goal-grid">${S.metas.slice(0, 4).map(m => cardMeta(m)).join('')}</div>` : '<div class="empty">Nenhum objetivo ainda. Crie o primeiro em “Meus objetivos”.</div>';
     $('dicas').innerHTML = S.dicas.map(d => `<li><span class="${d.tipo}">${d.tipo === 'ok' ? '✔' : d.tipo === 'aviso' ? '⚠' : '●'}</span><span>${esc(d.texto)}</span></li>`).join('');
 }
+
+// Saldo em conta, poupança e investido. Com o banco sincronizado mostra os valores reais dele;
+// sem sincronizar, o saldo é o calculado dos lançamentos e a poupança fica sem dado (não inventa).
+function renderCardsBanco(r) {
+    const b = S.banco;
+    const quando = b ? `🏦 do banco · atualizado em ${dataPorExtenso(b.atualizado)}` : '';
+    const nomes = tipo => b ? b.contas.filter(c => c.tipo === tipo).map(c => esc(c.nome)).join(', ') : '';
+    const temPoupanca = b && b.contas.some(c => c.tipo === 'poupanca');
+    const conta = b ? b.saldo_corrente : r.saldo;
+    const poup = b ? b.saldo_poupanca : null;
+    const invDoBanco = S.investimentos.filter(i => i.origem === 'pluggy').length;
+    const rent = r.rentabilidade_pct == null ? delta('nenhum investimento') : delta(`${pct(r.rentabilidade_pct)} sobre o aportado`, r.rentabilidade_pct >= 0 ? 'up' : 'down');
+    const total = reais2(conta + (poup || 0) + r.investido);
+    $('cardsBanco').innerHTML = [
+        ['Saldo em conta', money(conta), delta(b ? (nomes('corrente') ? `${nomes('corrente')}<br>${quando}` : quando) : 'calculado dos seus lançamentos — conecte o banco para ver o real'), '🏦'],
+        ['Poupança', poup == null ? '<span class="money">—</span>' : money(poup), delta(b ? (temPoupanca ? `${nomes('poupanca')}<br>${quando}` : 'nenhuma poupança encontrada na conexão') : 'disponível ao conectar o banco'), '🐖'],
+        ['Total investido', money(r.investido), rent + (invDoBanco ? delta(`${invDoBanco} ativo(s) vindo(s) do banco`) : ''), '📊'],
+        ['Total (conta + poupança + investido)', money(total), delta(b ? 'valores reais do banco' : 'conta calculada'), '💰'],
+    ].map(([t, v, d, i]) => `<div class="card stat"><div class="label">${t}<span>${i}</span></div><div class="value">${v}</div>${d}</div>`).join('');
+}
+const reais2 = v => Math.round(v * 100) / 100;
 
 function vencimentoMensal(inicial, mesesDepois) {
     const [ano, mes, dia] = inicial.split('-').map(Number);
@@ -742,7 +768,7 @@ async function pgCarregar() {
     $('pgConectar').style.display = PG.configurado && !PG.conectado ? '' : 'none';
     $('pgConectado').style.display = PG.conectado ? '' : 'none';
     $('pgStatus').textContent = PG.conectado ? `✔ ${PG.banco || 'banco'} conectado${PG.ultima_sync ? ' · última sincronização ' + PG.ultima_sync.split('-').reverse().join('/') : ''}` : '';
-    $('pgContas').innerHTML = PG.contas.map(c => `${esc(c.nome)}: ${money(c.saldo)}`).join(' · ');
+    $('pgContas').innerHTML = PG.contas.map(c => `${esc(c.nome)}${c.tipo === 'poupanca' ? ' (poupança)' : ''}: ${money(c.saldo)}`).join(' · ');
 }
 
 async function pgSalvarCredenciais(ev) {
@@ -784,12 +810,26 @@ async function pgConectar() {
     } catch (e) { toast('❌ ' + e.message); }
 }
 
+async function pgVincularItem(ev) {
+    ev.preventDefault();
+    try {
+        const texto = $('pgItem').value.trim();
+        const itemId = (texto.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i) || [texto])[0];   // aceita o código puro ou um endereço que o contenha
+        await api('POST', '/pluggy/item', { itemId });
+        $('pgItem').value = '';
+        toast('✔ Conexão vinculada — sincronizando…');
+        await pgCarregar();
+        pgSincronizar();
+    } catch (e) { toast('❌ ' + e.message); }
+}
+
 async function pgSincronizar() {
     const b = $('pgBtnSync'); b.disabled = true; b.textContent = 'Sincronizando…';
     try {
         const r = await api('POST', '/pluggy/sync', {});
         S = r; renderTudo();
-        toast(`✔ ${r.sync.novos} lançamento(s) novo(s) · saldo do banco ${money(r.sync.saldo_banco)}`);
+        const inv = r.sync.investimentos == null ? ' · investimentos não disponibilizados pelo banco' : ` · ${r.sync.investimentos} investimento(s)`;
+        toast(`✔ ${r.sync.novos} lançamento(s) novo(s) · saldo do banco ${brl(r.sync.saldo_banco)}${inv}`);
         pgCarregar();
     } catch (e) { toast('❌ ' + e.message); }
     b.disabled = false; b.textContent = 'Sincronizar agora';
