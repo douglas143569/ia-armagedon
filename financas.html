@@ -254,7 +254,7 @@ td.num, th.num { text-align: right; }
         <section class="view" id="v-planejamento">
             <h2 class="page-title">Planejamento financeiro</h2>
             <div class="card" style="margin-bottom:14px">
-                <h3>Conta do banco (Open Finance) <span id="pgStatus" class="hint" style="margin:0"></span></h3>
+                <h3>Conta do banco (Open Finance) <span id="pgStatus" class="hint" style="margin:0"></span><button class="ghost" type="button" id="pgBtnCred" onclick="pgAlternarCredenciais()" style="margin-left:auto">Alterar credenciais do Pluggy</button></h3>
                 <div id="pgSetup" style="display:none">
                     <p class="hint">Crie uma aplicação em dashboard.pluggy.ai e cole o Client ID e o Client Secret. Eles ficam só neste computador (financas_data/pluggy.json) e nunca voltam para o navegador.</p>
                     <form class="form" onsubmit="pgSalvarCredenciais(event)">
@@ -451,7 +451,7 @@ function num(s) {   // "1.234,56" ou "1234.56" → número
 }
 
 let toastT;
-function toast(msg) { const t = $('toast'); t.textContent = msg; t.style.display = 'block'; clearTimeout(toastT); toastT = setTimeout(() => t.style.display = 'none', 4500); }
+function toast(msg) { const t = $('toast'); t.textContent = msg; t.style.display = 'block'; clearTimeout(toastT); toastT = setTimeout(() => t.style.display = 'none', msg.startsWith('❌') ? 15000 : 4500); }
 
 async function api(method, path, body) {
     let r;
@@ -526,7 +526,11 @@ function renderInicio() {
 // sem sincronizar, o saldo é o calculado dos lançamentos e a poupança fica sem dado (não inventa).
 function renderCardsBanco(r) {
     const b = S.banco;
-    const quando = b ? `🏦 do banco · atualizado em ${dataPorExtenso(b.atualizado)}` : '';
+    // dados_em = quando o Pluggy buscou no banco; pode ser bem anterior à sincronização daqui
+    const dadosEm = b ? (b.dados_em || b.atualizado) : null;
+    const diasVelhos = dadosEm ? Math.round((new Date(hojeISO()) - new Date(dadosEm)) / 86400000) : 0;
+    const quando = b ? `🏦 dados do banco de ${dataPorExtenso(dadosEm)}` : '';
+    const velho = diasVelhos >= 2 ? delta(`⚠ O Meu Pluggy não atualiza há ${diasVelhos} dias. Abra meu.pluggy.ai e atualize a conexão do Santander, depois sincronize aqui.`, 'down') : '';
     const nomes = tipo => b ? b.contas.filter(c => c.tipo === tipo).map(c => esc(c.nome)).join(', ') : '';
     const temPoupanca = b && b.contas.some(c => c.tipo === 'poupanca');
     const conta = b ? b.saldo_corrente : r.saldo;
@@ -535,7 +539,7 @@ function renderCardsBanco(r) {
     const rent = r.rentabilidade_pct == null ? delta('nenhum investimento') : delta(`${pct(r.rentabilidade_pct)} sobre o aportado`, r.rentabilidade_pct >= 0 ? 'up' : 'down');
     const total = reais2(conta + (poup || 0) + r.investido);
     $('cardsBanco').innerHTML = [
-        ['Saldo em conta', money(conta), delta(b ? (nomes('corrente') ? `${nomes('corrente')}<br>${quando}` : quando) : 'calculado dos seus lançamentos — conecte o banco para ver o real'), '🏦'],
+        ['Saldo em conta', money(conta), delta(b ? (nomes('corrente') ? `${nomes('corrente')}<br>${quando}` : quando) : 'calculado dos seus lançamentos — conecte o banco para ver o real') + velho, '🏦'],
         ['Poupança', poup == null ? '<span class="money">—</span>' : money(poup), delta(b ? (temPoupanca ? `${nomes('poupanca')}<br>${quando}` : 'nenhuma poupança encontrada na conexão') : 'disponível ao conectar o banco'), '🐖'],
         ['Total investido', money(r.investido), rent + (invDoBanco ? delta(`${invDoBanco} ativo(s) vindo(s) do banco`) : ''), '📊'],
         ['Total (conta + poupança + investido)', money(total), delta(b ? 'valores reais do banco' : 'conta calculada'), '💰'],
@@ -764,11 +768,17 @@ let PG = null;
 
 async function pgCarregar() {
     try { PG = await api('GET', '/pluggy'); } catch { return; }
-    $('pgSetup').style.display = PG.configurado ? 'none' : '';
+    if (!PG.configurado) $('pgSetup').style.display = '';   // depois de configurado, só reabre pelo botão
+    $('pgBtnCred').style.display = PG.configurado ? '' : 'none';
     $('pgConectar').style.display = PG.configurado && !PG.conectado ? '' : 'none';
     $('pgConectado').style.display = PG.conectado ? '' : 'none';
     $('pgStatus').textContent = PG.conectado ? `✔ ${PG.banco || 'banco'} conectado${PG.ultima_sync ? ' · última sincronização ' + PG.ultima_sync.split('-').reverse().join('/') : ''}` : '';
     $('pgContas').innerHTML = PG.contas.map(c => `${esc(c.nome)}${c.tipo === 'poupanca' ? ' (poupança)' : ''}: ${money(c.saldo)}`).join(' · ');
+}
+
+function pgAlternarCredenciais() {
+    const aberto = $('pgSetup').style.display !== 'none';
+    $('pgSetup').style.display = aberto ? 'none' : '';
 }
 
 async function pgSalvarCredenciais(ev) {
@@ -829,7 +839,8 @@ async function pgSincronizar() {
         const r = await api('POST', '/pluggy/sync', {});
         S = r; renderTudo();
         const inv = r.sync.investimentos == null ? ' · investimentos não disponibilizados pelo banco' : ` · ${r.sync.investimentos} investimento(s)`;
-        toast(`✔ ${r.sync.novos} lançamento(s) novo(s) · saldo do banco ${brl(r.sync.saldo_banco)}${inv}`);
+        const velho = r.banco && r.banco.dados_em && r.banco.dados_em < hojeISO() ? ` · atenção: dados do banco de ${r.banco.dados_em.split('-').reverse().join('/')}` : '';
+        toast(`✔ ${r.sync.novos} lançamento(s) novo(s) · saldo do banco ${brl(r.sync.saldo_banco)}${inv}${velho}`);
         pgCarregar();
     } catch (e) { toast('❌ ' + e.message); }
     b.disabled = false; b.textContent = 'Sincronizar agora';

@@ -360,7 +360,7 @@ function aplicarSync(d, r) {
     const liquido = d.lancamentos.reduce((s, l) => s + (l.tipo === 'receita' ? l.valor : -l.valor), 0);
     d.config.saldo_inicial = reais(r.saldo - liquido);
     d.banco = {
-        atualizado: r.hoje,
+        atualizado: r.hoje, dados_em: r.dados_em || r.hoje,
         contas: r.contas.map(c => ({ nome: c.nome, tipo: c.tipo, saldo: reais(c.saldo) })),
         saldo_corrente: reais(r.saldo_corrente), saldo_poupanca: reais(r.saldo_poupanca),
     };

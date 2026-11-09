@@ -58,7 +58,7 @@ const CLASSES_INVEST = [   // type/subtype do Pluggy → classes do painel
 function normalizarInvestimento(i, hoje) {
     if (!i || !i.id) return null;
     const atual = Number(i.balance ?? i.value);
-    if (!Number.isFinite(atual) || atual < 0) return null;
+    if (!Number.isFinite(atual) || atual <= 0) return null;   // saldo zerado (resgatado) não entra
     const original = Number(i.amountOriginal ?? i.amount);
     const tipo = `${i.type || ''} ${i.subtype || ''}`;
     const achada = CLASSES_INVEST.find(([re]) => re.test(tipo));
@@ -190,14 +190,17 @@ module.exports = function criarPluggy(Erro, dataDir) {
         const bancarias = contas.filter(c => c.type === 'BANK');
         const transacoes = [];
         for (const c of bancarias) {
-            for (let pagina = 1, total = 1; pagina <= total && pagina <= 40; pagina++) {
-                const j = await chamar('GET', '/transactions', { apiKey: key, consulta: { accountId: c.id, from: datas(inicio), to: datas(hoje), pageSize: 500, page: pagina } });
-                total = j.totalPages || 1;
+            // /v2/transactions pagina por cursor: "next" já vem como query string pronta para anexar ao caminho
+            let rota = '/v2/transactions', consulta = { accountId: c.id, dateFrom: datas(inicio), dateTo: datas(hoje) };
+            for (let pagina = 1; rota && pagina <= 100; pagina++) {
+                const j = await chamar('GET', rota, { apiKey: key, consulta });
                 for (const t of j.results || []) { const n = normalizar(t); if (n) transacoes.push(n); }
+                rota = typeof j.next === 'string' && j.next.startsWith('?') ? '/v2/transactions' + j.next : null;
+                consulta = undefined;
             }
         }
         const lista = bancarias.map(c => ({
-            nome: String(c.name || c.marketingName || 'Conta').slice(0, 60),
+            nome: (String(c.name || c.marketingName || 'Conta').slice(0, 50) + (c.number ? ` ·${String(c.number).replace(/\D/g, '').slice(-4)}` : '')).trim(),
             tipo: c.subtype === 'SAVINGS_ACCOUNT' ? 'poupanca' : 'corrente',
             saldo: Number(c.balance) || 0,
         }));
@@ -222,6 +225,7 @@ module.exports = function criarPluggy(Erro, dataDir) {
             contas: lista,
             investimentos,
             ignoradasCartao: contas.length - bancarias.length,
+            dados_em: String(item.lastUpdatedAt || '').slice(0, 10) || null,   // quando o Pluggy buscou no banco pela última vez
             hoje: datas(hoje),
         };
     }
